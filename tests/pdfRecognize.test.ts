@@ -157,7 +157,7 @@ describe('Lecture d’une tablature sans rythme', () => {
 });
 
 describe('Accordage écrit', () => {
-  const lines = (...texts: string[]) => texts.map((t, i) => ({ text: t, x: 0, y: i * 10, size: 8, page: 0 }));
+  const lines = (...texts: string[]) => texts.map((t, i) => ({ text: t, x: 0, x1: t.length * 4, y: i * 10, size: 8, page: 0 }));
   it('chiffres cerclés', () => {
     expect(tuningFromText(lines('① = D  ④ = C', '② = A  ⑤ = G', '③ = F  ⑥ = D'), 6)?.tuning).toEqual([62, 57, 53, 48, 43, 38]);
   });

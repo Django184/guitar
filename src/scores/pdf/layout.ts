@@ -57,12 +57,13 @@ export function mergeHorizontal(hsegs: HSeg[], holes: Array<{ x0: number; x1: nu
       .map((h) => [Math.max(h.x0, x0), Math.min(h.x1, x1)] as const)
       .sort((a, b) => a[0] - b[0]);
     if (!inside.length) return false;
+    // Petit blanc toléré autour et entre les chiffres (« 6 <18> »).
     let edge = x0;
     for (const [a, b] of inside) {
-      if (a - edge > 3.5) return false;
+      if (a - edge > 5) return false;
       edge = Math.max(edge, b);
     }
-    return x1 - edge <= 3.5;
+    return x1 - edge <= 5;
   };
   const sorted = [...hsegs].sort((a, b) => a.y - b.y || a.x0 - b.x0);
   const rows: HSeg[][] = [];

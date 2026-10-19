@@ -59,7 +59,12 @@ export function measureLength(time: { beats: number; beatType: number }): number
 /** Repère les chiffres de n-olets d'une portée et marque les événements concernés. */
 export function applyTuplets(ctx: PageContext, staff: Staff, events: Ev[], stems: Stem[]): void {
   const sp = staff.spacing;
-  const digits = ctx.symbols.tupletDigits.filter((d) => nearestStaff(ctx.staves, d.x, d.y, 7) === staff);
+  // Chiffres proches de la portée (au-dessus ou au-dessous) ; c'est le groupe de notes trouvé qui tranche.
+  const digits = ctx.symbols.tupletDigits.filter((d) => {
+    if (d.x < staff.x0 || d.x > staff.x1) return false;
+    const dist = d.y < staffTop(staff) ? staffTop(staff) - d.y : d.y - staffBottom(staff);
+    return dist < 7 * sp && (nearestStaff(ctx.staves, d.x, d.y, 9) === staff || dist < 5 * sp);
+  });
   // Nombres de plusieurs chiffres.
   const numbers: Array<{ x: number; x1: number; y: number; size: number; value: number }> = [];
   for (const d of [...digits].sort((a, b) => a.x - b.x)) {
@@ -84,7 +89,12 @@ export function applyTuplets(ctx: PageContext, staff: Staff, events: Ev[], stems
       const x0 = leftSeg.x0 - 0.6 * sp;
       const x1 = rightSeg.x1 + 0.3 * sp;
       const above = midY < staffTop(staff);
-      members = events.filter((e) => e.x >= x0 && e.x <= x1);
+      // Notes de cette portée sous le crochet : leur tête ou le bout de leur hampe en est proche.
+      const reach = (e: Ev): boolean => {
+        const ys = [e.y, ...e.heads.map((h) => h.y), ...(e.stem ? [e.stem.y0, e.stem.y1] : [])];
+        return ys.some((y) => Math.abs(y - midY) < 4.5 * sp);
+      };
+      members = events.filter((e) => e.x >= x0 && e.x <= x1 && reach(e));
       // Deux voix : le crochet au-dessus concerne la voix haute.
       if (members.some((e) => e.stemDir === 'up') && members.some((e) => e.stemDir === 'down')) {
         members = members.filter((e) => !e.stemDir || e.stemDir === (above ? 'up' : 'down'));

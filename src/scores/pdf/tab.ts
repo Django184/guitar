@@ -3,7 +3,7 @@
  * (hampes sous la portée, ligatures, crochets, points) et accordage.
  */
 import { emit, type PageContext, type StaffSyms } from './context';
-import type { Beam, VSeg } from './geometry';
+import type { Beam } from './geometry';
 import { REST_QUARTERS } from './glyphs';
 import { staffBottom, staffTop, type Staff } from './layout';
 import { pitchToMidi, typeFromQuarters, type NoteType, type Pitch } from './model';
@@ -75,13 +75,16 @@ function tabStems(ctx: PageContext, staff: Staff, columns: Array<{ cx: number; t
     (v) => v.thickness <= 0.3 * sp + 0.25 && v.x > frame.system.x0 && v.x < frame.system.x1 && v.y1 > staffTop(staff) - sp && v.y0 < bottom + 8 * sp,
   );
   return columns.map((c) => {
-    const mine = pieces.filter((v) => Math.abs(v.x - c.cx) < 0.6 * sp && v.y0 >= c.topY - 0.6 * sp);
-    if (!mine.length) return null;
+    const near = pieces.filter((v) => Math.abs(v.x - c.cx) < 0.6 * sp && v.y0 >= c.topY - 0.6 * sp && v.y1 - v.y0 > 0.4 * sp);
+    if (!near.length) return null;
+    // Le trait le plus long et le plus proche du centre, puis ses morceaux colinéaires
+    // (la hampe s'interrompt autour des chiffres ; un crochet de n-olet voisin n'en fait pas partie).
+    const main = near.reduce((best, v) => (v.y1 - v.y0 - Math.abs(v.x - c.cx) * 4 > best.y1 - best.y0 - Math.abs(best.x - c.cx) * 4 ? v : best));
+    const mine = near.filter((v) => Math.abs(v.x - main.x) < 0.3);
     const y0 = Math.min(...mine.map((v) => v.y0));
     const y1 = Math.max(...mine.map((v) => v.y1));
     if (y1 < bottom + 0.3 * sp) return null;
-    const x = median(mine.map((v) => v.x));
-    return { x, y0, y1, thickness: (mine[0] as VSeg).thickness, up: false, heads: [], beams: 0, beamRefs: [] as Beam[] };
+    return { x: main.x, y0, y1, thickness: main.thickness, up: false, heads: [], beams: 0, beamRefs: [] as Beam[] };
   });
 }
 
