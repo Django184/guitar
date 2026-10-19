@@ -22,15 +22,19 @@ function walk(suite, titles = []) {
       if (status === 'skipped') skipped.push(`[${test.projectName}] ${spec.title}`);
       if (status === 'flaky' || status === 'failed') {
         // Premier message d'erreur, sur une ligne, pour diagnostiquer sans télécharger le rapport.
-        const error = (test.results ?? []).flatMap((r) => r.errors ?? []).find((e) => e.message);
-        const lines = (error?.message ?? '')
-          .replace(/\u001b\[[0-9;]*m/g, '')
-          .split('\n')
+        // Toutes les erreurs de la première tentative échouée : pour un dépassement de délai,
+        // la seconde dit sur quoi le test attendait (« waiting for … »).
+        const failedRun = (test.results ?? []).find((r) => (r.errors ?? []).length > 0);
+        const errors = failedRun?.errors ?? [];
+        const lines = errors
+          .flatMap((e) => (e.message ?? '').replace(/\u001b\[[0-9;]*m/g, '').split('\n'))
           .map((l) => l.trim())
-          .filter(Boolean)
-          .slice(0, 3)
+          .filter((l) => /^(Error|Expected|Received|- waiting for|- locator|Test timeout)/.test(l))
+          .filter((l, i, all) => all.indexOf(l) === i)
+          .slice(0, 6)
           .join(' / ');
-        const where = error?.location ? ` (${error.location.file.split('/').pop()}:${error.location.line})` : '';
+        const located = errors.find((e) => e.location);
+        const where = located ? ` (${located.location.file.split('/').pop()}:${located.location.line})` : '';
         unstable.push(`[${test.projectName}] ${spec.title} (${status})${where} : ${lines.slice(0, 300)}`);
       }
       for (const result of test.results ?? []) {

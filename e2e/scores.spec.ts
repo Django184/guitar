@@ -217,6 +217,11 @@ test.describe('Bibliothèque', () => {
     const count = await list.locator('.library__item').count();
     await list.getByRole('button', { name: /^Supprimer/ }).first().click();
     await expect(list.locator('.library__item')).toHaveCount(count - 1);
+    // Le message « supprimée » ne doit pas masquer la bibliothèque (il recouvre la barre de titre).
+    const toast = await page.locator('#toast').boundingBox();
+    const content = await page.locator('.library-view').boundingBox();
+    expect(toast, 'message affiché').not.toBeNull();
+    expect(toast!.y + toast!.height, 'message au-dessus de la bibliothèque').toBeLessThanOrEqual(content!.y);
     await page.getByRole('button', { name: 'Annuler' }).click();
     await expect(list.locator('.library__item')).toHaveCount(count);
   });
