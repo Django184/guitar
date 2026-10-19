@@ -109,10 +109,19 @@ export function applyTuplets(ctx: PageContext, staff: Staff, events: Ev[], stems
       if (beam) {
         const group = stems.filter((s) => s.beamRefs.includes(beam));
         members = events.filter((e) => e.stem && group.includes(e.stem));
+        // Un silence pris dans le groupe (souvent en tête : « soupir + deux notes ») en fait partie.
+        if (members.length >= 2) {
+          const xs = members.map((e) => e.x).sort((a, b) => a - b);
+          const step = ((xs[xs.length - 1] as number) - (xs[0] as number)) / (xs.length - 1);
+          const from = (xs[0] as number) - step * 1.3;
+          const to = xs[xs.length - 1] as number;
+          for (const e of events) if (e.kind === 'rest' && !e.tuplet && e.x > from && e.x < to) members.push(e);
+        }
       }
     }
-    // Les chiffres posés dans la portée sont des doigtés ou des cases, pas des n-olets.
-    if (midY > staffTop(staff) + 0.5 * sp && midY < staffBottom(staff) - 0.5 * sp) continue;
+    // Un chiffre de texte posé dans la portée, sans crochet, est un doigté (ou une case), pas un n-olet.
+    const inside = midY > staffTop(staff) + 0.5 * sp && midY < staffBottom(staff) - 0.5 * sp;
+    if (inside && !smufl && !(leftSeg && rightSeg)) continue;
     if (members.length < 2) continue;
     emit({ page: ctx.page.index, kind: 'tuplet', x0: Math.min(...members.map((e) => e.x)), y0: midY, x1: Math.max(...members.map((e) => e.x1)), y1: midY, label: String(n.value) });
     for (const e of members) if (!e.tuplet) e.tuplet = { actual: n.value, normal: 0 };
@@ -257,6 +266,57 @@ export function repairStemDurations(events: Ev[], end: number, length: number): 
 
 const fullRest = (e: Ev): boolean => e.kind === 'rest' && (e.type === 'whole' || e.type === 'breve') && e.dots === 0;
 
+/**
+ * N-olets non chiffrés (le graveur n'écrit souvent le « 3 » ou le « 6 » que sur les premiers
+ * groupes) : si une voix déborde de la mesure, on cherche des groupes ligaturés de 3 ou 6 valeurs
+ * égales dont le passage en triolets la remet exactement à la bonne durée.
+ */
+export function repairImplicitTuplets(voice: Ev[], length: number): void {
+  const total = voice.reduce((s, e) => s + e.duration, 0);
+  let excess = total - length;
+  if (excess <= EPS) return;
+  // Groupes : événements reliés par une même ligature.
+  const groups: Ev[][] = [];
+  for (const e of voice) {
+    if (!e.stem?.beamRefs.length || e.tuplet) continue;
+    const g = groups.find((list) => list.some((o) => o.stem?.beamRefs.some((b) => e.stem?.beamRefs.includes(b))));
+    if (g) g.push(e);
+    else groups.push([e]);
+  }
+  // Un silence de même valeur juste avant ou après le groupe peut en faire partie (« soupir + 5 notes »).
+  const ordered = [...voice].sort((a, b) => a.x - b.x);
+  for (const g of groups) {
+    if (g.length % 3 === 0) continue;
+    const first = ordered.indexOf(g.reduce((a, b) => (a.x < b.x ? a : b)));
+    const last = ordered.indexOf(g.reduce((a, b) => (a.x > b.x ? a : b)));
+    for (const i of [first - 1, last + 1]) {
+      const r = ordered[i];
+      if (r && r.kind === 'rest' && !r.tuplet && Math.abs(r.duration - (g[0] as Ev).duration) < EPS && (g.length + 1) % 3 === 0) {
+        g.push(r);
+        break;
+      }
+    }
+  }
+  const candidates = groups.filter((g) => g.length % 3 === 0 && g.every((e) => Math.abs(e.duration - (g[0] as Ev).duration) < EPS && e.duration <= 0.5));
+  // Réduction d'un groupe en triolets : un tiers de sa durée.
+  const chosen: Ev[][] = [];
+  for (const g of candidates) {
+    const cut = g.reduce((s, e) => s + e.duration, 0) / 3;
+    if (cut <= excess + EPS) {
+      chosen.push(g);
+      excess -= cut;
+    }
+    if (Math.abs(excess) < EPS) break;
+  }
+  if (Math.abs(excess) > EPS) return;
+  for (const g of chosen) {
+    for (const e of g) {
+      e.tuplet = { actual: 3, normal: 2 };
+      e.duration = (e.duration * 2) / 3;
+    }
+  }
+}
+
 function sequential(list: Ev[], voice: number): void {
   let t = 0;
   for (const e of list) {
@@ -281,6 +341,7 @@ export function assignVoices(events: Ev[], length: number, col: number, middle: 
       e.measureRest = true;
       e.duration = length;
     }
+    repairImplicitTuplets(sorted, length);
     sequential(sorted, 1);
     return;
   }
@@ -308,6 +369,8 @@ export function assignVoices(events: Ev[], length: number, col: number, middle: 
       (voice[0] as Ev).duration = length;
     }
   }
+  repairImplicitTuplets(v1, length);
+  repairImplicitTuplets(v2, length);
   // La voix la plus complète sert de référence ; l'autre se cale sur ses colonnes.
   if (total(2) > total(1) + EPS) [v1, v2] = [v2, v1];
   const main = v1;

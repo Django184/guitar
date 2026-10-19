@@ -208,7 +208,11 @@ export function buildSystems(staves: Staff[], vsegs: VSeg[], braces: Array<{ x: 
     const bottom = staffBottom(b) - b.spacing;
     const bar = verticals.some((v) => v.x >= a.x0 - 6 && v.x <= a.x1 + 1 && v.y0 <= top && v.y1 >= bottom);
     const brace = braces.some((br) => br.x < a.x0 + 2 && br.x > a.x0 - 40 && br.y0 <= top && br.y1 >= bottom);
-    return bar || brace;
+    // Trait de liaison à gauche qui ne fait que franchir l'espace entre les deux portées.
+    const gap = verticals.some((v) => v.x >= a.x0 - 8 && v.x <= a.x0 + 2 && v.y0 <= staffBottom(a) + 0.6 && v.y1 >= staffTop(b) - 0.6);
+    // Tablature collée à sa portée de notation (même largeur, juste dessous).
+    const pair = a.kind === 'standard' && b.kind === 'tab' && staffTop(b) - staffBottom(a) < 8 * a.spacing;
+    return bar || brace || gap || pair;
   };
   for (const staff of staves) {
     const prev = current[current.length - 1];

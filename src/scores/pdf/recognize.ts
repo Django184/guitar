@@ -192,6 +192,31 @@ function planParts(template: Frame, frames: Frame[]): PartPlan[] {
   return plans;
 }
 
+/**
+ * Barre (souvent une reprise) juste après la clé et l'armure d'un début de ligne : la « mesure »
+ * qui la précède est vide. On la fond dans la suivante, en gardant clé, armure et chiffrage.
+ */
+function dropEmptyLeadMeasure(f: Frame): void {
+  const first = f.system.barlines[0];
+  if (f.measureCount < 2 || !first) return;
+  const sp = (f.system.staves[0] as Staff).spacing;
+  if (first.left - f.system.start > 12 * sp) return;
+  const reads = [...f.notation.values(), ...[...f.tabs.values()].map((t) => t.measures)];
+  if (reads.some((r) => (r[0]?.events.length ?? 0) > 0)) return;
+  for (const r of reads) {
+    const [lead, next] = r;
+    if (lead && next) {
+      next.clef ??= lead.clef;
+      next.key ??= lead.key;
+      next.time ??= lead.time;
+      next.repeatStart ||= lead.repeatStart || first.style === 'heavy-light';
+    }
+    r.shift();
+  }
+  f.system = { ...f.system, barlines: f.system.barlines.slice(1), start: first.right };
+  f.measureCount -= 1;
+}
+
 /* ------------------------------------------------------------------ */
 /* Titre                                                               */
 /* ------------------------------------------------------------------ */
@@ -336,6 +361,8 @@ function recognizeAll(pagesData: PageData[]): RecognizeResult {
       }
     });
   }
+
+  for (const f of frames) dropEmptyLeadMeasure(f);
 
   const plans = planParts(template, frames);
   const textual = lines.some((l) => /guit|gtr|chitarra|gitarr|guitare/i.test(l.text));
