@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Typecheck, tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build for GitHub Pages
+        run: npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+
+      - name: Check PWA output (manifest, service worker, precache)
+        run: |
+          test -f dist/sw.js || { echo "::error::dist/sw.js missing"; exit 1; }
+          test -f dist/manifest.webmanifest || { echo "::error::manifest missing"; exit 1; }
+          node -e "
+            const fs = require('fs');
+            const m = JSON.parse(fs.readFileSync('dist/manifest.webmanifest', 'utf8'));
+            const sw = fs.readFileSync('dist/sw.js', 'utf8');
+            const problems = [];
+            if (m.display !== 'standalone') problems.push('display');
+            if (!m.icons || m.icons.length < 3) problems.push('icons');
+            if (!m.start_url || !m.scope) problems.push('start_url/scope');
+            if (!sw.includes('index.html')) problems.push('index.html not precached');
+            console.log('manifest:', m.name, '| start_url:', m.start_url, '| scope:', m.scope);
+            if (problems.length) { console.error('::error::' + problems.join(', ')); process.exit(1); }
+          "
+          ls -la dist dist/assets
+
+      - name: Keep the generated lockfile
+        uses: actions/upload-artifact@v7
+        with:
+          name: package-lock
+          path: package-lock.json
+
+      - name: Upload site for GitHub Pages
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
