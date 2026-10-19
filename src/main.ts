@@ -16,11 +16,18 @@ const metronome = new Metronome(
   loadPref<Meter>('meter', '4/4', isOneOf(METERS)),
 );
 
+const scores = createScoresView();
+
 const views: Record<RouteId, View> = {
-  // Le micro capterait les clics : on coupe le métronome avant d'accorder.
-  accordeur: createTunerView({ beforeStart: () => metronome.stop() }),
+  // Le micro capterait les clics et la partition : on coupe tout avant d'accorder.
+  accordeur: createTunerView({
+    beforeStart: () => {
+      metronome.stop();
+      scores.pause();
+    },
+  }),
   metronome: createMetronomeView(metronome),
-  partitions: createScoresView(),
+  partitions: scores,
 };
 
 const main = byId('main');
@@ -34,14 +41,17 @@ for (const view of Object.values(views)) {
 
 let current: View | null = null;
 
-startRouter((route, initial) => {
+startRouter(({ route, param }, initial) => {
   const next = views[route];
-  if (current === next) return;
+  if (current === next) {
+    next.update?.(param);
+    return;
+  }
   current?.leave();
   if (current) current.element.hidden = true;
 
   next.element.hidden = false;
-  next.enter();
+  next.enter(param);
   current = next;
 
   title.textContent = next.title;

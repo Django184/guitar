@@ -1,6 +1,6 @@
 # Pratique Guitare
 
-PWA de pratique guitare : accordeur, métronome et (Phase 2) partitions avec lecture sélective.
+PWA de pratique guitare : accordeur, métronome et partitions avec lecture sélective.
 Installable sur iOS, Android et ordinateur, utilisable hors-ligne après le premier chargement.
 
 **Version en ligne :** https://django184.github.io/guitar/ (déployée automatiquement à chaque
@@ -9,9 +9,13 @@ modification de `main`). C'est l'adresse à ouvrir sur le téléphone pour insta
 ## Intégration continue
 
 Le workflow `.github/workflows/ci.yml` s'exécute à chaque pull request et à chaque push sur `main` :
-typecheck, tests, build, puis contrôle du manifeste et du service worker générés. Sur `main`, le
-site est ensuite publié sur GitHub Pages (réglage requis une seule fois : Settings › Pages ›
-Source : « GitHub Actions »).
+
+- **check** : typecheck, tests unitaires, build, contrôle du manifeste et du service worker
+  (police musicale et banque de sons comprises dans le précache) ;
+- **e2e** : tests Playwright dans Chromium, profils ordinateur et mobile (écran tactile), sur le
+  build de production. Le rapport (captures, traces) est joint à chaque exécution ;
+- **deploy** (sur `main`, si les deux précédents passent) : publication sur GitHub Pages
+  (réglage requis une seule fois : Settings › Pages › Source : « GitHub Actions »).
 
 ## Prérequis
 
@@ -31,11 +35,18 @@ En mode `dev`, le service worker est désactivé (pas de cache qui masque vos mo
 Autres commandes :
 
 ```bash
-npm test            # tests unitaires (YIN, notes, métronome, formats, erreurs)
-npm run typecheck   # vérification TypeScript stricte
+npm test            # tests unitaires (YIN, métronome, formats, MIDI, tablature, bibliothèque…)
+npm run typecheck   # vérification TypeScript stricte (app, tests et tests e2e)
 npm run build       # typecheck + build de production dans dist/ (avec service worker)
 npm run preview     # sert dist/ sur http://localhost:4173
+npx playwright install chromium   # une fois, avant les tests de bout en bout
+npm run test:e2e    # tests de bout en bout sur le build (lancer « npm run build » avant)
 ```
+
+Les tests de bout en bout utilisent un micro simulé (La 110 Hz généré au lancement) et des
+partitions générées. Les quatre fichiers Guitar Pro de la suite de tests d'alphaTab sont
+téléchargés par la CI ; en local, placez-les dans `e2e/fixtures/download/` pour activer ces tests
+(voir l'étape « Download Guitar Pro test files » du workflow).
 
 ## Tester sur téléphone (HTTPS obligatoire pour le micro)
 
@@ -93,6 +104,50 @@ des certificats sur iPhone).
 L'adresse `trycloudflare.com` change à chaque lancement du tunnel : pour une installation durable,
 installez l'app depuis la version GitHub Pages.
 
+## Partitions (Phase 2)
+
+**Formats.** Guitar Pro 3 à 8 (`.gp3`, `.gp4`, `.gp5`, `.gpx`, `.gp`) et MusicXML (`.musicxml`,
+`.xml`, `.mxl`) sont lus par [alphaTab](https://alphatab.net) 1.8. alphaTab ne lit pas le MIDI :
+l'app le convertit en MusicXML (rythmes arrondis à la double croche, une voix par piste, batterie
+ignorée). Quand un fichier n'a pas de tablature (MIDI, MusicXML issu d'un PDF), l'app la calcule :
+chaque note est placée sur une corde et une case en limitant les déplacements de la main ; un
+message invite à vérifier les doigtés. Un PDF déclenche le guide de conversion (MuseScore ou
+Audiveris, puis import du MusicXML).
+
+**Sélection.** À la souris : cliquer-glisser d'une mesure à l'autre. Au doigt : appui long
+(0,4 s) sur la première mesure, puis glisser ; un simple glissement fait défiler la partition.
+« Par mesure » (activé par défaut) étend la sélection aux bords des mesures ; désactivé, on
+choisit note par note. Un clic ou un toucher bref place le curseur sans effacer la sélection.
+
+**Lecture.** Boucle activable, vitesse de 25 à 100 % par pas de 5 % (appui long pour aller
+vite), bouton « Début » pour revenir au début du passage. L'écran reste allumé pendant la lecture.
+La lecture se met en pause quand on quitte l'écran ou qu'on démarre l'accordeur.
+
+**Bibliothèque.** Chaque fichier importé est conservé dans IndexedDB avec ses réglages (piste,
+vitesse, boucle, sélection), restaurés à la réouverture. Renommer et supprimer (avec « Annuler »)
+depuis la liste. En navigation privée, la partition s'ouvre mais n'est pas conservée.
+
+**Hors-ligne.** alphaTab, sa police musicale (Bravura, 0,3 Mo) et la banque de sons SONiVOX
+(1 Mo) sont précachées avec l'app : une partition déjà importée s'ouvre et se joue sans réseau.
+
+**Limite connue d'alphaTab 1.8.4.** S'abonner à l'événement `midiLoaded` provoque une récursion
+infinie (`AlphaSynthWebWorkerApi.loadedMidiInfo`) ; l'app utilise `playerReady` à la place.
+
+## Vérifier les critères d'acceptation de la Phase 2
+
+Automatique (CI, job **e2e**, profils ordinateur et mobile) :
+
+- un fichier GP3, GP5, GPX, GP7, MusicXML, MXL et MIDI s'affiche avec sa tablature ;
+- la sélection des mesures 5 à 8 (glissé souris, ou appui long + glissé au doigt) donne la bonne
+  plage de lecture ; à 50 %, la lecture reste dans le passage, revient au début sans trou
+  (jamais plus de 300 ms sans avancer, bouclage compris) et avance à la moitié du tempo ;
+- la bibliothèque, la sélection et la vitesse sont retrouvées après rechargement ;
+- hors-ligne, une partition importée s'ouvre et le son se charge depuis le cache.
+
+Manuel (téléphone) : importez un fichier, appui long sur la mesure 5, glissez jusqu'à la 8,
+réglez 50 %, touchez « Lire » : le passage boucle sans pause audible. Fermez l'app, passez
+en mode avion, rouvrez-la : la partition est dans la bibliothèque et se joue.
+
 ## Notes iOS
 
 - L'audio démarre sur un geste (bouton « Démarrer ») : exigence de Safari.
@@ -113,8 +168,10 @@ src/
   audio/                AudioContext partagé (déblocage iOS), micro
   tuner/                YIN, notes et accordages, stabilisation, cadran, écran Accordeur
   metronome/            horloge des temps, clics, Worker, tap tempo, écran Métronome
-  scores/               reconnaissance des formats, écran Partitions (Phase 1 : import vérifié)
+  scores/               formats, conversion MIDI, tablature, bibliothèque IndexedDB,
+                        lecteur alphaTab, sélection souris / doigt, écran Partitions
   ui/                   helpers DOM, appui long, messages d'erreur en français
-tests/                  tests Vitest
-public/                 favicon et icônes PWA
+tests/                  tests Vitest (unitaires)
+e2e/                    tests Playwright (bout en bout)
+public/                 favicon et icônes PWA (font/ et soundfont/ copiés par le build)
 ```

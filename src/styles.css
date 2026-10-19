@@ -782,12 +782,327 @@ a {
 
 /* --- Partitions ------------------------------------------------------------ */
 
-.scores__intro p {
-  margin: 0 0 10px;
+.scores__lead {
+  margin: 0 0 8px;
+  font-size: 1.0625rem;
 }
 
-.scores__lead {
+.scores__result:empty {
+  display: none;
+}
+
+.library-view {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.library__empty p {
+  margin: 0 0 8px;
+}
+
+.library {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.library__item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.library__open {
+  flex: 1;
+  min-width: 0;
+  min-height: 60px;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.library__title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library__meta {
+  color: var(--muted);
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library__rename {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  margin: 8px 0;
+  padding: 0 12px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+/* Lecteur : la partition prend toute la place disponible, les commandes restent sous le pouce. */
+.view--scores.is-player {
+  flex: 1 1 0;
+  min-height: 0;
+  max-width: none;
+  padding-bottom: 12px;
+  gap: 0;
+}
+
+.player {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.player__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.btn--ghost {
+  padding: 0 10px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--accent);
+}
+
+.player__heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.player__heading p {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player__title {
+  font-weight: 700;
+}
+
+.player__artist {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.player__track-select {
+  max-width: 11rem;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9375rem;
+}
+
+.player__notice {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.player__stage {
+  position: relative;
+  flex: 1;
+  min-height: 180px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.player__score {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.player__surface {
+  min-height: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.player__status {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+
+/* Couleurs alphaTab : sélection, curseurs, notes jouées. */
+.player .at-selection div {
+  background: rgb(214 174 94 / 0.3);
+}
+
+.player .at-cursor-bar {
+  background: rgb(237 229 217 / 0.06);
+}
+
+.player .at-cursor-beat {
+  width: 3px;
+  background: var(--accent);
+}
+
+.player .at-highlight * {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+
+:root[data-theme='light'] .player .at-selection div {
+  background: rgb(138 101 22 / 0.22);
+}
+
+:root[data-theme='light'] .player .at-cursor-bar {
+  background: rgb(29 24 22 / 0.05);
+}
+
+.player__controls {
+  display: grid;
+  gap: 8px;
+}
+
+.player__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player__row--selection {
+  min-height: 44px;
+}
+
+.player__sel-label {
+  flex: 1;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.player__sel-label.is-set {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.player__time {
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.btn--small {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 0.9375rem;
+}
+
+.player__row--options {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.toggle {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: 600 0.9375rem var(--font);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.toggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.player__speed {
+  margin-left: auto;
+}
+
+.player__row--transport {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+}
+
+.btn--rewind {
+  min-height: 60px;
   font-size: 1.0625rem;
+}
+
+@media (max-height: 760px) {
+  .btn--rewind {
+    min-height: 52px;
+  }
+}
+
+@media (max-width: 420px) {
+  .toggle {
+    padding: 0 11px;
+    font-size: 0.875rem;
+  }
+
+  .player__speed {
+    gap: 4px;
+  }
+
+  .player__speed .stepper__value {
+    min-width: 4.5ch;
+  }
+}
+
+/* Écrans peu hauts (iPhone SE, paysage) : pendant la lecture, la barre de titre cède
+   sa place à la partition ; le bouton « Bibliothèque » reste le repère. */
+@media (max-height: 700px) {
+  .app:has(.view--scores.is-player:not([hidden])) .topbar {
+    display: none;
+  }
+
+  .view--scores.is-player {
+    padding-top: calc(env(safe-area-inset-top) + 6px);
+  }
+
+  .player__stage {
+    min-height: 140px;
+  }
 }
 
 .card {

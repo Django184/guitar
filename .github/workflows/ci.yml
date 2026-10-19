@@ -51,10 +51,13 @@ jobs:
             if (m.display !== 'standalone') problems.push('display');
             if (!m.icons || m.icons.length < 3) problems.push('icons');
             if (!m.start_url || !m.scope) problems.push('start_url/scope');
-            if (!sw.includes('index.html')) problems.push('index.html not precached');
+            for (const file of ['index.html', 'font/Bravura.woff2', 'soundfont/sonivox.sf3']) {
+              if (!sw.includes(file)) problems.push(file + ' not precached');
+            }
             console.log('manifest:', m.name, '| start_url:', m.start_url, '| scope:', m.scope);
             if (problems.length) { console.error('::error::' + problems.join(', ')); process.exit(1); }
           "
+          du -sh dist
           ls -la dist dist/assets
 
       - name: Keep the generated lockfile
@@ -68,10 +71,57 @@ jobs:
         with:
           path: dist
 
+  e2e:
+    name: End-to-end (Chromium, ordinateur + mobile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Build (base « / » for the local preview server)
+        run: npm run build
+
+      - name: Download Guitar Pro test files (alphaTab test suite, MPL-2.0)
+        run: |
+          mkdir -p e2e/fixtures/download
+          base=https://raw.githubusercontent.com/CoderLine/alphaTab/v1.8.4/packages/alphatab/test-data
+          for f in guitarpro3/effects.gp3 guitarpro5/canon.gp5 guitarpro6/chords.gpx guitarpro7/serenade.gp; do
+            curl -sSfL "$base/$f" -o "e2e/fixtures/download/$(basename "$f")"
+          done
+          ls -la e2e/fixtures/download
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: npx playwright test
+
+      - name: Summarize Playwright results
+        if: ${{ !cancelled() }}
+        run: node e2e/summary.mjs e2e-results.json
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+            e2e-results.json
+          retention-days: 14
+
   deploy:
     name: Deploy to GitHub Pages
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: check
+    needs: [check, e2e]
     runs-on: ubuntu-latest
     permissions:
       pages: write
