@@ -9,5 +9,6 @@ public/soundfont/
 # Résultats des tests de bout en bout
 test-results/
 playwright-report/
+e2e-results.json
 # Fichiers de test générés ou téléchargés
 e2e/fixtures/
