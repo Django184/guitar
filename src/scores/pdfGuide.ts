@@ -4,17 +4,23 @@ function link(href: string, label: string): HTMLAnchorElement {
   return h('a', { href, target: '_blank', rel: 'noopener noreferrer' }, label);
 }
 
-/** Message d'import PDF : pourquoi ce n'est pas lisible, et comment convertir. */
-export function pdfGuide(name: string): HTMLElement {
+export type PdfGuideReason = 'scanned' | 'no-music' | 'protected';
+
+const REASONS: Record<PdfGuideReason, string> = {
+  scanned:
+    "Ce PDF est une image (partition scannée ou photographiée) : l'app lit seulement les PDF exportés par un logiciel de partition (MuseScore, Guitar Pro, Finale, Sibelius, Dorico, LilyPond…). Convertissez-le en MusicXML, puis importez le fichier obtenu.",
+  'no-music':
+    "Aucune portée ni tablature n'a été reconnue dans ce PDF. S'il s'agit bien d'une partition, convertissez-la en MusicXML, puis importez le fichier obtenu.",
+  protected: 'Ce PDF est protégé par un mot de passe. Enregistrez-en une copie sans protection, ou convertissez-le en MusicXML.',
+};
+
+/** Message d'import PDF non lisible : pourquoi, et comment convertir. */
+export function pdfGuide(name: string, reason: PdfGuideReason = 'scanned'): HTMLElement {
   return h(
     'div',
     { class: 'card card--guide' },
-    h('p', { class: 'card__title' }, `« ${name} » doit d'abord être converti`),
-    h(
-      'p',
-      {},
-      "Un PDF contient une image de la partition, pas les notes elles-mêmes : l'app ne peut pas les lire de façon fiable. Convertissez-le en MusicXML, puis importez le fichier obtenu.",
-    ),
+    h('p', { class: 'card__title' }, `« ${name} » doit d'abord être converti`),
+    h('p', {}, REASONS[reason]),
     h(
       'ol',
       { class: 'steps' },
@@ -27,13 +33,8 @@ export function pdfGuide(name: string): HTMLElement {
         link('https://github.com/Audiveris/audiveris', 'Audiveris'),
         ' (gratuit, fonctionne hors-ligne).',
       ),
-      h('li', {}, 'Corrigez les erreurs de reconnaissance : rythmes, altérations, liaisons.'),
+      h('li', {}, 'Corrigez les erreurs de reconnaissance : rythmes, altérations, liaisons.'),
       h('li', {}, 'Exportez en MusicXML (.musicxml ou .mxl), puis importez ce fichier ici.'),
-    ),
-    h(
-      'p',
-      { class: 'muted' },
-      "La tablature d'un PDF est rarement reconnue : après conversion, vérifiez les positions sur le manche.",
     ),
   );
 }

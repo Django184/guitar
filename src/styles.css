@@ -1132,6 +1132,15 @@ a {
   border-color: var(--accent);
 }
 
+/* Progression d'une lecture longue (PDF) : texte discret, annoncé par les lecteurs d'écran. */
+.status-line {
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  color: var(--muted, inherit);
+}
+
 .steps {
   margin: 0 0 10px;
   padding-left: 1.4em;

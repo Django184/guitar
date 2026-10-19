@@ -35,6 +35,8 @@ export interface ScoreEntry {
   title: string;
   artist: string;
   format: ScoreFormat;
+  /** Fichier d'origine converti par l'app (le magasin garde alors le MusicXML obtenu). */
+  origin?: 'pdf';
   size: number;
   addedAt: number;
   openedAt: number;

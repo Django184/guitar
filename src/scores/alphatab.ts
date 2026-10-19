@@ -46,10 +46,25 @@ export function scoreColors(theme: Theme = currentTheme()): Record<string, strin
 /** Dossier public de l'app (« / » en local, « /guitar/ » sur GitHub Pages). */
 export const ASSET_BASE = import.meta.env.BASE_URL;
 
-/** Lit et valide une partition. Lève une AppError lisible si le fichier est illisible. */
-export function parseScore(at: AlphaTabModule, data: Uint8Array): Score {
+/**
+ * Lit et valide une partition. Lève une AppError lisible si le fichier est illisible.
+ * `withNotation` : affiche la portée de notation au-dessus de la tablature (le MusicXML
+ * d'alphaTab n'affiche que la tablature dès qu'un accordage est déclaré).
+ */
+export function parseScore(at: AlphaTabModule, data: Uint8Array, withNotation = false): Score {
   try {
-    return at.importer.ScoreLoader.loadScoreFromBytes(data, new at.Settings());
+    const score = at.importer.ScoreLoader.loadScoreFromBytes(data, new at.Settings());
+    if (withNotation) {
+      for (const track of score.tracks) {
+        for (const staff of track.staves) {
+          if (!staff.showTablature || staff.showStandardNotation) continue;
+          staff.showStandardNotation = true;
+          // <staff-lines> décrit la tablature (6 cordes) : la portée de notation garde ses 5 lignes.
+          staff.standardNotationLineCount = 5;
+        }
+      }
+    }
+    return score;
   } catch {
     throw new AppError(
       'file-invalid',
