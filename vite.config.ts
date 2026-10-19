@@ -11,6 +11,9 @@ const TUNNEL_HOSTS = ['.trycloudflare.com', '.ngrok-free.app', '.ngrok.app'];
 // Chemin de publication : « / » en local, « /guitar/ » sur GitHub Pages (fixé par la CI).
 const BASE = process.env.BASE_PATH ?? '/';
 
+// Version publiée (commit), lue par le test de fumée pour savoir que le nouveau site est en ligne.
+const APP_VERSION = process.env.APP_VERSION ?? 'dev';
+
 export default defineConfig({
   base: BASE,
   server: {
@@ -22,6 +25,10 @@ export default defineConfig({
     allowedHosts: TUNNEL_HOSTS,
   },
   plugins: [
+    {
+      name: 'app-version',
+      transformIndexHtml: (html: string) => html.replace('%APP_VERSION%', APP_VERSION),
+    },
     // alphaTab : Web Worker de rendu, Audio Worklet du synthétiseur, police Bravura
     // (public/font/) et banque de sons SONiVOX (public/soundfont/) copiées à chaque build.
     alphaTab(),
