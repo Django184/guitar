@@ -16,7 +16,7 @@ concurrency:
 jobs:
   check:
     name: Typecheck, tests, build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
@@ -38,6 +38,7 @@ jobs:
         run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
+          APP_VERSION: ${{ github.sha }}
 
       - name: Check PWA output (manifest, service worker, precache)
         run: |
@@ -73,7 +74,7 @@ jobs:
 
   e2e:
     name: End-to-end (Chromium, ordinateur + mobile)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
@@ -122,13 +123,95 @@ jobs:
     name: Deploy to GitHub Pages
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [check, e2e]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
+
+  smoke:
+    name: Smoke test (site publié)
+    needs: deploy
+    runs-on: ubuntu-24.04
+    env:
+      E2E_BASE_URL: ${{ needs.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Wait until GitHub Pages serves this commit
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsSL "$E2E_BASE_URL" | grep -q "name=\"app-version\" content=\"$GITHUB_SHA\""; then
+              echo "Version $GITHUB_SHA en ligne sur $E2E_BASE_URL"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::$E2E_BASE_URL ne sert pas encore la version $GITHUB_SHA"
+          exit 1
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Phase 1 + offline checks against the live site
+        run: npx playwright test e2e/app.spec.ts
+
+      - name: Summarize results
+        if: ${{ !cancelled() }}
+        run: node e2e/summary.mjs e2e-results.json
+
+      - name: Upload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: smoke-report
+          path: |
+            playwright-report
+            test-results
+            e2e-results.json
+          retention-days: 14
+
+  lockfile:
+    name: Lockfile (package-lock.json)
+    # Branches de ce dépôt uniquement : le jeton n'a pas le droit d'écrire sur un fork.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Create or update package-lock.json on the branch
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          if [ -n "$(git status --porcelain package-lock.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package-lock.json
+            git commit -m "Fichier de verrouillage des dépendances (package-lock.json)"
+            git push origin "HEAD:$GITHUB_HEAD_REF"
+            echo "::notice title=Lockfile::package-lock.json créé ou mis à jour sur $GITHUB_HEAD_REF"
+          else
+            echo "::notice title=Lockfile::package-lock.json déjà à jour"
+          fi

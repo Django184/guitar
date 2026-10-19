@@ -15,7 +15,15 @@ Le workflow `.github/workflows/ci.yml` s'exécute à chaque pull request et à c
 - **e2e** : tests Playwright dans Chromium, profils ordinateur et mobile (écran tactile), sur le
   build de production. Le rapport (captures, traces) est joint à chaque exécution ;
 - **deploy** (sur `main`, si les deux précédents passent) : publication sur GitHub Pages
-  (réglage requis une seule fois : Settings › Pages › Source : « GitHub Actions »).
+  (réglage requis une seule fois : Settings › Pages › Source : « GitHub Actions ») ;
+- **smoke** (après chaque déploiement) : attend que GitHub Pages serve le nouveau commit (balise
+  `<meta name="app-version">`), puis rejoue sur le site publié les tests de la Phase 1 et du
+  hors-ligne (accordeur, métronome, installation, partition ouverte et jouée sans réseau) ;
+- **lockfile** (sur les pull requests) : crée ou met à jour `package-lock.json` sur la branche,
+  pour que tous les jobs installent exactement les mêmes versions (`npm ci`).
+
+Les annotations de chaque exécution (onglet « Checks ») résument les tests de bout en bout :
+nombre de tests réussis ou ignorés, et vitesse mesurée de la boucle à 50 %.
 
 ## Prérequis
 
@@ -25,7 +33,7 @@ Le workflow `.github/workflows/ci.yml` s'exécute à chaque pull request et à c
 ## Lancer en local (ordinateur)
 
 ```bash
-npm install
+npm ci        # installe les versions exactes de package-lock.json
 npm run dev
 ```
 

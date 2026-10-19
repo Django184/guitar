@@ -130,16 +130,41 @@ test.describe('Sélection, boucle et vitesse', () => {
     const after = playing[wrapIndex]!;
     expect(before.tick).toBeGreaterThan(ticks.end - 960);
     expect(after.tick).toBeLessThan(ticks.start + 960);
-    // Sans trou : jamais plus de 300 ms sans avancer, y compris au moment du bouclage.
-    for (let i = 1; i < playing.length; i++) expect(playing[i]!.t - playing[i - 1]!.t).toBeLessThan(300);
-    expect(after.t - before.t).toBeLessThan(300);
-    // 50 % : le passage avance à la moitié du tempo écrit (±20 %).
-    const segment = playing.slice(0, wrapIndex);
-    const rate = (segment[segment.length - 1]!.tick - segment[0]!.tick) / ((segment[segment.length - 1]!.t - segment[0]!.t) / 1000);
+    // Jamais bloquée : la position avance au moins chaque seconde.
+    for (let i = 1; i < playing.length; i++) expect(playing[i]!.t - playing[i - 1]!.t, 'blocage de la lecture (ms)').toBeLessThan(1000);
+
+    // 50 % : avant le bouclage, le passage avance à la moitié du tempo écrit (±20 %).
+    // Droites de régression position = f(temps), avant et après le bouclage : on mesure la
+    // continuité de la musique elle-même, pas l'espacement des événements (que le
+    // navigateur peut regrouper quand la machine est chargée).
+    const fit = (points: Array<{ tick: number; t: number }>): { at: (tick: number) => number; rate: number } => {
+      const n = points.length;
+      const mt = points.reduce((sum, p) => sum + p.t, 0) / n;
+      const mk = points.reduce((sum, p) => sum + p.tick, 0) / n;
+      const slope =
+        points.reduce((sum, p) => sum + (p.t - mt) * (p.tick - mk), 0) / points.reduce((sum, p) => sum + (p.t - mt) ** 2, 0);
+      return { at: (tick) => mt + (tick - mk) / slope, rate: slope * 1000 };
+    };
+    const beforeWrap = playing.slice(0, wrapIndex).filter((p) => p.t > before.t - 2500);
+    const afterWrap = playing.slice(wrapIndex).filter((p, i, list) => p.t < after.t + 2500 && (i === 0 || p.tick >= list[i - 1]!.tick));
+    expect(beforeWrap.length, 'positions avant le bouclage').toBeGreaterThan(5);
+    expect(afterWrap.length, 'positions après le bouclage').toBeGreaterThan(5);
+    const pre = fit(beforeWrap);
+    const post = fit(afterWrap);
     const expected = 960 * (tempo / 60) * 0.5;
-    expect(rate / expected).toBeGreaterThan(0.8);
-    expect(rate / expected).toBeLessThan(1.2);
-    testInfo.annotations.push({ type: 'mesure', description: `tempo ${tempo}, ${Math.round(rate)} ticks/s (attendu ${Math.round(expected)}), passage de ${loopSeconds.toFixed(1)} s` });
+    expect(pre.rate / expected).toBeGreaterThan(0.8);
+    expect(pre.rate / expected).toBeLessThan(1.2);
+    expect(post.rate / expected).toBeGreaterThan(0.8);
+    expect(post.rate / expected).toBeLessThan(1.2);
+
+    // Sans trou : la reprise au début suit immédiatement la fin du passage (écart < 120 ms).
+    const range = state.range!;
+    const gapMs = post.at(range.startTick) - pre.at(range.endTick);
+    expect(Math.abs(gapMs), 'écart au bouclage (ms)').toBeLessThan(120);
+    testInfo.annotations.push({
+      type: 'mesure',
+      description: `tempo ${tempo}, ${Math.round(pre.rate)} ticks/s (attendu ${Math.round(expected)}), passage de ${loopSeconds.toFixed(1)} s, écart au bouclage ${gapMs.toFixed(0)} ms`,
+    });
 
     // Persistance : après rechargement, la bibliothèque rouvre la partition avec sa sélection et sa vitesse.
     const url = page.url();
