@@ -1,0 +1,80 @@
+# Corpus de test pour la lecture des PDF (temporaire, branche omr-corpus uniquement).
+# Exporte des partitions connues en PDF avec MuseScore 4 et LilyPond, avec leur MusicXML,
+# puis publie le tout sur la branche omr-corpus-out.
+name: OMR corpus
+
+on:
+  push:
+    branches: [omr-corpus]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  corpus:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Download source scores (alphaTab test suite, MPL-2.0)
+        run: |
+          mkdir -p in out
+          base=https://raw.githubusercontent.com/CoderLine/alphaTab/v1.8.4/packages/alphatab/test-data
+          for f in BeetAnGeSample Binchois BrahWiMeSample BrookeWestSample Chant DebuMandSample Dichterliebe01 Echigo FaurReveSample MahlFaGe4Sample MozaChloSample MozaVeilSample MozartPianoSonata MozartTrio Saltarello SchbAvMaSample Telemann; do
+            curl -sSfL "$base/musicxml-samples/$f.xml" -o "in/$f.musicxml"
+          done
+          for f in guitarpro5/canon.gp5 guitarpro5/serenade.gp5 guitarpro3/effects.gp3 guitarpro5/chords.gp5 guitarpro5/tuplets.gp5 guitarpro5/notes.gp5 guitarpro7/serenade.gp guitarpro5/hammer.gp5; do
+            n=$(basename "$f"); curl -sSfL "$base/$f" -o "in/${n%.*}-$(echo ${n##*.}).${n##*.}"
+          done
+          ls -la in
+
+      - name: Install MuseScore 4 and LilyPond
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb lilypond libegl1 libopengl0 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xkb1 libnss3 libasound2t64 libfuse2t64 > /dev/null
+          url=$(gh release view v4.7.5 --repo musescore/MuseScore --json assets --jq '.assets[] | select(.name|test("x86_64.AppImage$")) | .url' | head -1)
+          echo "MuseScore: $url"
+          curl -sSfL "$url" -o ms.AppImage
+          chmod +x ms.AppImage
+          ./ms.AppImage --appimage-extract > /dev/null
+          lilypond --version | head -1
+
+      - name: Export with MuseScore (PDF + MusicXML)
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          python3 - <<'PY'
+          import json, os
+          jobs = []
+          for f in sorted(os.listdir('in')):
+              stem = os.path.splitext(f)[0]
+              jobs.append({"in": f"in/{f}", "out": [f"out/{stem}.musescore.pdf", f"out/{stem}.musescore.musicxml"]})
+          json.dump(jobs, open('job.json', 'w'), indent=1)
+          PY
+          xvfb-run -a squashfs-root/AppRun -j job.json || true
+          ls -la out
+
+      - name: Export with LilyPond (MusicXML samples)
+        run: |
+          mkdir -p ly
+          for f in in/*.musicxml; do
+            stem=$(basename "$f" .musicxml)
+            musicxml2ly --no-beaming -o "ly/$stem.ly" "$f" > /dev/null 2>&1 || continue
+            (cd ly && lilypond -dno-point-and-click -o "$stem" "$stem.ly" > /dev/null 2>&1) || continue
+            cp "ly/$stem.pdf" "out/$stem.lilypond.pdf" 2>/dev/null || true
+          done
+          ls -la out | grep lilypond || true
+
+      - name: Publish to branch omr-corpus-out
+        run: |
+          cp in/* out/ 2>/dev/null || true
+          cd out
+          git init -q -b omr-corpus-out
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Corpus PDF de test ($(date -u +%F))"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" omr-corpus-out
+          echo "::notice title=Corpus::$(ls | wc -l) fichiers publiés sur omr-corpus-out ($(ls *.pdf | wc -l) PDF)"
