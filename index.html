@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Accordeur, métronome et partitions pour travailler la guitare, même hors-ligne." />
+    <meta name="theme-color" content="#1a1311" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Guitare" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <title>Pratique Guitare</title>
+    <script>
+      // Applique le thème mémorisé avant le premier rendu (évite un flash de couleur).
+      try {
+        var saved = JSON.parse(localStorage.getItem('pg.theme') || 'null');
+        if (saved === 'light') {
+          document.documentElement.dataset.theme = 'light';
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#eceee9');
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <h1 class="topbar__title" id="view-title" tabindex="-1">Accordeur</h1>
+        <div class="topbar__actions">
+          <button class="icon-btn" id="install-btn" type="button" hidden>Installer</button>
+          <button class="icon-btn" id="theme-btn" type="button" aria-label="Passer au thème clair">
+            <svg class="icon icon--sun" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="4.5" />
+              <path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" />
+            </svg>
+            <svg class="icon icon--moon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <nav class="nav" aria-label="Sections">
+        <div class="nav__brand">Pratique Guitare</div>
+        <a class="nav__item" href="#/accordeur" data-route="accordeur">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4.5 15.5a8 8 0 0 1 15 0" />
+            <path d="M12 16.5 15.5 9" />
+            <circle cx="12" cy="17" r="1.6" />
+          </svg>
+          <span>Accordeur</span>
+        </a>
+        <a class="nav__item" href="#/metronome" data-route="metronome">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9.5 3.5h5l4 17h-13Z" />
+            <path d="M12 16 16.5 6.5" />
+            <path d="M7.2 14h9.6" />
+          </svg>
+          <span>Métronome</span>
+        </a>
+        <a class="nav__item" href="#/partitions" data-route="partitions">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            <circle cx="9" cy="16" r="2" />
+            <path d="M11 16V7l4 1.5" />
+          </svg>
+          <span>Partitions</span>
+        </a>
+      </nav>
+
+      <main class="main" id="main"></main>
+
+      <div class="toast" id="toast" role="status" aria-live="polite" hidden>
+        <span class="toast__text"></span>
+        <button class="toast__action" type="button" hidden></button>
+      </div>
+    </div>
+    <noscript>Cette application a besoin de JavaScript pour fonctionner.</noscript>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
