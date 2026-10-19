@@ -9,7 +9,11 @@ export type ErrorCode =
   | 'audio-unsupported'
   | 'file-invalid'
   | 'file-unsupported'
-  | 'file-unreadable';
+  | 'file-unreadable'
+  | 'storage-unavailable'
+  | 'storage-full'
+  | 'player-failed'
+  | 'module-failed';
 
 const MESSAGES: Record<ErrorCode, string> = {
   'mic-denied':
@@ -26,6 +30,11 @@ const MESSAGES: Record<ErrorCode, string> = {
   'file-unsupported':
     'Format non pris en charge. Formats acceptés : Guitar Pro (.gp, .gp3, .gp4, .gp5, .gpx), MusicXML (.musicxml, .mxl) et MIDI (.mid).',
   'file-unreadable': 'Impossible de lire ce fichier. Réessayez ou choisissez un autre fichier.',
+  'storage-unavailable':
+    "La bibliothèque n'est pas disponible dans ce navigateur (navigation privée ?). La partition s'ouvre, mais ne sera pas conservée.",
+  'storage-full': "Plus de place pour enregistrer cette partition. Supprimez-en d'autres de la bibliothèque, puis réimportez-la.",
+  'module-failed': "Le module Partitions n'a pas pu être chargé. Vérifiez la connexion, puis réessayez.",
+  'player-failed': "Le lecteur audio n'a pas pu démarrer. Rechargez la page, puis touchez « Lire ».",
 };
 
 /** Erreur applicative portant un message en français prêt à afficher. */
@@ -68,8 +77,9 @@ export function microphoneError(error: unknown): AppError {
   }
 }
 
-/** Message à afficher pour n'importe quelle erreur. */
+/** Message à afficher pour n'importe quelle erreur. Les erreurs inattendues sont journalisées. */
 export function describeError(error: unknown): string {
   if (error instanceof AppError) return error.message;
+  console.error(error);
   return "Une erreur inattendue s'est produite. Rechargez la page et réessayez.";
 }

@@ -3,3 +3,11 @@ dist/
 dev-dist/
 *.local
 .DS_Store
+# Copiés depuis node_modules par le plugin alphaTab à chaque build
+public/font/
+public/soundfont/
+# Résultats des tests de bout en bout
+test-results/
+playwright-report/
+# Fichiers de test générés ou téléchargés
+e2e/fixtures/
