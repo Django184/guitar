@@ -1,0 +1,3090 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<score-partwise version="4.0">
+  <movement-title>Excerpt from Magnificat secundi toni</movement-title>
+  <identification>
+    <creator type="composer">Gilles Binchois</creator>
+    <rights>Copyright © 2010 Recordare LLC</rights>
+    <encoding>
+      <software>MuseScore Studio 4.7.5</software>
+      <encoding-date>2026-10-19</encoding-date>
+      <supports element="accidental" type="yes"/>
+      <supports element="beam" type="yes"/>
+      <supports element="print" attribute="new-page" type="yes" value="yes"/>
+      <supports element="print" attribute="new-system" type="yes" value="yes"/>
+      <supports element="stem" type="yes"/>
+      </encoding>
+    <miscellaneous>
+      <miscellaneous-field name="creationDate">2026-10-19</miscellaneous-field>
+      <miscellaneous-field name="platform">Linux</miscellaneous-field>
+      </miscellaneous>
+    </identification>
+  <defaults>
+    <scaling>
+      <millimeters>5.7326</millimeters>
+      <tenths>40</tenths>
+      </scaling>
+    <page-layout>
+      <page-height>1950</page-height>
+      <page-width>1506</page-width>
+      <page-margins type="both">
+        <left-margin>98</left-margin>
+        <right-margin>98</right-margin>
+        <top-margin>89</top-margin>
+        <bottom-margin>89</bottom-margin>
+        </page-margins>
+      </page-layout>
+    <appearance>
+      <line-width type="light barline">1.4583</line-width>
+      <line-width type="heavy barline">5</line-width>
+      <line-width type="beam">5</line-width>
+      <line-width type="bracket">4.5</line-width>
+      <line-width type="dashes">1</line-width>
+      <line-width type="enclosure">1.4583</line-width>
+      <line-width type="ending">1.4583</line-width>
+      <line-width type="extend">1</line-width>
+      <line-width type="leger">1.875</line-width>
+      <line-width type="pedal">1.1</line-width>
+      <line-width type="octave shift">1.1</line-width>
+      <line-width type="slur middle">2.1</line-width>
+      <line-width type="slur tip">0.5</line-width>
+      <line-width type="staff">1.25</line-width>
+      <line-width type="stem">0.957</line-width>
+      <line-width type="tie middle">2.1</line-width>
+      <line-width type="tie tip">0.5</line-width>
+      <line-width type="tuplet bracket">1.4583</line-width>
+      <line-width type="wedge">0.9375</line-width>
+      <note-size type="cue">50</note-size>
+      <note-size type="grace">50</note-size>
+      <note-size type="grace-cue">25</note-size>
+      </appearance>
+    <music-font font-family="Leland"/>
+    <word-font font-family="Book Antiqua" font-size="9"/>
+    <lyric-font font-family="Book Antiqua" font-size="9"/>
+    </defaults>
+  <credit page="1">
+    <credit-type>title</credit-type>
+    <credit-words default-x="753" default-y="1861" justify="center" valign="top" font-size="14">Magnificat secundi toni</credit-words>
+    </credit>
+  <credit page="1">
+    <credit-type>rights</credit-type>
+    <credit-words default-x="753" default-y="89" justify="center" valign="bottom">Copyright © 2010 Recordare LLC</credit-words>
+    </credit>
+  <part-list>
+    <score-part id="P1">
+      <part-name>Cantus</part-name>
+      <score-instrument id="P1-I1">
+        <instrument-name>Cantus</instrument-name>
+        <instrument-sound>keyboard.piano</instrument-sound>
+        </score-instrument>
+      <midi-device id="P1-I1" port="1"></midi-device>
+      <midi-instrument id="P1-I1">
+        <midi-channel>1</midi-channel>
+        <midi-program>54</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      </score-part>
+    <score-part id="P2">
+      <part-name>Cantus 2 and Tenor</part-name>
+      <score-instrument id="P2-I1">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I2">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I3">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I4">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I5">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I6">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I7">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I8">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I9">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I10">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I11">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I12">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I13">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I14">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I15">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I16">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I17">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I18">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I19">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I20">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I21">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I22">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I23">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I24">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I25">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I26">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I27">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I28">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I29">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.viol.alto</instrument-sound>
+        </score-instrument>
+      <score-instrument id="P2-I30">
+        <instrument-name>Cantus 2 and Tenor</instrument-name>
+        <instrument-sound>strings.cello</instrument-sound>
+        </score-instrument>
+      <midi-device id="P2-I1" port="1"></midi-device>
+      <midi-instrument id="P2-I1">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I2" port="2"></midi-device>
+      <midi-instrument id="P2-I2">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I3" port="2"></midi-device>
+      <midi-instrument id="P2-I3">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I4" port="3"></midi-device>
+      <midi-instrument id="P2-I4">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I5" port="3"></midi-device>
+      <midi-instrument id="P2-I5">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I6" port="4"></midi-device>
+      <midi-instrument id="P2-I6">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I7" port="4"></midi-device>
+      <midi-instrument id="P2-I7">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I8" port="5"></midi-device>
+      <midi-instrument id="P2-I8">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I9" port="5"></midi-device>
+      <midi-instrument id="P2-I9">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I10" port="6"></midi-device>
+      <midi-instrument id="P2-I10">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I11" port="6"></midi-device>
+      <midi-instrument id="P2-I11">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I12" port="7"></midi-device>
+      <midi-instrument id="P2-I12">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I13" port="7"></midi-device>
+      <midi-instrument id="P2-I13">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I14" port="8"></midi-device>
+      <midi-instrument id="P2-I14">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I15" port="8"></midi-device>
+      <midi-instrument id="P2-I15">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I16" port="9"></midi-device>
+      <midi-instrument id="P2-I16">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I17" port="9"></midi-device>
+      <midi-instrument id="P2-I17">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I18" port="10"></midi-device>
+      <midi-instrument id="P2-I18">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I19" port="10"></midi-device>
+      <midi-instrument id="P2-I19">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I20" port="11"></midi-device>
+      <midi-instrument id="P2-I20">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I21" port="11"></midi-device>
+      <midi-instrument id="P2-I21">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I22" port="12"></midi-device>
+      <midi-instrument id="P2-I22">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I23" port="12"></midi-device>
+      <midi-instrument id="P2-I23">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I24" port="13"></midi-device>
+      <midi-instrument id="P2-I24">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I25" port="13"></midi-device>
+      <midi-instrument id="P2-I25">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I26" port="14"></midi-device>
+      <midi-instrument id="P2-I26">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I27" port="14"></midi-device>
+      <midi-instrument id="P2-I27">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I28" port="15"></midi-device>
+      <midi-instrument id="P2-I28">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I29" port="15"></midi-device>
+      <midi-instrument id="P2-I29">
+        <midi-channel>2</midi-channel>
+        <midi-program>42</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      <midi-device id="P2-I30" port="16"></midi-device>
+      <midi-instrument id="P2-I30">
+        <midi-channel>3</midi-channel>
+        <midi-program>43</midi-program>
+        <volume>79.5276</volume>
+        <pan>0</pan>
+        </midi-instrument>
+      </score-part>
+    </part-list>
+  <part id="P1">
+    <measure number="1" width="260.59">
+      <print>
+        <system-layout>
+          <system-margins>
+            <left-margin>185.02</left-margin>
+            <right-margin>0</right-margin>
+            </system-margins>
+          <top-system-distance>207.58</top-system-distance>
+          </system-layout>
+        </print>
+      <attributes>
+        <divisions>8</divisions>
+        <key>
+          <fifths>-1</fifths>
+          <mode>major</mode>
+          </key>
+        <clef>
+          <sign>F</sign>
+          <line>4</line>
+          </clef>
+        </attributes>
+      <direction placement="above">
+        <direction-type>
+          <words default-y="29.46" relative-y="10">Chorus</words>
+          </direction-type>
+        </direction>
+      <sound tempo="60"/>
+      <note default-x="76.14" default-y="10">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>none</stem>
+        <lyric number="1" default-y="-40" relative-x="-12.56" relative-y="-30">
+          <syllabic>begin</syllabic>
+          <text>Ma</text>
+          </lyric>
+        </note>
+      <note default-x="112.74" default-y="15">
+        <pitch>
+          <step>D</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>none</stem>
+        <lyric number="1" default-y="-40" relative-x="-8.37" relative-y="-30">
+          <syllabic>middle</syllabic>
+          <text>gni</text>
+          </lyric>
+        </note>
+      <note default-x="149.34" default-y="10">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>none</stem>
+        <notations>
+          <slur type="start" orientation="over" placement="above" bezier-x="5.435339" bezier-y="13.088005" number="1"/>
+          </notations>
+        <lyric number="1" default-y="-40" relative-y="-30">
+          <syllabic>middle</syllabic>
+          <text>fi</text>
+          </lyric>
+        </note>
+      <note default-x="185.94" default-y="25">
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>none</stem>
+        <notations>
+          <slur type="stop" number="1" bezier-x="-13.057269" bezier-y="5.508765"/>
+          </notations>
+        </note>
+      <note default-x="222.54" default-y="25">
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>none</stem>
+        <lyric number="1" default-y="-40" relative-x="-4.19" relative-y="-30">
+          <syllabic>end</syllabic>
+          <text>cat</text>
+          </lyric>
+        </note>
+      </measure>
+    <measure number="2" width="148.18">
+      <attributes>
+        <time>
+          <beats>3</beats>
+          <beat-type>4</beat-type>
+          </time>
+        </attributes>
+      <direction placement="above">
+        <direction-type>
+          <words default-y="12.02" relative-y="10">(C.)</words>
+          </direction-type>
+        </direction>
+      <note default-x="36.92" default-y="-20">
+        <rest/>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        </note>
+      <note default-x="73.52" default-y="-20">
+        <rest/>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        </note>
+      <note default-x="110.12" default-y="25">
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-40" relative-y="-30">
+          <syllabic>begin</syllabic>
+          <text>A</text>
+          </lyric>
+        </note>
+      </measure>
+    <measure number="3" width="195.66">
+      <note default-x="12.5" default-y="25">
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-40" relative-y="-30">
+          <syllabic>middle</syllabic>
+          <text>ni</text>
+          </lyric>
+        </note>
+      <note default-x="44.67" default-y="30">
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-40" relative-x="-7.68" relative-y="-30">
+          <syllabic>end</syllabic>
+          <text>ma</text>
+          </lyric>
+        </note>
+      <note default-x="101.06" default-y="20">
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="125.46" default-y="15">
+        <pitch>
+          <step>D</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>6</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot default-x="143.46" default-y="15"/>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        <lyric number="1" default-y="-40" relative-y="-30">
+          <syllabic>begin</syllabic>
+          <text>me</text>
+          </lyric>
+        </note>
+      <note default-x="166.2" default-y="10">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        <beam number="2">backward hook</beam>
+        </note>
+      </measure>
+    <measure number="4" width="161.85">
+      <note default-x="24.54" default-y="10">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-40" relative-y="-30">
+          <syllabic>end</syllabic>
+          <text>a</text>
+          </lyric>
+        </note>
+      <note default-x="61.14" default-y="-20">
+        <rest/>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        </note>
+      <note default-x="107.99" default-y="-10">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        <lyric number="1" default-y="-40" relative-y="-30">
+          <syllabic>begin</syllabic>
+          <text>do</text>
+          </lyric>
+        </note>
+      <note default-x="132.39" default-y="0">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <tie type="start"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        <notations>
+          <tied type="start"/>
+          </notations>
+        </note>
+      </measure>
+    <measure number="5" width="187.98">
+      <note default-x="24.54" default-y="0">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <tie type="stop"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        <notations>
+          <tied type="stop"/>
+          </notations>
+        </note>
+      <note default-x="53.09" default-y="-10">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">continue</beam>
+        </note>
+      <note default-x="81.64" default-y="10">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">continue</beam>
+        </note>
+      <note default-x="106.04" default-y="0">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        </note>
+      <direction placement="above">
+        <direction-type>
+          <bracket type="start" number="1" line-end="down" line-type="solid" end-length="15" default-y="10"/>
+          </direction-type>
+        </direction>
+      <note default-x="130.43" default-y="-5">
+        <pitch>
+          <step>G</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    <measure number="6" width="184.72">
+      <note default-x="24.54" default-y="-10">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <direction placement="above">
+        <direction-type>
+          <bracket type="stop" number="1" line-end="down" end-length="15"/>
+          </direction-type>
+        <offset sound="yes">-6</offset>
+        </direction>
+      <note default-x="71.39" default-y="-20">
+        <rest/>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        </note>
+      <note default-x="95.79" default-y="25">
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="124.33" default-y="20">
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>6</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <dot default-x="142.34" default-y="25"/>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="155.26" default-y="15">
+        <pitch>
+          <step>D</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        <beam number="2">backward hook</beam>
+        </note>
+      </measure>
+    <measure number="7" width="929.59">
+      <print new-system="yes">
+        <system-layout>
+          <system-margins>
+            <left-margin>0</left-margin>
+            <right-margin>0</right-margin>
+            </system-margins>
+          <system-distance>320</system-distance>
+          </system-layout>
+        </print>
+      <note default-x="80.69" default-y="25">
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="207.8" default-y="20">
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <tie type="start"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        <notations>
+          <tied type="start"/>
+          </notations>
+        </note>
+      <note default-x="334.92" default-y="20">
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>2</duration>
+        <tie type="stop"/>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        <beam number="2">begin</beam>
+        <notations>
+          <tied type="stop"/>
+          </notations>
+        </note>
+      <note default-x="419.66" default-y="15">
+        <pitch>
+          <step>D</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <beam number="1">continue</beam>
+        <beam number="2">end</beam>
+        </note>
+      <note default-x="504.41" default-y="15">
+        <pitch>
+          <step>D</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        <lyric number="1" default-y="-40" relative-y="-30">
+          <syllabic>middle</syllabic>
+          <text>mi</text>
+          </lyric>
+        </note>
+      <note default-x="631.52" default-y="10">
+        <pitch>
+          <step>C</step>
+          <alter>1</alter>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <accidental parentheses="yes">sharp</accidental>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="758.64" default-y="5">
+        <pitch>
+          <step>B</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>16th</type>
+        <accidental parentheses="yes">natural</accidental>
+        <stem>down</stem>
+        <beam number="1">continue</beam>
+        <beam number="2">begin</beam>
+        </note>
+      <note default-x="843.38" default-y="10">
+        <pitch>
+          <step>C</step>
+          <alter>1</alter>
+          <octave>4</octave>
+          </pitch>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        <beam number="2">end</beam>
+        </note>
+      </measure>
+    <measure number="8" width="394.41">
+      <note default-x="24.54" default-y="15">
+        <pitch>
+          <step>D</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>24</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <dot default-x="42.55" default-y="15"/>
+        <stem>down</stem>
+        <lyric number="1" default-x="2.75" default-y="-40" relative-x="-3.49" relative-y="-30">
+          <syllabic>end</syllabic>
+          <text>num.</text>
+          </lyric>
+        </note>
+      <barline location="right">
+        <bar-style>light-light</bar-style>
+        </barline>
+      </measure>
+    <measure number="9" width="220.09">
+      <print new-system="yes">
+        <system-layout>
+          <system-margins>
+            <left-margin>0</left-margin>
+            <right-margin>0</right-margin>
+            </system-margins>
+          <system-distance>320</system-distance>
+          </system-layout>
+        </print>
+      <note default-x="76.14" default-y="15">
+        <pitch>
+          <step>D</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-57.26" relative-y="-30">
+          <syllabic>single</syllabic>
+          <text>Et</text>
+          </lyric>
+        </note>
+      <note default-x="111.9" default-y="10">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="135.74" default-y="25">
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">continue</beam>
+        </note>
+      <note default-x="166.8" default-y="20">
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">continue</beam>
+        </note>
+      <note default-x="190.63" default-y="15">
+        <pitch>
+          <step>D</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        </note>
+      </measure>
+    <measure number="10" width="137.85">
+      <note default-x="12.5" default-y="25">
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-57.26" relative-y="-30">
+          <syllabic>begin</syllabic>
+          <text>ex</text>
+          </lyric>
+        </note>
+      <note default-x="48.26" default-y="25">
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-57.26" relative-y="-30">
+          <syllabic>middle</syllabic>
+          <text>ul</text>
+          </lyric>
+        </note>
+      <note default-x="100.64" default-y="25">
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-57.26" relative-y="-30">
+          <syllabic>middle</syllabic>
+          <text>ta</text>
+          </lyric>
+        </note>
+      </measure>
+    <measure number="11" width="133.14">
+      <direction placement="below">
+        <direction-type>
+          <bracket type="start" number="1" line-end="up" line-type="solid" end-length="15" default-y="-62.63"/>
+          </direction-type>
+        </direction>
+      <note default-x="12.5" default-y="25">
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-57.26" relative-y="-30">
+          <syllabic>end</syllabic>
+          <text>vit</text>
+          </lyric>
+        </note>
+      <note default-x="48.26" default-y="20">
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notations>
+          <fermata type="upright" default-y="24.28" relative-y="5"/>
+          </notations>
+        </note>
+      <direction placement="below">
+        <direction-type>
+          <bracket type="stop" number="1" line-end="up" end-length="15"/>
+          </direction-type>
+        <offset sound="yes">-6</offset>
+        </direction>
+      <note default-x="95.93" default-y="-20">
+        <rest/>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        </note>
+      </measure>
+    <measure number="12" width="134.96">
+      <note default-x="12.5" default-y="20">
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>12</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot default-x="30.5" default-y="25"/>
+        <stem>down</stem>
+        <lyric number="1" default-y="-57.26" relative-y="-30">
+          <syllabic>begin</syllabic>
+          <text>spi</text>
+          </lyric>
+        </note>
+      <note default-x="57.83" default-y="15">
+        <pitch>
+          <step>D</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="81.66" default-y="25">
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        <lyric number="1" default-y="-57.26" relative-y="-30">
+          <syllabic>middle</syllabic>
+          <text>ri</text>
+          </lyric>
+        </note>
+      <note default-x="105.5" default-y="20">
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        </note>
+      </measure>
+    <measure number="13" width="158.63">
+      <note default-x="12.5" default-y="10">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="36.34" default-y="5">
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>3</octave>
+          </pitch>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <beam number="1">continue</beam>
+        <beam number="2">begin</beam>
+        </note>
+      <note default-x="56.14" default-y="10">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>16th</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        <beam number="2">end</beam>
+        </note>
+      <note default-x="78.24" default-y="15">
+        <pitch>
+          <step>D</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>12</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot default-x="96.24" default-y="15"/>
+        <stem>down</stem>
+        <lyric number="1" default-y="-57.26" relative-y="-30">
+          <syllabic>end</syllabic>
+          <text>tus</text>
+          </lyric>
+        </note>
+      <note default-x="123.57" default-y="10">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    <measure number="14" width="137.31">
+      <direction placement="above">
+        <direction-type>
+          <bracket type="start" number="1" line-end="down" line-type="solid" end-length="15" default-y="18.03"/>
+          </direction-type>
+        </direction>
+      <note default-x="12.5" default-y="0">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-57.26" relative-y="-30">
+          <syllabic>begin</syllabic>
+          <text>me</text>
+          </lyric>
+        </note>
+      <note default-x="48.26" default-y="5">
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>3</octave>
+          </pitch>
+        <duration>12</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot default-x="66.26" default-y="5"/>
+        <stem>down</stem>
+        </note>
+      <direction placement="above">
+        <direction-type>
+          <bracket type="stop" number="1" line-end="down" end-length="15"/>
+          </direction-type>
+        <offset sound="yes">-6</offset>
+        </direction>
+      <note default-x="107.85" default-y="0">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    <measure number="15" width="170.02">
+      <note default-x="12.5" default-y="0">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>12</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot default-x="30.5" default-y="5"/>
+        <stem>down</stem>
+        </note>
+      <note default-x="87.28" default-y="-5">
+        <pitch>
+          <step>G</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="111.12" default-y="-5">
+        <pitch>
+          <step>G</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="134.95" default-y="-10">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        </note>
+      </measure>
+    <measure number="16" width="103.35">
+      <note default-x="12.5" default-y="0">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>16</duration>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notations>
+          <fermata type="upright" default-y="4.28" relative-y="5"/>
+          </notations>
+        <lyric number="1" default-y="-57.26" relative-y="-30">
+          <syllabic>end</syllabic>
+          <text>us</text>
+          </lyric>
+        </note>
+      <note default-x="66.13" default-y="-20">
+        <rest/>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        </note>
+      </measure>
+    <measure number="17" width="128.65">
+      <direction placement="above">
+        <direction-type>
+          <bracket type="start" number="1" line-end="down" line-type="solid" end-length="15" default-y="38.03"/>
+          </direction-type>
+        </direction>
+      <note default-x="12.5" default-y="20">
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-57.26" relative-y="-30">
+          <syllabic>single</syllabic>
+          <text>in</text>
+          </lyric>
+        </note>
+      <note default-x="48.26" default-y="25">
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>12</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot default-x="66.26" default-y="25"/>
+        <stem>down</stem>
+        </note>
+      <direction placement="above">
+        <direction-type>
+          <bracket type="stop" number="1" line-end="down" end-length="15"/>
+          </direction-type>
+        <offset sound="yes">-7</offset>
+        </direction>
+      <note default-x="93.58" default-y="15">
+        <pitch>
+          <step>D</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    </part>
+  <part id="P2">
+    <measure number="1" width="260.59">
+      <print>
+        <staff-layout number="1">
+          <staff-distance>170.01</staff-distance>
+          </staff-layout>
+        </print>
+      <attributes>
+        <divisions>8</divisions>
+        <key>
+          <fifths>-1</fifths>
+          <mode>major</mode>
+          </key>
+        <instruments>30</instruments>
+        <clef>
+          <sign>F</sign>
+          <line>4</line>
+          </clef>
+        </attributes>
+      <note default-x="148.64" default-y="-220.01">
+        <rest measure="yes"/>
+        <duration>40</duration>
+        <voice>1</voice>
+        </note>
+      </measure>
+    <measure number="2" width="148.18">
+      <attributes>
+        <time>
+          <beats>3</beats>
+          <beat-type>4</beat-type>
+          </time>
+        </attributes>
+      <direction placement="above">
+        <direction-type>
+          <words default-y="27.44" relative-y="10">(CT.)</words>
+          </direction-type>
+        </direction>
+      <note default-x="36.92" default-y="-210.01">
+        <rest/>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        </note>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I2">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="73.52" default-y="-210.01">
+        <rest/>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        </note>
+      <note default-x="98.07" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I2"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-40" relative-y="-30">
+          <syllabic>begin</syllabic>
+          <text>A</text>
+          </lyric>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="36.92" default-y="-250.01">
+        <rest/>
+        <duration>8</duration>
+        <voice>2</voice>
+        <type>quarter</type>
+        </note>
+      <note default-x="73.52" default-y="-250.01">
+        <rest/>
+        <duration>8</duration>
+        <voice>2</voice>
+        <type>quarter</type>
+        </note>
+      <note default-x="110.12" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I2"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    <measure number="3" width="195.66">
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I3">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="12.5" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I3"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        <beam number="1">begin</beam>
+        <lyric number="1" default-y="-40" relative-y="-30">
+          <syllabic>middle</syllabic>
+          <text>ni</text>
+          </lyric>
+        </note>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I4">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="44.67" default-y="-235.01">
+        <pitch>
+          <step>C</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I4"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        <beam number="1">end</beam>
+        </note>
+      <note default-x="70.72" default-y="-225.01">
+        <pitch>
+          <step>E</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I4"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-40" relative-y="-30">
+          <syllabic>end</syllabic>
+          <text>ma</text>
+          </lyric>
+        </note>
+      <note default-x="113.41" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I4"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        <lyric number="1" default-y="-40" relative-y="-30">
+          <syllabic>begin</syllabic>
+          <text>me</text>
+          </lyric>
+        </note>
+      <note default-x="141.96" default-y="-215.01">
+        <pitch>
+          <step>G</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I4"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="24.54" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I3"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="56.71" default-y="-235.01">
+        <pitch>
+          <step>C</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I4"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        <beam number="1">end</beam>
+        </note>
+      <note default-x="82.76" default-y="-225.01">
+        <pitch>
+          <step>E</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I4"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="125.46" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I4"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="154" default-y="-215.01">
+        <pitch>
+          <step>G</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I4"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        </note>
+      </measure>
+    <measure number="4" width="161.85">
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I5">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="12.5" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I5"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I6">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="49.1" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I6"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-40" relative-y="-30">
+          <syllabic>end</syllabic>
+          <text>a</text>
+          </lyric>
+        </note>
+      <note default-x="77.64" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I6"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1" default-y="-40" relative-y="-30">
+          <syllabic>begin</syllabic>
+          <text>do</text>
+          </lyric>
+        </note>
+      <note default-x="120.34" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I6"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="24.54" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I5"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="61.14" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I6"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="89.69" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I6"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="132.39" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I6"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    <measure number="5" width="187.98">
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I7">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="12.5" default-y="-200.01">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I7"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I8">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="41.05" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I8"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        </note>
+      <note default-x="69.59" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I8"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="130.43" default-y="-220.01">
+        <rest/>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>eighth</type>
+        </note>
+      <note default-x="146.48" default-y="-205.01">
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I8"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="24.54" default-y="-200.01">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I7"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="53.09" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I8"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        </note>
+      <note default-x="81.64" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I8"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="130.43" default-y="-250.01">
+        <rest/>
+        <duration>4</duration>
+        <voice>2</voice>
+        <type>eighth</type>
+        </note>
+      <note default-x="158.52" default-y="-205.01">
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I8"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    <measure number="6" width="184.72">
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I9">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="12.5" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I9"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I10">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="41.05" default-y="-200.01">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I10"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="83.74" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I10"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="112.29" default-y="-215.01">
+        <pitch>
+          <step>G</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I10"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="24.54" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I9"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="53.09" default-y="-200.01">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I10"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="95.79" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I10"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="124.33" default-y="-215.01">
+        <pitch>
+          <step>G</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I10"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    <measure number="7" width="929.59">
+      <print new-system="yes">
+        <staff-layout number="1">
+          <staff-distance>170.01</staff-distance>
+          </staff-layout>
+        </print>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I11">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="68.64" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I11"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I12">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="195.76" default-y="-235.01">
+        <pitch>
+          <step>C</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I12"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">continue</beam>
+        <lyric number="1" default-y="-48.88" relative-y="-30">
+          <syllabic>middle</syllabic>
+          <text>mi</text>
+          </lyric>
+        </note>
+      <note default-x="322.87" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I12"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">continue</beam>
+        </note>
+      <note default-x="492.36" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I12"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        </note>
+      <note default-x="619.48" default-y="-225.01">
+        <pitch>
+          <step>E</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I12"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="80.69" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I11"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="207.8" default-y="-235.01">
+        <pitch>
+          <step>C</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I12"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">continue</beam>
+        </note>
+      <note default-x="334.92" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I12"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">continue</beam>
+        </note>
+      <note default-x="504.41" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I12"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        </note>
+      <note default-x="631.52" default-y="-225.01">
+        <pitch>
+          <step>E</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I12"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    <measure number="8" width="394.41">
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I13">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="12.5" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>24</duration>
+        <instrument id="P2-I13"/>
+        <voice>1</voice>
+        <type>half</type>
+        <dot default-x="42.55" default-y="-225.01"/>
+        <stem>down</stem>
+        <lyric number="1" default-x="2.75" default-y="-48.88" relative-x="-3.49" relative-y="-30">
+          <syllabic>end</syllabic>
+          <text>num.</text>
+          </lyric>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="24.54" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>24</duration>
+        <instrument id="P2-I13"/>
+        <voice>2</voice>
+        <type>half</type>
+        <dot default-x="42.55" default-y="-235.01"/>
+        <stem>down</stem>
+        </note>
+      <barline location="right">
+        <bar-style>light-light</bar-style>
+        </barline>
+      </measure>
+    <measure number="9" width="220.09">
+      <print new-system="yes">
+        <staff-layout number="1">
+          <staff-distance>170.01</staff-distance>
+          </staff-layout>
+        </print>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I14">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <direction placement="above">
+        <direction-type>
+          <words default-y="36.39" relative-y="10">CT.(instr.)</words>
+          </direction-type>
+        </direction>
+      <direction placement="below">
+        <direction-type>
+          <words default-y="-40" relative-y="-25">T.(instr.)</words>
+          </direction-type>
+        </direction>
+      <note default-x="76.14" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>12</duration>
+        <instrument id="P2-I14"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot default-x="94.14" default-y="-205.01"/>
+        <stem>up</stem>
+        </note>
+      <note default-x="139.69" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I14"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        </note>
+      <note default-x="166.8" default-y="-205.01">
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I14"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>up</stem>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="76.14" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I14"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="111.9" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I14"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="135.74" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I14"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        </note>
+      <note default-x="166.8" default-y="-215.01">
+        <pitch>
+          <step>G</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I14"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    <measure number="10" width="137.85">
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I15">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="12.5" default-y="-200.01">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I15"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>up</stem>
+        </note>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I16">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="48.26" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I16"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="72.09" default-y="-215.01">
+        <pitch>
+          <step>G</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I16"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        <beam number="1">end</beam>
+        </note>
+      <note default-x="100.64" default-y="-205.01">
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I16"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>up</stem>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="12.5" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I15"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="48.26" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I16"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="84.14" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I16"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        <beam number="1">end</beam>
+        </note>
+      <note default-x="100.64" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I16"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    <measure number="11" width="133.14">
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I17">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="12.5" default-y="-205.01">
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I17"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>up</stem>
+        </note>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I18">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="48.26" default-y="-200.01">
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I18"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="72.09" default-y="-205.01">
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I18"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        <beam number="1">end</beam>
+        </note>
+      <note default-x="95.93" default-y="-215.01">
+        <pitch>
+          <step>G</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I18"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>up</stem>
+        <notations>
+          <fermata type="upright" default-y="19" relative-y="5"/>
+          </notations>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="12.5" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I17"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="48.26" default-y="-235.01">
+        <pitch>
+          <step>C</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>16</duration>
+        <instrument id="P2-I18"/>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notations>
+          <fermata type="inverted" default-y="-51.5" relative-y="-5"/>
+          </notations>
+        </note>
+      </measure>
+    <measure number="12" width="134.96">
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I19">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="25.46" default-y="-235.01">
+        <pitch>
+          <step>C</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>16</duration>
+        <instrument id="P2-I19"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>up</stem>
+        </note>
+      <note default-x="85.62" default-y="-240.01">
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>2</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I20"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>up</stem>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="12.5" default-y="-215.01">
+        <pitch>
+          <step>G</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>12</duration>
+        <instrument id="P2-I19"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <dot default-x="30.5" default-y="-215.01"/>
+        <stem>down</stem>
+        </note>
+      <note default-x="57.83" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I20"/>
+        <voice>2</voice>
+        <type>eighth</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="81.66" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I20"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    <measure number="13" width="158.63">
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I21">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <direction placement="below">
+        <direction-type>
+          <bracket type="start" number="1" line-end="up" line-type="solid" end-length="15" default-y="-69.5"/>
+          </direction-type>
+        </direction>
+      <note default-x="16.46" default-y="-245.01">
+        <pitch>
+          <step>A</step>
+          <octave>2</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I21"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>up</stem>
+        </note>
+      <direction placement="above">
+        <direction-type>
+          <bracket type="start" number="2" line-end="down" line-type="solid" end-length="15" default-y="13.03"/>
+          </direction-type>
+        <offset sound="yes">-7</offset>
+        </direction>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I22">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="78.24" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>12</duration>
+        <instrument id="P2-I22"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot default-x="96.24" default-y="-205.01"/>
+        <stem>up</stem>
+        </note>
+      <direction placement="below">
+        <direction-type>
+          <bracket type="stop" number="1" line-end="up" end-length="15"/>
+          </direction-type>
+        <offset sound="yes">-10</offset>
+        </direction>
+      <direction placement="above">
+        <direction-type>
+          <bracket type="stop" number="2" line-end="down" end-length="15"/>
+          </direction-type>
+        <offset sound="yes">-9</offset>
+        </direction>
+      <note default-x="123.57" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I22"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="12.5" default-y="-225.01">
+        <pitch>
+          <step>E</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I21"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="78.24" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>16</duration>
+        <instrument id="P2-I22"/>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    <measure number="14" width="137.31">
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I23">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <direction placement="below">
+        <direction-type>
+          <bracket type="start" number="1" line-end="up" line-type="solid" end-length="15" default-y="-72"/>
+          </direction-type>
+        </direction>
+      <note default-x="12.5" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I23"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>up</stem>
+        </note>
+      <note default-x="48.26" default-y="-210.01">
+        <rest/>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        </note>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I24">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="84.01" default-y="-225.01">
+        <pitch>
+          <step>E</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I24"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        <beam number="1">begin</beam>
+        </note>
+      <note default-x="107.85" default-y="-225.01">
+        <pitch>
+          <step>E</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <tie type="start"/>
+        <instrument id="P2-I24"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        <beam number="1">end</beam>
+        <notations>
+          <tied type="start" orientation="over" placement="above"/>
+          </notations>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="12.5" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>16</duration>
+        <instrument id="P2-I23"/>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="84.01" default-y="-235.01">
+        <pitch>
+          <step>C</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <tie type="start"/>
+        <instrument id="P2-I24"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notations>
+          <tied type="start" orientation="under" placement="below"/>
+          </notations>
+        </note>
+      </measure>
+    <measure number="15" width="170.02">
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I25">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="12.5" default-y="-225.01">
+        <pitch>
+          <step>E</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <tie type="stop"/>
+        <instrument id="P2-I25"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        <beam number="1">begin</beam>
+        <notations>
+          <tied type="stop"/>
+          </notations>
+        </note>
+      <note default-x="36.34" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I25"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        <beam number="1">end</beam>
+        </note>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I26">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="60.17" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I26"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        </note>
+      <direction placement="below">
+        <direction-type>
+          <bracket type="stop" number="1" line-end="up" end-length="15"/>
+          </direction-type>
+        <offset sound="yes">-3</offset>
+        </direction>
+      <note default-x="87.28" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I26"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>up</stem>
+        </note>
+      <note default-x="134.95" default-y="-235.01">
+        <pitch>
+          <step>C</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I26"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="12.5" default-y="-235.01">
+        <pitch>
+          <step>C</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <tie type="stop"/>
+        <instrument id="P2-I25"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <notations>
+          <tied type="stop"/>
+          </notations>
+        </note>
+      <note default-x="60.17" default-y="-240.01">
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>2</octave>
+          </pitch>
+        <duration>16</duration>
+        <instrument id="P2-I26"/>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    <measure number="16" width="103.35">
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I27">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="12.5" default-y="-225.01">
+        <pitch>
+          <step>E</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>16</duration>
+        <instrument id="P2-I27"/>
+        <voice>1</voice>
+        <type>half</type>
+        <stem>up</stem>
+        <notations>
+          <fermata type="upright" default-y="11.5" relative-y="5"/>
+          </notations>
+        </note>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I28">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="66.13" default-y="-210.01">
+        <rest/>
+        <duration>8</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="12.5" default-y="-245.01">
+        <pitch>
+          <step>A</step>
+          <octave>2</octave>
+          </pitch>
+        <duration>16</duration>
+        <instrument id="P2-I27"/>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>down</stem>
+        <notations>
+          <fermata type="inverted" default-y="-59" relative-y="-5"/>
+          </notations>
+        </note>
+      <note default-x="66.13" default-y="-250.01">
+        <rest/>
+        <duration>8</duration>
+        <voice>2</voice>
+        <type>quarter</type>
+        </note>
+      </measure>
+    <measure number="17" width="128.65">
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I29">
+          <instrument-sound>strings.viol.alto</instrument-sound>
+          </instrument-change>
+        </sound>
+      <direction placement="above">
+        <direction-type>
+          <bracket type="start" number="1" line-end="down" line-type="solid" end-length="15" default-y="32.75"/>
+          </direction-type>
+        </direction>
+      <note default-x="16.46" default-y="-245.01">
+        <pitch>
+          <step>A</step>
+          <octave>2</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I29"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>up</stem>
+        </note>
+      <print>
+        <part-name-display>
+          <display-text>Cantus 2 and Tenor</display-text>
+          </part-name-display>
+        </print>
+      <sound>
+        <instrument-change id="P2-I30">
+          <instrument-sound>strings.cello</instrument-sound>
+          </instrument-change>
+        </sound>
+      <note default-x="48.26" default-y="-210.01">
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>12</duration>
+        <instrument id="P2-I30"/>
+        <voice>1</voice>
+        <type>quarter</type>
+        <dot default-x="66.26" default-y="-205.01"/>
+        <stem>up</stem>
+        </note>
+      <direction placement="above">
+        <direction-type>
+          <bracket type="stop" number="1" line-end="down" end-length="15"/>
+          </direction-type>
+        <offset sound="yes">-5</offset>
+        </direction>
+      <note default-x="93.58" default-y="-220.01">
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>4</duration>
+        <instrument id="P2-I30"/>
+        <voice>1</voice>
+        <type>eighth</type>
+        <stem>up</stem>
+        </note>
+      <backup>
+        <duration>24</duration>
+        </backup>
+      <note default-x="12.5" default-y="-235.01">
+        <pitch>
+          <step>C</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>8</duration>
+        <instrument id="P2-I29"/>
+        <voice>2</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        </note>
+      <note default-x="48.26" default-y="-230.01">
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+          </pitch>
+        <duration>16</duration>
+        <instrument id="P2-I30"/>
+        <voice>2</voice>
+        <type>half</type>
+        <stem>down</stem>
+        </note>
+      </measure>
+    </part>
+  </score-partwise>
