@@ -22,7 +22,17 @@ import type { PageData, PageImage } from './types';
 export type PdfSource = 'vector' | 'text' | 'image';
 
 export type PdfConversion =
-  | { kind: 'score'; source: PdfSource; xml: string; title: string; measures: number; notes: number; tabs: number }
+  | {
+      kind: 'score';
+      source: PdfSource;
+      xml: string;
+      title: string;
+      measures: number;
+      notes: number;
+      tabs: number;
+      /** Tablature texte : ses barres de mesure étaient écrites (sinon, mesures déduites). */
+      tabBars?: boolean;
+    }
   /** Pages faites d'images : partition scannée ou photographiée. */
   | { kind: 'scanned' }
   /** Aucune portée reconnue. */
@@ -95,9 +105,10 @@ export async function convertPdf(
       page.cleanup();
       onProgress?.(n, total, 'pages');
     }
-    const done = (score: RecScore, measures: number, notes: number, source: PdfSource): PdfConversion => ({
+    const done = (score: RecScore, measures: number, notes: number, source: PdfSource, tabBars?: boolean): PdfConversion => ({
       kind: 'score',
       source,
+      ...(tabBars === undefined ? {} : { tabBars }),
       xml: toMusicXml(score),
       title: score.title,
       measures,
@@ -113,7 +124,7 @@ export async function convertPdf(
     const texts = pages.flatMap((p) => textLines(p.glyphs, p.index));
     const rows: TextRow[] = pages.flatMap((p) => monospaceRows(p.glyphs, p.index));
     const fromText = readAsciiTab(rows, texts);
-    if (fromText) return done(fromText.score, measureCount(fromText.score), fromText.notes, 'text');
+    if (fromText) return done(fromText.score, measureCount(fromText.score), fromText.notes, 'text', fromText.bars);
 
     // 3. Tablature texte en image. Document rouvert : une fois une page nettoyée, pdf.js ne
     // renvoie plus ses images déjà décodées.
@@ -142,7 +153,7 @@ export async function convertPdf(
       }
       rows.sort((a, b) => a.page - b.page || a.y - b.y);
       const fromImages = readAsciiTab(rows, texts);
-      if (fromImages) return done(fromImages.score, measureCount(fromImages.score), fromImages.notes, 'image');
+      if (fromImages) return done(fromImages.score, measureCount(fromImages.score), fromImages.notes, 'image', fromImages.bars);
     }
     return looksScanned(pages) ? { kind: 'scanned' } : { kind: 'no-music' };
   } finally {

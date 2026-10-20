@@ -10,6 +10,8 @@ export type AlphaTabModule = typeof AlphaTab;
 export type Score = AlphaTab.model.Score;
 export type Beat = AlphaTab.model.Beat;
 export type Api = AlphaTab.AlphaTabApi;
+export type ExternalMediaOutput = AlphaTab.synth.IExternalMediaSynthOutput;
+export type ExternalMediaHandler = AlphaTab.synth.IExternalMediaHandler;
 
 let modulePromise: Promise<AlphaTabModule> | null = null;
 

@@ -32,14 +32,15 @@ const alert = (message: string): HTMLElement => h('p', { class: 'alert', role: '
 const cleanText = (text: string): string => text.replace(/\s+/g, ' ').trim();
 
 const PDF_NOTICE = `Partition lue dans le PDF${NB}: vérifiez les notes et les rythmes.`;
-const PDF_TAB_NOTICE = `Tablature lue dans le PDF${NB}: le rythme, absent d'une tablature texte, est déduit de l'espacement des chiffres. Vérifiez-le à l'écoute.`;
+const PDF_TAB_NOTICE = `Tablature lue dans le PDF${NB}: le rythme, absent d'une tablature texte, est déduit de l'espacement des chiffres. Vérifiez-le à l'écoute, ou calez-le sur une vidéo (bouton «${NB}Vidéo${NB}»).`;
+const PDF_TAB_SYNCED_NOTICE = `Tablature lue dans le PDF, rythme calé sur l'enregistrement de référence.`;
 
 /** Partition convertie depuis un PDF (portée de notation affichée au-dessus de la tablature). */
 const fromPdf = (origin: ScoreEntry['origin']): boolean => origin === 'pdf' || origin === 'pdf-tab';
 
 /** Avertissement affiché au-dessus de la partition (conversion, tablature calculée). */
 function noticeFor(entry: ScoreEntry, prepared: string | null): string | null {
-  if (entry.origin === 'pdf-tab') return PDF_TAB_NOTICE;
+  if (entry.origin === 'pdf-tab') return entry.sync?.points.length ? PDF_TAB_SYNCED_NOTICE : PDF_TAB_NOTICE;
   if (entry.origin !== 'pdf') return prepared;
   return prepared ? `${PDF_NOTICE} La tablature a été calculée${NB}: vérifiez les doigtés.` : PDF_NOTICE;
 }
@@ -53,7 +54,7 @@ export function createScoresView(): ScoresView {
   let libraryReady: Promise<void> | null = null;
   let storageWarned = false;
   /** Partitions gardées en mémoire quand la bibliothèque n'est pas disponible (navigation privée). */
-  const sessionScores = new Map<string, { entry: ScoreEntry; bytes: Uint8Array }>();
+  const sessionScores = new Map<string, { entry: ScoreEntry; bytes: Uint8Array; media?: Uint8Array }>();
   /** Dernière partition analysée, pour ne pas la relire juste après l'import. */
   let parsed: { id: string; score: Score; notice: string | null } | null = null;
   let openId: string | null = null;
@@ -64,6 +65,24 @@ export function createScoresView(): ScoresView {
   const player = new ScorePlayerView({
     onBack: () => navigate('partitions'),
     onSettingsChange: scheduleSave,
+    loadMediaFile: async (entry) => {
+      const session = sessionScores.get(entry.id);
+      if (session) return session.media;
+      await ensureLibrary();
+      return library?.getMedia(entry.id);
+    },
+    saveMediaFile: async (entry, bytes) => {
+      const session = sessionScores.get(entry.id);
+      if (session) {
+        if (bytes) session.media = bytes;
+        else delete session.media;
+        return;
+      }
+      await ensureLibrary();
+      if (!library) throw new AppError('storage-unavailable');
+      await library.setMedia(entry.id, bytes);
+    },
+    replaceScore,
   });
   player.element.hidden = true;
 
@@ -163,12 +182,14 @@ export function createScoresView(): ScoresView {
       // PDF : lu et converti en MusicXML ici même ; c'est ce MusicXML qui est conservé.
       let format: ScoreFormat;
       let origin: ScoreEntry['origin'];
+      let tabBars: boolean | undefined;
       if (detection.kind === 'pdf') {
         const converted = await readPdf(file.name, bytes);
         if (!converted) return;
         bytes = converted.xml;
         format = 'musicxml';
         origin = converted.source === 'vector' ? 'pdf' : 'pdf-tab';
+        tabBars = converted.tabBars;
       } else {
         format = detection.format;
       }
@@ -185,6 +206,7 @@ export function createScoresView(): ScoresView {
         artist: cleanText(score.artist),
         format,
         ...(origin ? { origin } : {}),
+        ...(tabBars === undefined ? {} : { tabBars }),
         size: file.size,
         addedAt: now,
         openedAt: now,
@@ -218,7 +240,7 @@ export function createScoresView(): ScoresView {
   async function readPdf(
     name: string,
     bytes: Uint8Array,
-  ): Promise<{ xml: Uint8Array<ArrayBuffer>; source: PdfSource } | null> {
+  ): Promise<{ xml: Uint8Array<ArrayBuffer>; source: PdfSource; tabBars?: boolean } | null> {
     const status = h('p', { class: 'status-line', role: 'status' }, 'Lecture du PDF…');
     libraryView.showMessage(status);
     let convert: typeof import('./pdf/convert');
@@ -243,14 +265,36 @@ export function createScoresView(): ScoresView {
       return null;
     }
     libraryView.showMessage(null);
-    return { xml: new TextEncoder().encode(result.xml), source: result.source };
+    return {
+      xml: new TextEncoder().encode(result.xml),
+      source: result.source,
+      ...(result.tabBars === undefined ? {} : { tabBars: result.tabBars }),
+    };
   }
 
   // --- Ouverture, suppression, renommage ---------------------------------------
 
+  /** Partition réécrite (rythme calé sur un enregistrement) : enregistrée, puis rouverte. */
+  async function replaceScore(entry: ScoreEntry, xml: Uint8Array): Promise<void> {
+    const at = await loadAlphaTab();
+    const score = parseScore(at, xml, true);
+    const session = sessionScores.get(entry.id);
+    if (session) {
+      session.entry = entry;
+      session.bytes = xml;
+    } else {
+      await ensureLibrary();
+      if (!library) throw new AppError('storage-unavailable');
+      await library.add(entry, xml);
+    }
+    const notice = noticeFor(entry, null);
+    parsed = { id: entry.id, score, notice };
+    if (openId === entry.id) await player.open(entry, score, notice);
+  }
+
   function showLibrary(): void {
     openId = null;
-    player.pause();
+    player.close();
     player.element.hidden = true;
     libraryView.element.hidden = false;
     element.classList.remove('is-player');
@@ -301,7 +345,7 @@ export function createScoresView(): ScoresView {
     const session = sessionScores.get(entry.id);
     sessionScores.delete(entry.id);
     if (parsed?.id === entry.id) parsed = null;
-    let removed: { entry: ScoreEntry; bytes: Uint8Array } | null = session ?? null;
+    let removed: { entry: ScoreEntry; bytes: Uint8Array; media?: Uint8Array } | null = session ?? null;
     try {
       if (!session && library) removed = await library.remove(entry.id);
     } catch (error) {
@@ -317,7 +361,7 @@ export function createScoresView(): ScoresView {
           const restore = removed;
           const done = session
             ? Promise.resolve(void sessionScores.set(restore.entry.id, restore))
-            : (library?.add(restore.entry, restore.bytes) ?? Promise.resolve());
+            : (library?.add(restore.entry, restore.bytes, restore.media) ?? Promise.resolve());
           void done.then(refresh, (error: unknown) => libraryView.showMessage(alert(describeError(error))));
         },
       },

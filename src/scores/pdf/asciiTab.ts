@@ -294,7 +294,7 @@ export function timeFromText(lines: string[]): { beats: number; beatType: number
  * Lit les tablatures texte de lignes déjà alignées sur une grille de caractères.
  * `texts` : autres lignes du document (titre, accordage, capodastre, chiffrage).
  */
-export function readAsciiTab(rows: TextRow[], texts: TextLine[]): { score: RecScore; notes: number } | null {
+export function readAsciiTab(rows: TextRow[], texts: TextLine[]): { score: RecScore; notes: number; bars: boolean } | null {
   const blocks = findBlocks(rows);
   const total = blocks.reduce((s, b) => s + b.notes.length, 0);
   if (!blocks.length || total === 0) return null;
@@ -363,6 +363,32 @@ export function readAsciiTab(rows: TextRow[], texts: TextLine[]): { score: RecSc
     }
   }
 
+  const title = titleOf(texts, rows);
+  return { score: tabScore(measures, { time, tuning, capo, title, tempo: null }), notes: total, bars: hasBars };
+}
+
+/** Note de tablature : corde (1 = la plus aiguë) et case. */
+export interface TabHit {
+  string: number;
+  fret: number;
+}
+
+/** Notes jouées ensemble, datées dans leur mesure (en noires). */
+export interface TabOnset {
+  onset: number;
+  notes: TabHit[];
+}
+
+/**
+ * Partition de guitare (tablature) à partir des instants de chaque mesure : chaque note dure
+ * jusqu'à la suivante (ou la fin de la mesure), en figures liées si besoin.
+ */
+export function tabScore(
+  measures: TabOnset[][],
+  options: { time: { beats: number; beatType: number }; tuning: number[]; capo: number; title: string; tempo: number | null; artist?: string },
+): RecScore {
+  const { time, tuning, capo } = options;
+  const length = (time.beats * 4) / time.beatType;
   const recMeasures: RecMeasure[] = measures.map((timed, mi) => {
     const events: RecEvent[] = [];
     const push = (onset: number, q: number, notes: RecNote[]): void => {
@@ -393,7 +419,7 @@ export function readAsciiTab(rows: TextRow[], texts: TextLine[]): { score: RecSc
         }
       }
       timed.forEach((e, i) => {
-        const end = (timed[i + 1] as Timed | undefined)?.onset ?? length;
+        const end = (timed[i + 1] as TabOnset | undefined)?.onset ?? length;
         const notes: RecNote[] = [...e.notes]
           .sort((a, b) => a.string - b.string)
           .map((n) => ({
@@ -412,11 +438,11 @@ export function readAsciiTab(rows: TextRow[], texts: TextLine[]): { score: RecSc
     }
     return rec;
   });
-
-  const title = titleOf(texts, rows);
   return {
-    score: { title, composer: '', tempo: null, parts: [{ name: 'Guitare', staves: 1, measures: recMeasures, tuning, capo }] },
-    notes: total,
+    title: options.title,
+    composer: options.artist ?? '',
+    tempo: options.tempo,
+    parts: [{ name: 'Guitare', staves: 1, measures: recMeasures, tuning, capo }],
   };
 }
 

@@ -1,10 +1,12 @@
 /**
  * Bibliothèque locale des partitions importées (IndexedDB).
  * Deux magasins : « entries » (métadonnées et réglages, listés rapidement)
- * et « files » (contenu original des fichiers, chargé à l'ouverture).
+ * et « files » (contenu des fichiers, chargé à l'ouverture : la partition sous son id,
+ * l'enregistrement audio de référence éventuel sous « <id>:media »).
  */
 import { AppError } from '../ui/errors';
 import type { ScoreFormat } from './formats';
+import type { SyncPoint } from './sync/rhythmFit';
 
 const DB_NAME = 'pratique-guitare';
 const DB_VERSION = 1;
@@ -27,6 +29,26 @@ export interface ScoreSettings {
   /** Sélection par mesures entières plutôt que par notes. */
   wholeBars: boolean;
   selection: StoredSelection | null;
+  /** Lecture avec l'enregistrement de référence (vidéo ou audio) au lieu du synthétiseur. */
+  followMedia?: boolean;
+}
+
+/** Enregistrement de référence lié à la partition : vidéo YouTube ou fichier audio. */
+export type MediaLink =
+  | { kind: 'youtube'; id: string; title: string; channel?: string }
+  | { kind: 'audio'; name: string; type: string; size: number };
+
+/** Identifiant stable d'un enregistrement (les instants calés s'y rapportent). */
+export const mediaKey = (media: MediaLink): string => (media.kind === 'youtube' ? `youtube:${media.id}` : `audio:${media.name}:${media.size}`);
+
+/** Calage de la partition sur un enregistrement. */
+export interface ScoreSync {
+  /** mediaKey() de l'enregistrement. */
+  media: string;
+  /** Instant (s) de chaque note de la partition, dans l'ordre ; null si inconnu. */
+  times: Array<number | null>;
+  /** Débuts de mesure ↔ instants (ms), pour suivre l'enregistrement pendant la lecture. */
+  points: SyncPoint[];
 }
 
 export interface ScoreEntry {
@@ -40,6 +62,11 @@ export interface ScoreEntry {
    * « pdf » partition lue dans un PDF, « pdf-tab » tablature texte (rythme déduit de l'espacement).
    */
   origin?: 'pdf' | 'pdf-tab';
+  /** Tablature texte : ses barres de mesure étaient écrites (les mesures sont donc fiables). */
+  tabBars?: boolean;
+  /** Enregistrement de référence. */
+  media?: MediaLink;
+  sync?: ScoreSync;
   size: number;
   addedAt: number;
   openedAt: number;
@@ -116,16 +143,33 @@ export class ScoreLibrary {
     return (await this.list()).find((e) => e.fileName === fileName && e.size === size);
   }
 
-  async add(entry: ScoreEntry, bytes: Uint8Array): Promise<void> {
+  async add(entry: ScoreEntry, bytes: Uint8Array, media?: Uint8Array): Promise<void> {
     try {
       const tx = this.db.transaction([ENTRIES, FILES], 'readwrite');
       tx.objectStore(ENTRIES).put(entry);
       // Copie dans un ArrayBuffer propre : le tampon d'origine peut être plus grand que la vue.
       tx.objectStore(FILES).put(bytes.slice().buffer, entry.id);
+      if (media) tx.objectStore(FILES).put(media.slice().buffer, mediaFileKey(entry.id));
       await done(tx);
     } catch (error) {
       throw storageError(error);
     }
+  }
+
+  /** Enregistrement audio de référence (null : le supprimer). */
+  async setMedia(id: string, bytes: Uint8Array | null): Promise<void> {
+    try {
+      const tx = this.db.transaction(FILES, 'readwrite');
+      if (bytes) tx.objectStore(FILES).put(bytes.slice().buffer, mediaFileKey(id));
+      else tx.objectStore(FILES).delete(mediaFileKey(id));
+      await done(tx);
+    } catch (error) {
+      throw storageError(error);
+    }
+  }
+
+  getMedia(id: string): Promise<Uint8Array | undefined> {
+    return this.getFile(mediaFileKey(id));
   }
 
   async update(entry: ScoreEntry): Promise<void> {
@@ -139,14 +183,16 @@ export class ScoreLibrary {
   }
 
   /** Supprime une partition et renvoie de quoi annuler la suppression. */
-  async remove(id: string): Promise<{ entry: ScoreEntry; bytes: Uint8Array } | null> {
+  async remove(id: string): Promise<{ entry: ScoreEntry; bytes: Uint8Array; media?: Uint8Array } | null> {
     const entry = await this.get(id);
     const bytes = await this.getFile(id);
+    const media = await this.getMedia(id);
     const tx = this.db.transaction([ENTRIES, FILES], 'readwrite');
     tx.objectStore(ENTRIES).delete(id);
     tx.objectStore(FILES).delete(id);
+    tx.objectStore(FILES).delete(mediaFileKey(id));
     await done(tx);
-    return entry && bytes ? { entry, bytes } : null;
+    return entry && bytes ? { entry, bytes, ...(media ? { media } : {}) } : null;
   }
 }
 
@@ -158,6 +204,8 @@ export async function requestPersistentStorage(): Promise<void> {
     // Facultatif : sans persistance, le navigateur garde tout de même les données en temps normal.
   }
 }
+
+const mediaFileKey = (id: string): string => `${id}:media`;
 
 export function newEntryId(): string {
   return typeof crypto.randomUUID === 'function'

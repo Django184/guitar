@@ -40,6 +40,9 @@ jobs:
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
           APP_VERSION: ${{ github.sha }}
+          # Clé de l'API YouTube Data v3 (recherche de vidéos), restreinte au site publié :
+          # variable du dépôt (Settings → Secrets and variables → Actions → Variables).
+          VITE_YOUTUBE_API_KEY: ${{ vars.YOUTUBE_API_KEY }}
 
       - name: Check PWA output (manifest, service worker, precache)
         run: |
