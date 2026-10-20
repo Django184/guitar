@@ -7,7 +7,7 @@
  * dièses est souvent écrite d'un seul bloc) et tous les traits (portées, hampes, ligatures).
  */
 import type * as PdfJs from 'pdfjs-dist';
-import type { Box, Glyph, PageData, PathItem, Point } from './types';
+import type { Box, Glyph, PageData, PageImage, PathItem, Point } from './types';
 
 type Matrix = [number, number, number, number, number, number];
 type PdfModule = typeof PdfJs;
@@ -107,6 +107,7 @@ export async function extractPage(pdfjs: PdfModule, page: PdfJs.PDFPageProxy, in
   const glyphs: Glyph[] = [];
   const paths: PathItem[] = [];
   let imageArea = 0;
+  const images: PageImage[] = [];
   const fonts = new Map<string, FontInfo>();
 
   const fontInfo = (id: string): FontInfo => {
@@ -351,11 +352,15 @@ export async function extractPage(pdfjs: PdfModule, page: PdfJs.PDFPageProxy, in
       case OPS.paintImageXObjectRepeat: {
         const m = toPage(state.ctm);
         imageArea += Math.abs(m[0] * m[3] - m[1] * m[2]);
+        // Image : carré unité de l'espace utilisateur.
+        if (fn === OPS.paintImageXObject && typeof args[0] === 'string') {
+          images.push({ id: args[0], box: boxOf([apply(m, 0, 0), apply(m, 1, 0), apply(m, 0, 1), apply(m, 1, 1)]) });
+        }
         break;
       }
       default:
     }
   }
 
-  return { index, width: viewport.width, height: viewport.height, glyphs, paths, imageArea };
+  return { index, width: viewport.width, height: viewport.height, glyphs, paths, imageArea, images };
 }

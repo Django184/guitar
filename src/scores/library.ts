@@ -35,8 +35,11 @@ export interface ScoreEntry {
   title: string;
   artist: string;
   format: ScoreFormat;
-  /** Fichier d'origine converti par l'app (le magasin garde alors le MusicXML obtenu). */
-  origin?: 'pdf';
+  /**
+   * Fichier d'origine converti par l'app (le magasin garde alors le MusicXML obtenu) :
+   * « pdf » partition lue dans un PDF, « pdf-tab » tablature texte (rythme déduit de l'espacement).
+   */
+  origin?: 'pdf' | 'pdf-tab';
   size: number;
   addedAt: number;
   openedAt: number;

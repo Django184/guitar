@@ -13,6 +13,7 @@ import {
   requestPersistentStorage,
 } from './library';
 import { LibraryView } from './libraryView';
+import type { PdfSource } from './pdf/convert';
 import { pdfGuide } from './pdfGuide';
 import { ScorePlayerView } from './playerView';
 import { prepareScore } from './prepare';
@@ -31,9 +32,14 @@ const alert = (message: string): HTMLElement => h('p', { class: 'alert', role: '
 const cleanText = (text: string): string => text.replace(/\s+/g, ' ').trim();
 
 const PDF_NOTICE = `Partition lue dans le PDF${NB}: vérifiez les notes et les rythmes.`;
+const PDF_TAB_NOTICE = `Tablature lue dans le PDF${NB}: le rythme, absent d'une tablature texte, est déduit de l'espacement des chiffres. Vérifiez-le à l'écoute.`;
+
+/** Partition convertie depuis un PDF (portée de notation affichée au-dessus de la tablature). */
+const fromPdf = (origin: ScoreEntry['origin']): boolean => origin === 'pdf' || origin === 'pdf-tab';
 
 /** Avertissement affiché au-dessus de la partition (conversion, tablature calculée). */
 function noticeFor(entry: ScoreEntry, prepared: string | null): string | null {
+  if (entry.origin === 'pdf-tab') return PDF_TAB_NOTICE;
   if (entry.origin !== 'pdf') return prepared;
   return prepared ? `${PDF_NOTICE} La tablature a été calculée${NB}: vérifiez les doigtés.` : PDF_NOTICE;
 }
@@ -156,13 +162,13 @@ export function createScoresView(): ScoresView {
 
       // PDF : lu et converti en MusicXML ici même ; c'est ce MusicXML qui est conservé.
       let format: ScoreFormat;
-      let origin: 'pdf' | undefined;
+      let origin: ScoreEntry['origin'];
       if (detection.kind === 'pdf') {
         const converted = await readPdf(file.name, bytes);
         if (!converted) return;
-        bytes = converted;
+        bytes = converted.xml;
         format = 'musicxml';
-        origin = 'pdf';
+        origin = converted.source === 'vector' ? 'pdf' : 'pdf-tab';
       } else {
         format = detection.format;
       }
@@ -170,7 +176,7 @@ export function createScoresView(): ScoresView {
       // Le fichier est lu entièrement AVANT d'être enregistré : un fichier illisible n'entre pas dans la bibliothèque.
       const prepared = await prepareScore(format, bytes, baseName(file.name));
       const at = await loadAlphaTab();
-      const score = parseScore(at, prepared.data, origin === 'pdf');
+      const score = parseScore(at, prepared.data, fromPdf(origin));
       const now = Date.now();
       const entry: ScoreEntry = {
         id: newEntryId(),
@@ -209,7 +215,10 @@ export function createScoresView(): ScoresView {
    * Lit un PDF de partition et le convertit en MusicXML (module chargé à la demande).
    * Renvoie null, guide de conversion affiché, quand le PDF n'est pas lisible (scan, aucune portée).
    */
-  async function readPdf(name: string, bytes: Uint8Array): Promise<Uint8Array<ArrayBuffer> | null> {
+  async function readPdf(
+    name: string,
+    bytes: Uint8Array,
+  ): Promise<{ xml: Uint8Array<ArrayBuffer>; source: PdfSource } | null> {
     const status = h('p', { class: 'status-line', role: 'status' }, 'Lecture du PDF…');
     libraryView.showMessage(status);
     let convert: typeof import('./pdf/convert');
@@ -221,8 +230,9 @@ export function createScoresView(): ScoresView {
     }
     let result: Awaited<ReturnType<typeof convert.convertPdf>>;
     try {
-      result = await convert.convertPdf(bytes, (page, total) => {
-        status.textContent = total > 1 ? `Lecture du PDF… page${NB}${page}/${total}` : 'Lecture du PDF…';
+      result = await convert.convertPdf(bytes, (page, total, phase) => {
+        const label = phase === 'images' ? 'Lecture des images du PDF…' : 'Lecture du PDF…';
+        status.textContent = total > 1 ? `${label} page${NB}${page}/${total}` : label;
       });
     } catch (error) {
       console.error(error);
@@ -233,7 +243,7 @@ export function createScoresView(): ScoresView {
       return null;
     }
     libraryView.showMessage(null);
-    return new TextEncoder().encode(result.xml);
+    return { xml: new TextEncoder().encode(result.xml), source: result.source };
   }
 
   // --- Ouverture, suppression, renommage ---------------------------------------
@@ -271,7 +281,7 @@ export function createScoresView(): ScoresView {
         const bytes = await found.bytes();
         if (!bytes) throw new AppError('file-unreadable');
         const prepared = await prepareScore(entry.format, bytes, entry.title);
-        score = parseScore(await loadAlphaTab(), prepared.data, entry.origin === 'pdf');
+        score = parseScore(await loadAlphaTab(), prepared.data, fromPdf(entry.origin));
         notice = noticeFor(entry, prepared.notice);
         parsed = { id, score, notice };
       }

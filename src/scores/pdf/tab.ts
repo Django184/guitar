@@ -224,7 +224,7 @@ export function textLines(glyphs: Glyph[], page: number): TextLine[] {
       let text = '';
       let prev: Glyph | null = null;
       for (const g of current) {
-        if (prev && g.x - (prev.x + prev.width) > 0.2 * g.size) text += ' ';
+        if (prev && g.x - (prev.x + prev.width) > 0.15 * g.size) text += ' ';
         text += g.text;
         prev = g;
       }

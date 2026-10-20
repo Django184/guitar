@@ -78,6 +78,45 @@ function textOnlyPdf(): string {
   return `${pdf}trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
 }
 
+/** Tablature texte de test : deux mesures, accordage drop D écrit dans les noms de cordes. */
+const ASCII_TAB = [
+  'e|-0---------------|-----------------|',
+  'B|-----1-------1---|-3---------------|',
+  'G|---------2-------|-----------------|',
+  'D|-----------------|---------2-------|',
+  'A|-----------------|-----------------|',
+  'D|-----------------|-0-----------10--|',
+];
+
+/**
+ * Page de tablature texte, imprimée en PDF par Chromium : en caractères (police à chasse fixe)
+ * ou en image (capture d'écran collée dans un document).
+ */
+function asciiTabHtml(mode: 'text' | 'image'): string {
+  const lines = JSON.stringify(ASCII_TAB);
+  const body =
+    mode === 'text'
+      ? `<pre style="font: 11px 'Courier New', monospace">${ASCII_TAB.join('\n')}</pre>`
+      : `<canvas id="c" width="760" height="230"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#000';
+  ctx.font = '30px monospace';
+  ctx.textBaseline = 'middle';
+  ${lines}.forEach((line, i) => ctx.fillText(line, 12, 30 + i * 34));
+  const img = document.createElement('img');
+  img.src = c.toDataURL('image/png');
+  img.style.width = c.width / 2 + 'px';
+  document.body.append(img);
+  c.remove();
+</script>`;
+  return `<!doctype html><html><head><meta charset="utf-8"></head><body style="font-family: sans-serif">
+<h1 style="font-size: 24px">Exercice en arpèges</h1><p style="font-size: 12px">Capo 2</p>${body}</body></html>`;
+}
+
 const scoreApi = (page: Page) =>
   page.evaluate(() => {
     const { api } = (window as unknown as { __scores: { debug(): { api: any } } }).__scores.debug();
@@ -163,6 +202,36 @@ test.describe('Import des formats', () => {
     await page.getByRole('button', { name: 'Retour à la bibliothèque' }).click();
     await expect(page.getByTestId('library')).toContainText('Promenade en Sol');
   });
+
+  for (const mode of ['text', 'image'] as const) {
+    test(`PDF de tablature texte (${mode === 'text' ? 'en caractères' : 'en image'}) : lue dans l’app`, async ({ page, context }, testInfo) => {
+      test.setTimeout(90_000);
+      const printer = await context.newPage();
+      await printer.setContent(asciiTabHtml(mode), { waitUntil: 'load' });
+      if (mode === 'image') await printer.waitForFunction(() => document.querySelector('img')?.complete === true);
+      const pdf = await printer.pdf({ format: 'A4' });
+      await printer.close();
+      fs.writeFileSync(testInfo.outputPath(`tablature-${mode}.pdf`), pdf);
+
+      await openApp(page);
+      await importScore(page, { name: `tablature-${mode}.pdf`, mimeType: 'application/pdf', buffer: pdf });
+      await waitForScore(page, { sound: false });
+      await expect(page.locator('.player__title')).toHaveText('Exercice en arpèges');
+      await expect(page.locator('.player__notice')).toContainText('Tablature lue dans le PDF');
+      const info = await scoreApi(page);
+      expect(info.tab).toBe(true);
+      expect(info.notes).toBe(8);
+      expect(info.fretted).toBe(8);
+      // Cases dans l'ordre de lecture (accords de la corde aiguë à la grave).
+      const frets = await page.evaluate(() => {
+        const { api } = (window as unknown as { __scores: { debug(): { api: any } } }).__scores.debug();
+        const out: number[] = [];
+        for (const bar of api.tracks[0].staves[0].bars) for (const beat of bar.voices[0].beats) for (const note of beat.notes) out.push(note.fret);
+        return out;
+      });
+      expect([...frets].sort((a, b) => a - b)).toEqual([0, 0, 1, 1, 2, 2, 3, 10]);
+    });
+  }
 
   test('PDF sans partition ou illisible : explication, rien n’est ajouté à la bibliothèque', async ({ page }) => {
     await openApp(page);
