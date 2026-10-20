@@ -143,6 +143,31 @@ barre, nom de corde) par comparaison à des gabarits. L'accordage vient des noms
 Une tablature texte n'écrit pas le rythme : il est déduit de la position des chiffres dans la
 mesure (ou, sans barres, de leur espacement), et un message invite à le vérifier à l'écoute.
 
+**Vidéo de référence et rythme calé.** Le bouton « Vidéo » du lecteur lie à la partition un
+enregistrement : une vidéo YouTube (trouvée automatiquement à partir du titre, ou lien collé) ou un
+fichier audio. La vidéo est jouée par le lecteur officiel de YouTube, jamais téléchargée : l'app ne
+lit que sa position. Deux façons de caler la partition dessus :
+
+- **Taper le rythme** : pendant l'écoute (ralentie au besoin), on touche « Note » (ou la barre
+  d'espace) à chaque note ou accord ; le curseur montre la note attendue ;
+- **Écoute automatique** : l'app retrouve elle-même chaque note de la tablature dans le son
+  (attaques du flux spectral, ce qui apparaît à chaque attaque ramené à ses 12 classes de hauteur,
+  puis appariement ordonné avec les notes, transposition comprise). Un fichier audio est analysé
+  directement ; pour une vidéo YouTube, dont le son n'est pas accessible, l'app l'écoute au micro
+  pendant la lecture (haut-parleurs, pas de casque).
+
+Pour une tablature texte, les instants trouvés donnent le rythme : une programmation dynamique
+sur (position dans la mesure, tempo) arrondit chaque écart à la double croche en laissant le tempo
+varier doucement (barres de mesure respectées quand la tablature en avait). L'aperçu se garde ou
+s'annule, et « Valeurs ×2 / ÷2 » corrige une lecture au tempo double ou moitié. Pour toute partition,
+le calage donne des points de synchronisation : avec « Suivre la vidéo », c'est l'enregistrement
+qui joue (vitesse, boucle et passage compris) et le curseur le suit.
+
+La recherche automatique utilise l'API YouTube Data v3 avec une clé gratuite (Google Cloud),
+restreinte au site publié : variable de dépôt `YOUTUBE_API_KEY` (Settings → Secrets and variables
+→ Actions → Variables), lue au build (`VITE_YOUTUBE_API_KEY`), ou clé saisie dans l'app (gardée sur
+l'appareil). Sans clé, l'app ouvre la recherche YouTube et on colle le lien.
+
 Une partition scannée (portées en image) n'est pas lisible : l'app l'explique et propose la
 conversion par MuseScore ou Audiveris. Le code est dans `src/scores/pdf/` (extraction, mise en page,
 notation, tablature, rythme, tablatures texte et reconnaissance en image, MusicXML).
@@ -177,6 +202,9 @@ Automatique (CI, job **e2e**, profils ordinateur et mobile) :
   comprise ; une tablature texte imprimée en PDF, en caractères comme en image, donne les mêmes
   cases et l'accordage écrit ; un PDF sans musique ou illisible est expliqué, sans rien ajouter à
   la bibliothèque ;
+- une tablature texte jouée avec un autre rythme que son espacement (guitare synthétisée, fichier
+  WAV) est recalée par l'écoute automatique comme en tapant le rythme : positions et tempo exacts,
+  lecture qui suit l'enregistrement, calage conservé à la réouverture ;
 - la sélection des mesures 5 à 8 (glissé souris, ou appui long + glissé au doigt) donne la bonne
   plage de lecture ; à 50 %, la lecture reste dans le passage, revient au début sans trou
   (jamais plus de 300 ms sans avancer, bouclage compris) et avance à la moitié du tempo ;
@@ -212,6 +240,8 @@ src/
     pdf/                lecture des PDF : extraction pdf.js, portées et systèmes, notation,
                         tablature et accordage, rythme et voix, tablatures texte (caractères
                         ou image, reconnaissance dédiée), écriture MusicXML
+    sync/               enregistrement de référence : YouTube (lecteur, recherche), fichier
+                        audio, micro, alignement audio, rythme et tempo retrouvés, panneau Vidéo
   ui/                   helpers DOM, appui long, messages d'erreur en français
 tests/                  tests Vitest (unitaires)
 e2e/                    tests Playwright (bout en bout)

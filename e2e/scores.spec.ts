@@ -117,6 +117,83 @@ function asciiTabHtml(mode: 'text' | 'image'): string {
 <h1 style="font-size: 24px">Exercice en arpèges</h1><p style="font-size: 12px">Capo 2</p>${body}</body></html>`;
 }
 
+/** Corde pincée (Karplus-Strong). */
+function pluck(out: Float32Array, rate: number, start: number, midi: number, seed: number): void {
+  const period = Math.max(2, Math.round(rate / (440 * 2 ** ((midi - 69) / 12))));
+  let s = seed;
+  const buf = Float32Array.from({ length: period }, () => (s = (s * 16807) % 2147483647) / 1073741823.5 - 1);
+  const i0 = Math.round(start * rate);
+  for (let n = 0, idx = 0; n < Math.min(out.length - i0, rate * 2); n++) {
+    const next = (idx + 1) % period;
+    const v = buf[idx] as number;
+    buf[idx] = 0.996 * 0.5 * (v + (buf[next] as number));
+    out[i0 + n] = (out[i0 + n] as number) + 0.25 * v;
+    idx = next;
+  }
+}
+
+/** Enregistrement de référence de test : guitare synthétisée, WAV mono 16 bits. */
+function guitarWav(notes: Array<{ time: number; pitches: number[] }>, duration: number, rate = 22050): Buffer {
+  const samples = new Float32Array(Math.round(duration * rate));
+  notes.forEach((n, i) => n.pitches.forEach((p, j) => pluck(samples, rate, n.time, p, i * 7 + j + 1)));
+  const peak = samples.reduce((m, v) => Math.max(m, Math.abs(v)), 0) || 1;
+  const buf = Buffer.alloc(44 + samples.length * 2);
+  buf.write('RIFF', 0);
+  buf.writeUInt32LE(36 + samples.length * 2, 4);
+  buf.write('WAVEfmt ', 8);
+  buf.writeUInt32LE(16, 16);
+  buf.writeUInt16LE(1, 20);
+  buf.writeUInt16LE(1, 22);
+  buf.writeUInt32LE(rate, 24);
+  buf.writeUInt32LE(rate * 2, 28);
+  buf.writeUInt16LE(2, 32);
+  buf.writeUInt16LE(16, 34);
+  buf.write('data', 36);
+  buf.writeUInt32LE(samples.length * 2, 40);
+  samples.forEach((v, i) => buf.writeInt16LE(Math.round((v / peak) * 0.9 * 32767), 44 + i * 2));
+  return buf;
+}
+
+/**
+ * La tablature ASCII_TAB (drop D, capo 2) jouée avec un autre rythme que son espacement :
+ * mesure 1 : noire pointée, croche, noire, noire ; mesure 2 : blanche, noire, noire. 100 à la noire.
+ */
+const TAB_RHYTHM = [0, 1.5, 2, 3, 4, 6, 7];
+const TAB_PITCHES = [[66], [62], [59], [62], [64, 40], [54], [50]];
+const TAB_TIMES = TAB_RHYTHM.map((q) => 1.2 + q * 0.6);
+const tabRecording = (): { name: string; mimeType: string; buffer: Buffer } => ({
+  name: 'reprise.wav',
+  mimeType: 'audio/wav',
+  buffer: guitarWav(
+    TAB_TIMES.map((time, i) => ({ time, pitches: TAB_PITCHES[i] as number[] })),
+    (TAB_TIMES[TAB_TIMES.length - 1] as number) + 2.5,
+  ),
+});
+
+/** Débuts (en noires) des notes de la partition ouverte, notes liées exclues. */
+const noteStarts = (page: Page) =>
+  page.evaluate(() => {
+    const { api } = (window as unknown as { __scores: { debug(): { api: any } } }).__scores.debug();
+    const out: number[] = [];
+    for (const bar of api.score.tracks[0].staves[0].bars)
+      for (const beat of bar.voices[0].beats) {
+        if (beat.isRest || !beat.notes.some((n: any) => !n.isTieDestination)) continue;
+        out.push((api.score.masterBars[bar.index].start + beat.playbackStart) / 960);
+      }
+    return { starts: out, tempo: api.score.tempo as number };
+  });
+
+/** Importe la tablature texte de test (PDF imprimé par Chromium) et l'ouvre. */
+async function openTextTab(page: Page, context: import('@playwright/test').BrowserContext): Promise<void> {
+  const printer = await context.newPage();
+  await printer.setContent(asciiTabHtml('text'), { waitUntil: 'load' });
+  const pdf = await printer.pdf({ format: 'A4' });
+  await printer.close();
+  await openApp(page);
+  await importScore(page, { name: 'arpeges.pdf', mimeType: 'application/pdf', buffer: pdf });
+  await waitForScore(page);
+}
+
 const scoreApi = (page: Page) =>
   page.evaluate(() => {
     const { api } = (window as unknown as { __scores: { debug(): { api: any } } }).__scores.debug();
@@ -250,6 +327,90 @@ test.describe('Import des formats', () => {
     await expect(page.getByRole('alert')).toContainText('Fichier invalide');
     await importScore(page, { name: 'notes.docx', mimeType: 'application/octet-stream', buffer: Buffer.from('PK\u0003\u0004word/document.xml') });
     await expect(page.getByRole('alert')).toContainText('Format non pris en charge');
+  });
+});
+
+test.describe('Calage sur un enregistrement de référence', () => {
+  test('écoute automatique d’un fichier audio : rythme réécrit, lecture qui suit l’enregistrement', async ({ page, context }) => {
+    test.setTimeout(120_000);
+    await openTextTab(page, context);
+    expect((await noteStarts(page)).starts).toEqual([0, 1, 2, 3, 4, 6, 7]);
+
+    await page.getByTestId('media-toggle').click();
+    await page.getByTestId('media-file').setInputFiles(tabRecording());
+    await expect(page.locator('.media__audio')).toBeAttached();
+    await page.getByRole('button', { name: 'Écoute automatique' }).click();
+    await expect(page.getByTestId('rhythm-summary')).toContainText('2', { timeout: 60_000 });
+    await expect(page.getByTestId('rhythm-summary')).toContainText('≈ 100');
+    await page.getByTestId('rhythm-keep').click();
+    await expect(page.locator('.player__notice')).toContainText('calé', { timeout: 30_000 });
+    await waitForScore(page);
+    const result = await noteStarts(page);
+    expect(result.starts).toEqual(TAB_RHYTHM);
+    expect(result.tempo).toBe(100);
+    await expect(page.getByTestId('media-follow')).toHaveAttribute('aria-pressed', 'true');
+
+    // Lecture : c'est l'enregistrement qui joue, et le curseur suit sa position.
+    await page.getByRole('button', { name: 'Lire' }).click();
+    await page.waitForFunction(() => !(document.querySelector('.media__audio') as HTMLAudioElement).paused, null, { timeout: 15_000 });
+    // 3 s dans l'enregistrement = 3e temps (la première note sonne à 1,2 s, noire = 0,6 s) : tick 2880.
+    // (Position imposée : dans Chromium sans tête, avec les périphériques simulés, le son peut se figer.)
+    await page.evaluate(() => {
+      (document.querySelector('.media__audio') as HTMLAudioElement).currentTime = 3;
+    });
+    await page.waitForFunction(
+      () => {
+        const tick = (window as unknown as { __scores: { debug(): { api: any } } }).__scores.debug().api.tickPosition as number;
+        return Math.abs(tick - 2880) < 240;
+      },
+      null,
+      { timeout: 15_000 },
+    );
+    await page.getByRole('button', { name: 'Pause' }).click();
+    await expect.poll(() => page.evaluate(() => (document.querySelector('.media__audio') as HTMLAudioElement).paused)).toBe(true);
+
+    // Rouverte depuis la bibliothèque : rythme, lien et calage conservés.
+    await page.getByRole('button', { name: 'Retour à la bibliothèque' }).click();
+    await page.locator('.library__open').first().click();
+    await waitForScore(page);
+    expect((await noteStarts(page)).starts).toEqual(TAB_RHYTHM);
+    await expect(page.locator('.media__audio')).toBeAttached();
+    await expect(page.getByTestId('media-follow')).toHaveAttribute('aria-pressed', 'true');
+    // Lecteur audio recréé après l'ouverture : la lecture suit de nouveau l'enregistrement.
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { __scores: { debug(): { api: any; at: any } } }).__scores.debug().api.settings.player.playerMode))
+      .toBe(4);
+  });
+
+  test('rythme tapé pendant l’écoute', async ({ page, context }) => {
+    test.setTimeout(120_000);
+    await openTextTab(page, context);
+    await page.getByTestId('media-toggle').click();
+    await page.getByTestId('media-file').setInputFiles(tabRecording());
+    await expect(page.locator('.media__audio')).toBeAttached();
+    await page.getByRole('button', { name: 'Taper le rythme' }).click();
+    await expect(page.getByTestId('tap-progress')).toContainText('Note 1');
+    // Un appui à chaque note, au moment où l'enregistrement la joue.
+    await page.evaluate((times) => {
+      const audio = document.querySelector('.media__audio') as HTMLAudioElement;
+      const button = document.querySelector('[data-testid="tap-note"]') as HTMLElement;
+      let i = 0;
+      const loop = (): void => {
+        if (i >= times.length) return;
+        if (audio.currentTime >= (times[i] as number)) {
+          button.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+          i++;
+        }
+        requestAnimationFrame(loop);
+      };
+      void audio.play();
+      requestAnimationFrame(loop);
+    }, TAB_TIMES);
+    await expect(page.getByTestId('rhythm-summary')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('rhythm-keep').click();
+    await expect(page.locator('.player__notice')).toContainText('calé', { timeout: 30_000 });
+    await waitForScore(page, { sound: false });
+    expect((await noteStarts(page)).starts).toEqual(TAB_RHYTHM);
   });
 });
 

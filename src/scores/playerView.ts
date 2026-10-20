@@ -3,9 +3,21 @@ import { allowSleep, keepAwake } from '../shell/wakeLock';
 import { h } from '../ui/dom';
 import { describeError } from '../ui/errors';
 import { bindHoldRepeat } from '../ui/hold';
-import { ASSET_BASE, type AlphaTabModule, type Api, type Score, loadAlphaTab, scoreColors } from './alphatab';
+import {
+  ASSET_BASE,
+  type AlphaTabModule,
+  type Api,
+  type ExternalMediaHandler,
+  type ExternalMediaOutput,
+  type Score,
+  loadAlphaTab,
+  scoreColors,
+} from './alphatab';
 import type { ScoreEntry, ScoreSettings, StoredSelection } from './library';
 import { type Passage, SelectionController } from './selection';
+import type { ReferenceMedia } from './sync/media';
+import { MediaPanel } from './sync/mediaPanel';
+import type { SyncPoint } from './sync/rhythmFit';
 
 const MIN_SPEED = 0.25;
 const MAX_SPEED = 1;
@@ -15,9 +27,17 @@ const NB = ' ';
 interface PlayerDeps {
   /** Retour à la bibliothèque. */
   onBack: () => void;
-  /** Réglages modifiés (vitesse, boucle, sélection…) : à enregistrer. */
+  /** Réglages modifiés (vitesse, boucle, sélection, enregistrement lié…) : à enregistrer. */
   onSettingsChange: (entry: ScoreEntry) => void;
+  /** Fichier audio de référence de la partition. */
+  loadMediaFile: (entry: ScoreEntry) => Promise<Uint8Array | undefined>;
+  saveMediaFile: (entry: ScoreEntry, bytes: Uint8Array | null) => Promise<void>;
+  /** Partition réécrite (rythme calé sur l'enregistrement) : à enregistrer, puis rouvrir. */
+  replaceScore: (entry: ScoreEntry, xml: Uint8Array) => Promise<void>;
 }
+
+/** Ticks MIDI d'alphaTab par noire. */
+const QUARTER_TICKS = 960;
 
 const isCoarsePointer = (): boolean => window.matchMedia('(pointer: coarse)').matches;
 const scaleForWidth = (): number => (window.innerWidth < 600 ? 0.8 : 1);
@@ -49,6 +69,13 @@ export class ScorePlayerView {
   private playing = false;
   private loadingSound = false;
   private currentScale = scaleForWidth();
+  /** Partition affichée à la place de celle enregistrée (aperçu d'un rythme recalé). */
+  private previewing = false;
+  /** Lecture avec l'enregistrement de référence (alphaTab en mode « média externe »). */
+  private following = false;
+  private media: ReferenceMedia | null = null;
+  private mediaFrame = 0;
+  private readonly panel: MediaPanel;
 
   private readonly titleEl = h('p', { class: 'player__title' });
   private readonly artistEl = h('p', { class: 'player__artist' });
@@ -75,6 +102,27 @@ export class ScorePlayerView {
   private readonly playButton = h('button', { type: 'button', class: 'btn btn--primary', 'aria-pressed': 'false', disabled: true }, 'Lire');
 
   constructor(private readonly deps: PlayerDeps) {
+    this.panel = new MediaPanel({
+      current: () => (this.entry && this.score ? { entry: this.entry, score: this.score, trackIndex: this.trackIndex } : null),
+      alphaTab: () => this.at,
+      saveEntry: (entry) => deps.onSettingsChange(entry),
+      loadMediaFile: (entry) => deps.loadMediaFile(entry),
+      saveMediaFile: (entry, bytes) => deps.saveMediaFile(entry, bytes),
+      mediaChanged: (media) => this.attachMedia(media),
+      setFollow: (on) => this.setFollow(on),
+      applySync: (points) => this.applySync(points),
+      preview: (score) => this.preview(score),
+      commit: (entry, xml) => deps.replaceScore(entry, xml),
+      selectionStart: () => {
+        const start = this.selection?.current?.start;
+        return start ? start.absolutePlaybackStart / QUARTER_TICKS : null;
+      },
+      cursorTo: (quarters) => {
+        if (this.api?.isReadyForPlayback) this.api.tickPosition = Math.round(quarters * QUARTER_TICKS);
+      },
+      speed: () => this.entry?.settings.speed ?? 1,
+      stopPlayback: () => this.api?.pause(),
+    });
     const back = h(
       'button',
       { type: 'button', class: 'btn btn--ghost player__back', 'aria-label': 'Retour à la bibliothèque' },
@@ -91,9 +139,11 @@ export class ScorePlayerView {
         back,
         h('div', { class: 'player__heading' }, this.titleEl, this.artistEl),
         this.trackLabel,
+        this.panel.toggleButton,
       ),
       this.noticeEl,
       this.alertEl,
+      this.panel.element,
       h('div', { class: 'player__stage' }, this.scroller, this.statusEl),
       h(
         'div',
@@ -134,10 +184,20 @@ export class ScorePlayerView {
     return (this.entry as ScoreEntry).settings;
   }
 
+  private get trackIndex(): number {
+    const count = this.score?.tracks.length ?? 1;
+    return Math.min(Math.max(0, this.entry?.settings.trackIndex ?? 0), count - 1);
+  }
+
   /** Ouvre une partition déjà lue par alphaTab. */
   async open(entry: ScoreEntry, score: Score, notice: string | null): Promise<void> {
     this.entry = entry;
     this.score = score;
+    this.previewing = false;
+    // Calage sur l'enregistrement de référence : points de synchronisation de la partition.
+    const synced = MediaPanel.syncValid(entry);
+    if (synced && entry.sync) score.applyFlatSyncPoints(entry.sync.points);
+    void this.panel.load(entry);
     this.pendingSelection = entry.settings.selection;
     this.titleEl.textContent = entry.title;
     this.artistEl.textContent = entry.artist;
@@ -163,6 +223,7 @@ export class ScorePlayerView {
       this.selection?.forget();
       this.renderSelection(null);
       this.renderSettings();
+      this.setFollow(synced && !!entry.settings.followMedia, false);
       api.renderScore(score, [trackIndex]);
       api.playbackSpeed = entry.settings.speed;
       api.isLooping = entry.settings.loop;
@@ -175,6 +236,122 @@ export class ScorePlayerView {
   /** Met la lecture en pause (accordeur ouvert, etc.). */
   pause(): void {
     if (this.playing) this.api?.pause();
+    this.media?.pause();
+  }
+
+  /** Partition quittée : tâche de calage arrêtée. */
+  close(): void {
+    this.panel.close();
+    this.pause();
+  }
+
+  // --- Enregistrement de référence ------------------------------------------------
+
+  /**
+   * Lecture avec l'enregistrement : alphaTab ne joue plus son synthétiseur, il commande le
+   * lecteur (lecture, pause, position, vitesse) et suit sa position pour le curseur et la boucle.
+   */
+  private setFollow(on: boolean, apply = true): void {
+    const at = this.at;
+    const api = this.api;
+    const want = on && !!this.media;
+    if (!at || !api) {
+      this.following = want;
+      return;
+    }
+    if (want === this.following && api.settings.player.playerMode === (want ? at.PlayerMode.EnabledExternalMedia : at.PlayerMode.EnabledSynthesizer)) return;
+    api.pause();
+    this.following = want;
+    api.settings.player.playerMode = want ? at.PlayerMode.EnabledExternalMedia : at.PlayerMode.EnabledSynthesizer;
+    if (apply) api.updateSettings();
+    this.bindHandler();
+  }
+
+  private attachMedia(media: ReferenceMedia | null): void {
+    this.media = media;
+    cancelAnimationFrame(this.mediaFrame);
+    if (!media) {
+      this.setFollow(false);
+      return;
+    }
+    // Lecteur créé après l'ouverture (chargement de YouTube…) : la lecture suivie reprend.
+    const entry = this.entry;
+    if (entry && entry.settings.followMedia && MediaPanel.syncValid(entry)) this.setFollow(true);
+    media.onState((state) => {
+      const api = this.api;
+      if (!api || !this.following || this.media !== media) return;
+      if (state === 'playing') {
+        // Lecture lancée depuis le lecteur vidéo lui-même : alphaTab suit.
+        if (!this.playing) api.play();
+        cancelAnimationFrame(this.mediaFrame);
+        this.mediaFrame = requestAnimationFrame(this.followFrame);
+      } else if (state === 'paused' || state === 'ended') {
+        if (this.playing) api.pause();
+        this.pushPosition();
+      }
+    });
+    this.bindHandler();
+  }
+
+  /** Lecteur de référence confié à alphaTab (mode « média externe »). */
+  private bindHandler(): void {
+    const api = this.api;
+    const media = this.media;
+    if (!api || !this.following || !media) return;
+    const output = api.player?.output as ExternalMediaOutput | undefined;
+    if (!output || !('handler' in output)) return;
+    const handler: ExternalMediaHandler = {
+      get backingTrackDuration() {
+        return media.duration * 1000;
+      },
+      get playbackRate() {
+        return media.playbackRate;
+      },
+      set playbackRate(value: number) {
+        media.playbackRate = value;
+      },
+      get masterVolume() {
+        return media.volume;
+      },
+      set masterVolume(value: number) {
+        media.volume = value;
+      },
+      seekTo: (ms: number) => {
+        media.seek(ms / 1000);
+        this.pushPosition();
+      },
+      play: () => media.play(),
+      pause: () => media.pause(),
+    };
+    output.handler = handler;
+  }
+
+  private pushPosition(): void {
+    const output = this.api?.player?.output as ExternalMediaOutput | undefined;
+    if (this.following && this.media && output && 'updatePosition' in output) output.updatePosition(this.media.currentTime() * 1000);
+  }
+
+  private readonly followFrame = (): void => {
+    if (!this.following || !this.media?.playing) return;
+    this.pushPosition();
+    this.mediaFrame = requestAnimationFrame(this.followFrame);
+  };
+
+  private applySync(points: SyncPoint[]): void {
+    if (!this.score || !this.api) return;
+    this.score.applyFlatSyncPoints(points);
+    this.api.updateSyncPoints();
+  }
+
+  /** Aperçu d'une partition réécrite (null : retour à celle enregistrée). */
+  private preview(score: Score | null): void {
+    const api = this.api;
+    if (!api || !this.score) return;
+    api.pause();
+    this.selection?.forget();
+    this.renderSelection(null);
+    this.previewing = score !== null;
+    api.renderScore(score ?? this.score, [this.trackIndex]);
   }
 
   // --- alphaTab ----------------------------------------------------------------
@@ -243,6 +420,7 @@ export class ScorePlayerView {
       this.loadingSound = false;
       this.status(null);
       this.playButton.disabled = false;
+      this.bindHandler();
       const settings = this.entry?.settings;
       if (settings) {
         api.playbackSpeed = settings.speed;
@@ -272,11 +450,23 @@ export class ScorePlayerView {
     const api = this.api;
     if (!api || !api.isReadyForPlayback) return;
     setAudioSession('playback');
+    if (this.following) this.bindHandler();
+    const starting = !this.playing;
     api.playPause();
+    // Sur téléphone, YouTube refuse la lecture commandée tant qu'on n'a pas touché la vidéo une fois.
+    const media = this.media;
+    if (starting && this.following && media) {
+      window.setTimeout(() => {
+        if (this.following && this.media === media && this.playing && !media.playing) {
+          this.panel.notify('La vidéo ne démarre pas : touchez-la une première fois pour la lancer, puis utilisez « Lire ».');
+        }
+      }, 2500);
+    }
   }
 
   private changeTrack(index: number): void {
     if (!this.api || !this.score || !this.entry) return;
+    this.previewing = false;
     this.api.pause();
     this.selection?.forget();
     this.renderSelection(null);
@@ -314,6 +504,8 @@ export class ScorePlayerView {
 
   private onSelectionChange(passage: Passage | null): void {
     this.renderSelection(passage);
+    // Pendant l'aperçu d'un rythme recalé, la sélection vise une autre partition : pas enregistrée.
+    if (this.previewing) return;
     const stored: StoredSelection | null = passage
       ? {
           startBar: passage.start.voice.bar.index,
