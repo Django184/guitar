@@ -81,20 +81,23 @@ export function applyTuplets(ctx: PageContext, staff: Staff, events: Ev[], stems
     const smufl = (digits.find((d) => d.x === n.x)?.glyph.cp ?? 0) >= 0xe000;
     const midY = smufl ? n.y - 0.25 * sp : n.y - 0.35 * n.size;
     // Crochet : segments horizontaux de part et d'autre du chiffre.
-    const near = (y: number): boolean => Math.abs(y - midY) < 1.4 * sp;
-    const leftSeg = ctx.hsegs.find((h) => near(h.y) && h.x1 <= n.x + 0.2 * sp && n.x - h.x1 < 1.5 * sp && h.x1 - h.x0 > 0.3 * sp);
-    const rightSeg = ctx.hsegs.find((h) => near(h.y) && h.x0 >= n.x1 - 0.2 * sp && h.x0 - n.x1 < 1.5 * sp && h.x1 - h.x0 > 0.3 * sp);
+    // Traits fins seulement : une ligature horizontale voisine n'est pas un crochet.
+    const near = (h: { y: number; thickness: number }): boolean => Math.abs(h.y - midY) < 1.4 * sp && h.thickness < 0.3 * sp;
+    const leftSeg = ctx.hsegs.find((h) => near(h) && h.x1 <= n.x + 0.2 * sp && n.x - h.x1 < 1.5 * sp && h.x1 - h.x0 > 0.3 * sp);
+    const rightSeg = ctx.hsegs.find((h) => near(h) && h.x0 >= n.x1 - 0.2 * sp && h.x0 - n.x1 < 1.5 * sp && h.x1 - h.x0 > 0.3 * sp);
     let members: Ev[] = [];
     if (leftSeg && rightSeg) {
       const x0 = leftSeg.x0 - 0.6 * sp;
       const x1 = rightSeg.x1 + 0.3 * sp;
       const above = midY < staffTop(staff);
-      // Notes de cette portée sous le crochet : leur tête ou le bout de leur hampe en est proche.
+      // Le crochet appartient à cette portée si l'une de ses notes le touche (tête ou bout de hampe) :
+      // un crochet entre deux portées n'est pas pris par la voisine.
       const reach = (e: Ev): boolean => {
         const ys = [e.y, ...e.heads.map((h) => h.y), ...(e.stem ? [e.stem.y0, e.stem.y1] : [])];
-        return ys.some((y) => Math.abs(y - midY) < 4.5 * sp);
+        return ys.some((y) => Math.abs(y - midY) < 2.5 * sp);
       };
-      members = events.filter((e) => e.x >= x0 && e.x <= x1 && reach(e));
+      const inRange = events.filter((e) => e.x >= x0 && e.x <= x1);
+      members = inRange.some(reach) ? inRange : [];
       // Deux voix : le crochet au-dessus concerne la voix haute.
       if (members.some((e) => e.stemDir === 'up') && members.some((e) => e.stemDir === 'down')) {
         members = members.filter((e) => !e.stemDir || e.stemDir === (above ? 'up' : 'down'));
@@ -123,7 +126,7 @@ export function applyTuplets(ctx: PageContext, staff: Staff, events: Ev[], stems
     const inside = midY > staffTop(staff) + 0.5 * sp && midY < staffBottom(staff) - 0.5 * sp;
     if (inside && !smufl && !(leftSeg && rightSeg)) continue;
     if (members.length < 2) continue;
-    emit({ page: ctx.page.index, kind: 'tuplet', x0: Math.min(...members.map((e) => e.x)), y0: midY, x1: Math.max(...members.map((e) => e.x1)), y1: midY, label: String(n.value) });
+    emit({ page: ctx.page.index, kind: 'tuplet', x0: Math.min(...members.map((e) => e.x)), y0: midY, x1: Math.max(...members.map((e) => e.x1)), y1: midY, label: `${n.value}@${Math.round(staffTop(staff))}${leftSeg && rightSeg ? 'b' : 'l'}` });
     for (const e of members) if (!e.tuplet) e.tuplet = { actual: n.value, normal: 0 };
   }
 }
