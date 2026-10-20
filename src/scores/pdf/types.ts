@@ -43,6 +43,14 @@ export interface PathItem {
   box: Box;
 }
 
+/** Image posée sur la page (XObject), pour la lecture des tablatures dessinées en image. */
+export interface PageImage {
+  /** Identifiant de l'objet pdf.js (page.objs). */
+  id: string;
+  /** Emplacement sur la page, en points. */
+  box: Box;
+}
+
 export interface PageData {
   index: number;
   width: number;
@@ -51,4 +59,6 @@ export interface PageData {
   paths: PathItem[];
   /** Surface couverte par des images (pour reconnaître un PDF scanné), en points². */
   imageArea: number;
+  /** Images (XObjects) de la page, dans l'ordre de dessin. */
+  images?: PageImage[];
 }

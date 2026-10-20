@@ -8,7 +8,7 @@ export type PdfGuideReason = 'scanned' | 'no-music' | 'protected';
 
 const REASONS: Record<PdfGuideReason, string> = {
   scanned:
-    "Ce PDF est une image (partition scannée ou photographiée) : l'app lit seulement les PDF exportés par un logiciel de partition (MuseScore, Guitar Pro, Finale, Sibelius, Dorico, LilyPond…). Convertissez-le en MusicXML, puis importez le fichier obtenu.",
+    "Ce PDF est une image (partition scannée ou photographiée) : l'app lit les PDF exportés par un logiciel de partition (MuseScore, Guitar Pro, Finale, Sibelius, Dorico, LilyPond…) et les tablatures texte, même en image, mais pas les portées scannées. Convertissez-le en MusicXML, puis importez le fichier obtenu.",
   'no-music':
     "Aucune portée ni tablature n'a été reconnue dans ce PDF. S'il s'agit bien d'une partition, convertissez-la en MusicXML, puis importez le fichier obtenu.",
   protected: 'Ce PDF est protégé par un mot de passe. Enregistrez-en une copie sans protection, ou convertissez-le en MusicXML.',

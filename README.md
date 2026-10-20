@@ -132,9 +132,20 @@ tablature est lue chiffre par chiffre (corde, case) ; son rythme vient de la por
 jumelle, des hampes sous la tablature (style Guitar Pro), ou à défaut de l'espacement des colonnes.
 L'accordage est déduit des notes de la portée jumelle, ou lu dans le texte (« Tuning: D A D G B E »,
 « ⑥ = D », « Drop D », « Tune down 1/2 step », capodastre). Le résultat est converti en MusicXML et
-conservé dans la bibliothèque ; un message invite à vérifier notes et rythmes. Un PDF scanné
-(image) n'est pas lisible : l'app l'explique et propose la conversion par MuseScore ou Audiveris.
-Le code est dans `src/scores/pdf/` (extraction, mise en page, notation, tablature, rythme, MusicXML).
+conservé dans la bibliothèque ; un message invite à vérifier notes et rythmes.
+
+Les **tablatures texte** (« ASCII », lignes `e|---0---|` en police à chasse fixe, courantes sur les
+sites de tablatures) sont lues aussi, qu'elles soient écrites en caractères dans le PDF ou collées
+en image (capture d'écran) : pour ces dernières, une reconnaissance de caractères dédiée, sans
+dépendance, retrouve la grille (tirets des cordes, pas des colonnes) puis lit chaque case (chiffre,
+barre, nom de corde) par comparaison à des gabarits. L'accordage vient des noms de cordes
+(`D|` en bas : drop D) ou du texte, le capodastre et le chiffrage du texte (« Capo 2 », « 3/4 »).
+Une tablature texte n'écrit pas le rythme : il est déduit de la position des chiffres dans la
+mesure (ou, sans barres, de leur espacement), et un message invite à le vérifier à l'écoute.
+
+Une partition scannée (portées en image) n'est pas lisible : l'app l'explique et propose la
+conversion par MuseScore ou Audiveris. Le code est dans `src/scores/pdf/` (extraction, mise en page,
+notation, tablature, rythme, tablatures texte et reconnaissance en image, MusicXML).
 
 **Sélection.** À la souris : cliquer-glisser d'une mesure à l'autre. Au doigt : appui long
 (0,4 s) sur la première mesure, puis glisser ; un simple glissement fait défiler la partition.
@@ -163,7 +174,9 @@ Automatique (CI, job **e2e**, profils ordinateur et mobile) :
 - un fichier GP3, GP5, GPX, GP7, MusicXML, MXL et MIDI s'affiche avec sa tablature ;
 - un PDF de partition (gravé par alphaTab puis imprimé par Chromium pendant le test) est lu dans
   l'app : mêmes notes, mesures, positions et durées que la partition d'origine, tablature
-  comprise ; un PDF sans musique ou illisible est expliqué, sans rien ajouter à la bibliothèque ;
+  comprise ; une tablature texte imprimée en PDF, en caractères comme en image, donne les mêmes
+  cases et l'accordage écrit ; un PDF sans musique ou illisible est expliqué, sans rien ajouter à
+  la bibliothèque ;
 - la sélection des mesures 5 à 8 (glissé souris, ou appui long + glissé au doigt) donne la bonne
   plage de lecture ; à 50 %, la lecture reste dans le passage, revient au début sans trou
   (jamais plus de 300 ms sans avancer, bouclage compris) et avance à la moitié du tempo ;
@@ -196,8 +209,9 @@ src/
   metronome/            horloge des temps, clics, Worker, tap tempo, écran Métronome
   scores/               formats, conversion MIDI, tablature, bibliothèque IndexedDB,
                         lecteur alphaTab, sélection souris / doigt, écran Partitions
-    pdf/                lecture des PDF vectoriels : extraction pdf.js, portées et systèmes,
-                        notation, tablature et accordage, rythme et voix, écriture MusicXML
+    pdf/                lecture des PDF : extraction pdf.js, portées et systèmes, notation,
+                        tablature et accordage, rythme et voix, tablatures texte (caractères
+                        ou image, reconnaissance dédiée), écriture MusicXML
   ui/                   helpers DOM, appui long, messages d'erreur en français
 tests/                  tests Vitest (unitaires)
 e2e/                    tests Playwright (bout en bout)
