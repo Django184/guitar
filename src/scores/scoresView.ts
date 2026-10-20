@@ -4,7 +4,7 @@ import type { View } from '../shell/view';
 import { h } from '../ui/dom';
 import { AppError, describeError } from '../ui/errors';
 import { type Score, loadAlphaTab, parseScore } from './alphatab';
-import { MAX_FILE_BYTES, detectScoreBytes } from './formats';
+import { MAX_FILE_BYTES, type ScoreFormat, detectScoreBytes } from './formats';
 import {
   DEFAULT_SETTINGS,
   type ScoreEntry,
@@ -29,6 +29,14 @@ const baseName = (fileName: string): string => fileName.replace(/\.[^.]+$/, '').
 const alert = (message: string): HTMLElement => h('p', { class: 'alert', role: 'alert' }, message);
 /** alphaTab remplace les espaces des titres MusicXML par des espaces insécables : on les normalise. */
 const cleanText = (text: string): string => text.replace(/\s+/g, ' ').trim();
+
+const PDF_NOTICE = `Partition lue dans le PDF${NB}: vérifiez les notes et les rythmes.`;
+
+/** Avertissement affiché au-dessus de la partition (conversion, tablature calculée). */
+function noticeFor(entry: ScoreEntry, prepared: string | null): string | null {
+  if (entry.origin !== 'pdf') return prepared;
+  return prepared ? `${PDF_NOTICE} La tablature a été calculée${NB}: vérifiez les doigtés.` : PDF_NOTICE;
+}
 
 /**
  * Écran Partitions : bibliothèque locale (IndexedDB) et lecteur.
@@ -125,7 +133,7 @@ export function createScoresView(): ScoresView {
       if (file.size > MAX_FILE_BYTES) {
         throw new AppError('file-invalid', `Fichier invalide${NB}: «${NB}${file.name}${NB}» dépasse 50${NB}Mo.`);
       }
-      let bytes: Uint8Array;
+      let bytes: Uint8Array<ArrayBuffer>;
       try {
         bytes = new Uint8Array(await file.arrayBuffer());
       } catch {
@@ -133,11 +141,7 @@ export function createScoresView(): ScoresView {
       }
 
       const detection = detectScoreBytes(file.name, bytes);
-      if (detection.kind === 'pdf') {
-        libraryView.showMessage(pdfGuide(file.name));
-        return;
-      }
-      if (detection.kind !== 'score') {
+      if (detection.kind !== 'score' && detection.kind !== 'pdf') {
         libraryView.showMessage(alert(detection.message));
         return;
       }
@@ -150,23 +154,37 @@ export function createScoresView(): ScoresView {
         return;
       }
 
+      // PDF : lu et converti en MusicXML ici même ; c'est ce MusicXML qui est conservé.
+      let format: ScoreFormat;
+      let origin: 'pdf' | undefined;
+      if (detection.kind === 'pdf') {
+        const converted = await readPdf(file.name, bytes);
+        if (!converted) return;
+        bytes = converted;
+        format = 'musicxml';
+        origin = 'pdf';
+      } else {
+        format = detection.format;
+      }
+
       // Le fichier est lu entièrement AVANT d'être enregistré : un fichier illisible n'entre pas dans la bibliothèque.
-      const prepared = await prepareScore(detection.format, bytes, baseName(file.name));
+      const prepared = await prepareScore(format, bytes, baseName(file.name));
       const at = await loadAlphaTab();
-      const score = parseScore(at, prepared.data);
+      const score = parseScore(at, prepared.data, origin === 'pdf');
       const now = Date.now();
       const entry: ScoreEntry = {
         id: newEntryId(),
         fileName: file.name,
         title: cleanText(score.title) || baseName(file.name),
         artist: cleanText(score.artist),
-        format: detection.format,
+        format,
+        ...(origin ? { origin } : {}),
         size: file.size,
         addedAt: now,
         openedAt: now,
         settings: { ...DEFAULT_SETTINGS },
       };
-      parsed = { id: entry.id, score, notice: prepared.notice };
+      parsed = { id: entry.id, score, notice: noticeFor(entry, prepared.notice) };
 
       try {
         if (!library) throw new AppError('storage-unavailable');
@@ -185,6 +203,37 @@ export function createScoresView(): ScoresView {
     } finally {
       libraryView.setBusy(false);
     }
+  }
+
+  /**
+   * Lit un PDF de partition et le convertit en MusicXML (module chargé à la demande).
+   * Renvoie null, guide de conversion affiché, quand le PDF n'est pas lisible (scan, aucune portée).
+   */
+  async function readPdf(name: string, bytes: Uint8Array): Promise<Uint8Array<ArrayBuffer> | null> {
+    const status = h('p', { class: 'status-line', role: 'status' }, 'Lecture du PDF…');
+    libraryView.showMessage(status);
+    let convert: typeof import('./pdf/convert');
+    try {
+      convert = await import('./pdf/convert');
+    } catch (error) {
+      console.error(error);
+      throw new AppError('module-failed', "Le lecteur de PDF n'a pas pu être chargé. Vérifiez la connexion, puis réessayez.");
+    }
+    let result: Awaited<ReturnType<typeof convert.convertPdf>>;
+    try {
+      result = await convert.convertPdf(bytes, (page, total) => {
+        status.textContent = total > 1 ? `Lecture du PDF… page${NB}${page}/${total}` : 'Lecture du PDF…';
+      });
+    } catch (error) {
+      console.error(error);
+      throw new AppError('file-invalid', `Fichier invalide${NB}: «${NB}${name}${NB}» n'est pas un PDF lisible.`);
+    }
+    if (result.kind !== 'score') {
+      libraryView.showMessage(pdfGuide(name, result.kind));
+      return null;
+    }
+    libraryView.showMessage(null);
+    return new TextEncoder().encode(result.xml);
   }
 
   // --- Ouverture, suppression, renommage ---------------------------------------
@@ -222,8 +271,8 @@ export function createScoresView(): ScoresView {
         const bytes = await found.bytes();
         if (!bytes) throw new AppError('file-unreadable');
         const prepared = await prepareScore(entry.format, bytes, entry.title);
-        score = parseScore(await loadAlphaTab(), prepared.data);
-        notice = prepared.notice;
+        score = parseScore(await loadAlphaTab(), prepared.data, entry.origin === 'pdf');
+        notice = noticeFor(entry, prepared.notice);
         parsed = { id, score, notice };
       }
       if (openId !== id) return; // l'utilisateur est reparti entre-temps

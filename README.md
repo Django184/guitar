@@ -117,10 +117,24 @@ installez l'app depuis la version GitHub Pages.
 **Formats.** Guitar Pro 3 à 8 (`.gp3`, `.gp4`, `.gp5`, `.gpx`, `.gp`) et MusicXML (`.musicxml`,
 `.xml`, `.mxl`) sont lus par [alphaTab](https://alphatab.net) 1.8. alphaTab ne lit pas le MIDI :
 l'app le convertit en MusicXML (rythmes arrondis à la double croche, une voix par piste, batterie
-ignorée). Quand un fichier n'a pas de tablature (MIDI, MusicXML issu d'un PDF), l'app la calcule :
-chaque note est placée sur une corde et une case en limitant les déplacements de la main ; un
-message invite à vérifier les doigtés. Un PDF déclenche le guide de conversion (MuseScore ou
-Audiveris, puis import du MusicXML).
+ignorée). Quand un fichier n'a pas de tablature (MIDI, MusicXML, PDF sans tablature), l'app la
+calcule : chaque note est placée sur une corde et une case en limitant les déplacements de la main ;
+un message invite à vérifier les doigtés.
+
+**PDF.** Les PDF exportés par un logiciel de partition (MuseScore, Guitar Pro, Finale, Sibelius,
+Dorico, LilyPond…) sont lus directement dans l'app, sans réseau : leurs symboles sont des caractères
+de police musicale et leurs lignes des tracés vectoriels, que l'app lit avec
+[pdf.js](https://mozilla.github.io/pdf.js/) à leur position exacte. Elle reconnaît les portées et
+systèmes (y compris les portées masquées d'un système à l'autre), les clés (clé de sol octaviée),
+armures, chiffrages, altérations, notes, accords, silences, hampes, ligatures, crochets, points,
+n-olets, liaisons de prolongation, deux voix par portée, les reprises, le titre et le tempo. Une
+tablature est lue chiffre par chiffre (corde, case) ; son rythme vient de la portée de notation
+jumelle, des hampes sous la tablature (style Guitar Pro), ou à défaut de l'espacement des colonnes.
+L'accordage est déduit des notes de la portée jumelle, ou lu dans le texte (« Tuning: D A D G B E »,
+« ⑥ = D », « Drop D », « Tune down 1/2 step », capodastre). Le résultat est converti en MusicXML et
+conservé dans la bibliothèque ; un message invite à vérifier notes et rythmes. Un PDF scanné
+(image) n'est pas lisible : l'app l'explique et propose la conversion par MuseScore ou Audiveris.
+Le code est dans `src/scores/pdf/` (extraction, mise en page, notation, tablature, rythme, MusicXML).
 
 **Sélection.** À la souris : cliquer-glisser d'une mesure à l'autre. Au doigt : appui long
 (0,4 s) sur la première mesure, puis glisser ; un simple glissement fait défiler la partition.
@@ -135,8 +149,9 @@ La lecture se met en pause quand on quitte l'écran ou qu'on démarre l'accordeu
 vitesse, boucle, sélection), restaurés à la réouverture. Renommer et supprimer (avec « Annuler »)
 depuis la liste. En navigation privée, la partition s'ouvre mais n'est pas conservée.
 
-**Hors-ligne.** alphaTab, sa police musicale (Bravura, 0,3 Mo) et la banque de sons SONiVOX
-(1 Mo) sont précachées avec l'app : une partition déjà importée s'ouvre et se joue sans réseau.
+**Hors-ligne.** alphaTab, sa police musicale (Bravura, 0,3 Mo), la banque de sons SONiVOX
+(1 Mo) et pdf.js (1,8 Mo, chargé seulement à l'import d'un PDF) sont précachés avec l'app : une
+partition déjà importée s'ouvre et se joue sans réseau, et un PDF s'importe hors-ligne.
 
 **Limite connue d'alphaTab 1.8.4.** S'abonner à l'événement `midiLoaded` provoque une récursion
 infinie (`AlphaSynthWebWorkerApi.loadedMidiInfo`) ; l'app utilise `playerReady` à la place.
@@ -146,6 +161,9 @@ infinie (`AlphaSynthWebWorkerApi.loadedMidiInfo`) ; l'app utilise `playerReady` 
 Automatique (CI, job **e2e**, profils ordinateur et mobile) :
 
 - un fichier GP3, GP5, GPX, GP7, MusicXML, MXL et MIDI s'affiche avec sa tablature ;
+- un PDF de partition (gravé par alphaTab puis imprimé par Chromium pendant le test) est lu dans
+  l'app : mêmes notes, mesures, positions et durées que la partition d'origine, tablature
+  comprise ; un PDF sans musique ou illisible est expliqué, sans rien ajouter à la bibliothèque ;
 - la sélection des mesures 5 à 8 (glissé souris, ou appui long + glissé au doigt) donne la bonne
   plage de lecture ; à 50 %, la lecture reste dans le passage, revient au début sans trou
   (jamais plus de 300 ms sans avancer, bouclage compris) et avance à la moitié du tempo ;
@@ -178,6 +196,8 @@ src/
   metronome/            horloge des temps, clics, Worker, tap tempo, écran Métronome
   scores/               formats, conversion MIDI, tablature, bibliothèque IndexedDB,
                         lecteur alphaTab, sélection souris / doigt, écran Partitions
+    pdf/                lecture des PDF vectoriels : extraction pdf.js, portées et systèmes,
+                        notation, tablature et accordage, rythme et voix, écriture MusicXML
   ui/                   helpers DOM, appui long, messages d'erreur en français
 tests/                  tests Vitest (unitaires)
 e2e/                    tests Playwright (bout en bout)

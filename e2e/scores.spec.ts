@@ -4,6 +4,80 @@ import { midiFile, musicXmlFile, mxlFile } from './fixtures';
 import { barTicks, beatPoint, importScore, openApp, passagePoints, playerState, touchSelectBars, waitForScore } from './helpers';
 import { GP_FIXTURES } from './paths';
 
+/** Notes de la première piste : mesure, début et durée (ticks), hauteur. */
+const scoreNotes = (page: Page) =>
+  page.evaluate(() => {
+    const { api } = (window as unknown as { __scores: { debug(): { api: any } } }).__scores.debug();
+    const out: string[] = [];
+    for (const staff of api.score.tracks[0].staves)
+      for (const bar of staff.bars)
+        for (const voice of bar.voices)
+          for (const beat of voice.beats) for (const note of beat.notes) out.push(`${bar.index}:${beat.displayStart}:${beat.displayDuration}:${note.realValue}`);
+    return out.sort();
+  });
+
+/** Gravure de la partition ouverte en SVG statique (sans rendu différé), prête à imprimer. */
+const engravedHtml = (page: Page) =>
+  page.evaluate(async () => {
+    const { api, at } = (window as unknown as { __scores: { debug(): { api: any; at: any } } }).__scores.debug();
+    const host = document.createElement('div');
+    // Visible (alphaTab attend qu'un conteneur soit affiché pour le mettre en page), mais sous l'app.
+    host.style.cssText = 'position:fixed;left:0;top:0;width:760px;height:200px;overflow:hidden;z-index:-1;opacity:0.01';
+    document.body.append(host);
+    const engraver = new at.AlphaTabApi(host, {
+      core: { engine: 'svg', useWorkers: false, enableLazyLoading: false, fontDirectory: api.settings.core.fontDirectory },
+      display: { layoutMode: at.LayoutMode.Page, staveProfile: at.StaveProfile.Default },
+      player: { playerMode: at.PlayerMode.Disabled },
+    });
+    // Portée de notation ET tablature, comme un export Guitar Pro ou MuseScore « portée + tablature ».
+    for (const staff of api.score.tracks[0].staves) {
+      staff.showStandardNotation = true;
+      staff.standardNotationLineCount = 5;
+    }
+    await new Promise<void>((resolve) => {
+      engraver.renderFinished.on(() => resolve());
+      engraver.renderScore(api.score, [0]);
+    });
+    // Police musicale incorporée : la page d'impression n'a pas l'origine de l'app (CORS des polices).
+    const fontUrl = new URL(`${api.settings.core.fontDirectory}Bravura.woff2`, location.href).href;
+    const bytes = new Uint8Array(await (await fetch(fontUrl)).arrayBuffer());
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    const fontFace = `@font-face{font-family:'alphaTab';src:url(data:font/woff2;base64,${btoa(binary)}) format('woff2');}`;
+    const styles = [...document.querySelectorAll('style')]
+      .map((el) => el.outerHTML.replace(/@font-face\s*{[^}]*}/g, ''))
+      .join('') + `<style>${fontFace}</style>`;
+    const surface = host.querySelector('.at-surface') as HTMLElement;
+    const html =
+      `<!doctype html><html><head><meta charset="utf-8"><base href="${location.href}">${styles}` +
+      '<style>body{margin:0;background:#fff;color:#000} .at-surface>div{position:relative!important;top:auto!important;left:auto!important;break-inside:avoid}</style>' +
+      `</head><body><div style="width:760px">${surface.outerHTML}</div></body></html>`;
+    engraver.destroy();
+    host.remove();
+    return html;
+  });
+
+/** PDF valide mais sans musique (une ligne de texte). */
+function textOnlyPdf(): string {
+  const content = 'BT /F1 12 Tf 50 150 Td (Bonjour) Tj ET';
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 200] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    `<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
+  ];
+  let pdf = '%PDF-1.4\n';
+  const offsets: number[] = [];
+  objects.forEach((body, i) => {
+    offsets.push(pdf.length);
+    pdf += `${i + 1} 0 obj\n${body}\nendobj\n`;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.map((o) => `${String(o).padStart(10, '0')} 00000 n \n`).join('')}`;
+  return `${pdf}trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+}
+
 const scoreApi = (page: Page) =>
   page.evaluate(() => {
     const { api } = (window as unknown as { __scores: { debug(): { api: any } } }).__scores.debug();
@@ -54,12 +128,51 @@ test.describe('Import des formats', () => {
     await expect(page.locator('.player__notice')).toContainText('MIDI');
   });
 
-  test('PDF : guide de conversion, rien n’est ajouté à la bibliothèque', async ({ page }) => {
+  test('PDF exporté par un logiciel : lu dans l’app, partition et tablature', async ({ page, context }, testInfo) => {
+    test.setTimeout(120_000);
+    // Le PDF est produit ici : la partition MusicXML de test, gravée par alphaTab (police SMuFL),
+    // puis imprimée en PDF par Chromium, comme un export de logiciel de partition.
     await openApp(page);
-    await importScore(page, { name: 'scan.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.7\n%test\n') });
+    await importScore(page, musicXmlFile());
+    await waitForScore(page, { sound: false });
+    const original = await scoreNotes(page);
+    const html = await engravedHtml(page);
+    const printer = await context.newPage();
+    await printer.setContent(html, { waitUntil: 'load' });
+    await printer.evaluate(async () => {
+      await document.fonts.load('24px alphaTab', '\ue050');
+      await document.fonts.ready;
+    });
+    const pdf = await printer.pdf({ format: 'A4', printBackground: true });
+    await printer.close();
+    // Conservé avec les résultats des tests (artefact de la CI) pour pouvoir l'examiner.
+    fs.writeFileSync(testInfo.outputPath('promenade.pdf'), pdf);
+
+    await page.goto('./?e2e#/partitions');
+    await importScore(page, { name: 'promenade.pdf', mimeType: 'application/pdf', buffer: pdf });
+    await waitForScore(page, { sound: false });
+    await expect(page.locator('.player__title')).toHaveText('Promenade en Sol');
+    await expect(page.locator('.player__notice')).toContainText('PDF');
+    const info = await scoreApi(page);
+    expect(info.tab).toBe(true);
+    expect(info.fretted).toBe(info.notes);
+    // Mêmes notes, mêmes mesures, mêmes positions dans la mesure, mêmes durées.
+    expect(await scoreNotes(page)).toEqual(original);
+
+    // Rouverte depuis la bibliothèque : le MusicXML converti est conservé, pas besoin de relire le PDF.
+    await page.getByRole('button', { name: 'Retour à la bibliothèque' }).click();
+    await expect(page.getByTestId('library')).toContainText('Promenade en Sol');
+  });
+
+  test('PDF sans partition ou illisible : explication, rien n’est ajouté à la bibliothèque', async ({ page }) => {
+    await openApp(page);
+    await importScore(page, { name: 'lettre.pdf', mimeType: 'application/pdf', buffer: Buffer.from(textOnlyPdf()) });
     await expect(page.getByTestId('score-result')).toContainText('être converti');
-    await expect(page.getByTestId('score-result')).toContainText('MusicXML');
+    await expect(page.getByTestId('score-result')).toContainText('Aucune portée');
     await expect(page).toHaveURL(/#\/partitions$/);
+    await importScore(page, { name: 'scan.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.7\n%test\n') });
+    await expect(page.getByRole('alert')).toContainText('pas un PDF lisible');
+    await expect(page.getByTestId('library')).toBeHidden();
   });
 
   test('fichier invalide et format non pris en charge : messages clairs', async ({ page }) => {

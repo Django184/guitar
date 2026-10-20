@@ -16,7 +16,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@coderline/alphatab": "~1.8.4"
+    "@coderline/alphatab": "~1.8.4",
+    "pdfjs-dist": "~6.2.108"
   },
   "devDependencies": {
     "@coderline/alphatab-vite": "~1.8.4",
