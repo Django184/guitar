@@ -1,6 +1,6 @@
 {
   // Proxy de Pratique Guitare : voir README.md de ce dossier.
-  "name": "pratique-guitare-proxy",
+  "name": "guitar",
   "main": "src/index.ts",
   "compatibility_date": "2025-09-01",
   "workers_dev": true,

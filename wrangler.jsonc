@@ -1,0 +1,13 @@
+{
+  // Proxy de Pratique Guitare (dossier proxy/), déployable en reliant TOUT le dépôt à Cloudflare
+  // Workers : la configuration est lue ici, à la racine. Le site lui-même reste sur GitHub Pages.
+  // Le nom doit être celui du Worker créé dans Cloudflare.
+  "name": "guitar",
+  "main": "proxy/src/index.ts",
+  "compatibility_date": "2025-09-01",
+  "workers_dev": true,
+  "vars": {
+    // Origines supplémentaires autorisées (séparées par des virgules), si l'app est publiée ailleurs.
+    "ALLOWED_ORIGINS": ""
+  }
+}
