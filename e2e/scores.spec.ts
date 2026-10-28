@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { type Page, expect, test } from '@playwright/test';
 import { midiFile, musicXmlFile, mxlFile } from './fixtures';
 import { barTicks, beatPoint, importScore, openApp, passagePoints, playerState, touchSelectBars, waitForScore } from './helpers';
-import { GP_FIXTURES } from './paths';
+import { GP_FIXTURES, SCREEN_RECORDING } from './paths';
 
 /** Notes de la première piste : mesure, début et durée (ticks), hauteur. */
 const scoreNotes = (page: Page) =>
@@ -412,7 +412,159 @@ test.describe('Calage sur un enregistrement de référence', () => {
     await waitForScore(page, { sound: false });
     expect((await noteStarts(page)).starts).toEqual(TAB_RHYTHM);
   });
+
+  test('enregistrement d’écran importé (vidéo) : seul le son est gardé, rythme réécrit', async ({ page, context }) => {
+    test.setTimeout(120_000);
+    await openTextTab(page, context);
+    await page.getByTestId('media-toggle').click();
+    await page.getByTestId('media-file').setInputFiles(SCREEN_RECORDING);
+    await expect(page.locator('.media__audio')).toBeAttached({ timeout: 30_000 });
+    await expect(page.locator('.media__title')).toHaveText('ecran-tablature (son)');
+    // Le son est gardé en WAV (32 kHz mono), pas la vidéo.
+    expect(await page.evaluate(() => (document.querySelector('.media__audio') as HTMLAudioElement).src.startsWith('blob:'))).toBe(true);
+    await page.getByRole('button', { name: 'Écoute automatique' }).click();
+    await expect(page.getByTestId('rhythm-summary')).toContainText('≈ 100', { timeout: 60_000 });
+    await page.getByTestId('rhythm-keep').click();
+    await expect(page.locator('.player__notice')).toContainText('calé', { timeout: 30_000 });
+    await waitForScore(page, { sound: false });
+    expect((await noteStarts(page)).starts).toEqual(TAB_RHYTHM);
+  });
+
+  test('vidéo YouTube : son de l’onglet (ordinateur) ou enregistrement d’écran (téléphone), sans micro', async ({ page, context }, testInfo) => {
+    test.setTimeout(120_000);
+    const mobile = testInfo.project.name === 'mobile';
+    // Lecteur YouTube simulé (YouTube est injoignable pendant les tests) : il joue l'enregistrement
+    // de test, et le partage de l'onglet transmet ce qu'il joue.
+    await page.addInitScript(fakeYouTubeTab, tabRecording().buffer.toString('base64'));
+    await openTextTab(page, context);
+    await page.getByTestId('media-toggle').click();
+    await page.getByLabel('Lien YouTube').fill('https://youtu.be/abcdefghijk');
+    await page.getByRole('button', { name: 'Lier', exact: true }).click();
+    await expect(page.locator('.fake-youtube')).toBeAttached();
+    await expect(page.locator('.media__title')).toHaveText('Vidéo de test');
+    await page.getByRole('button', { name: 'Écoute automatique' }).click();
+
+    if (mobile) {
+      // Téléphone : pas de partage d'onglet ; on importe un enregistrement d'écran, analysé aussitôt.
+      await expect(page.getByTestId('listen-tab')).toHaveCount(0);
+      await expect(page.getByTestId('listen-import')).toBeVisible();
+      await expect(page.getByTestId('media-task')).toContainText('Sons multimédias');
+      const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByTestId('listen-import').click()]);
+      await chooser.setFiles(SCREEN_RECORDING);
+      await expect(page.locator('.media__title')).toHaveText('Enregistrement — Vidéo de test', { timeout: 30_000 });
+    } else {
+      await expect(page.getByTestId('listen-mic')).toHaveCount(0);
+      await page.getByTestId('listen-tab').click();
+      await expect(page.getByTestId('listen-stop')).toBeEnabled();
+      // La vidéo simulée (7,9 s) est jouée jusqu'au bout, puis analysée.
+    }
+    await expect(page.getByTestId('rhythm-summary')).toContainText('≈ 100', { timeout: 60_000 });
+    await page.getByTestId('rhythm-keep').click();
+    await expect(page.locator('.player__notice')).toContainText('calé', { timeout: 30_000 });
+    await waitForScore(page, { sound: false });
+    expect((await noteStarts(page)).starts).toEqual(TAB_RHYTHM);
+    if (!mobile) {
+      const request = await page.evaluate(() => (window as unknown as { __tabCapture: { requests: number; options: any } }).__tabCapture);
+      expect(request.requests).toBe(1);
+      expect(request.options.preferCurrentTab).toBe(true);
+      expect(request.options.audio).toBeTruthy();
+      await expect(page.getByTestId('media-follow')).toHaveAttribute('aria-pressed', 'true');
+    }
+  });
 });
+
+/**
+ * Lecteur YouTube simulé (API IFrame) qui joue un WAV, et partage de l'onglet qui transmet son son :
+ * script injecté dans la page avant l'app.
+ */
+function fakeYouTubeTab(wavBase64: string): void {
+  const w = window as unknown as Record<string, any>;
+  let ctx: AudioContext | null = null;
+  const audio = (): AudioContext => (ctx ??= new AudioContext());
+  w.__tabCapture = { requests: 0, options: null };
+  navigator.mediaDevices.getDisplayMedia = async (options?: DisplayMediaStreamOptions) => {
+    w.__tabCapture.requests++;
+    w.__tabCapture.options = options;
+    const dest = w.__tabDestination as MediaStreamAudioDestinationNode | undefined;
+    if (!dest) throw new DOMException('Aucun onglet', 'NotFoundError');
+    return new MediaStream(dest.stream.getAudioTracks());
+  };
+  function Player(this: any, target: HTMLElement, options: any): void {
+    const c = audio();
+    const dest = c.createMediaStreamDestination();
+    w.__tabDestination = dest;
+    const box = document.createElement('div');
+    box.className = 'fake-youtube';
+    box.textContent = 'Vidéo YouTube simulée';
+    target.replaceWith(box);
+    let state = -1;
+    let offset = 0;
+    let t0 = 0;
+    let source: AudioBufferSourceNode | null = null;
+    let buffer: AudioBuffer | null = null;
+    const emit = (data: number): void => options.events?.onStateChange?.({ data });
+    const now = (): number => (state === 1 ? offset + (c.currentTime - t0) : offset);
+    const halt = (): void => {
+      const s = source;
+      source = null;
+      s?.stop();
+    };
+    const start = (): void => {
+      if (!buffer) return;
+      void c.resume();
+      const s = c.createBufferSource();
+      s.buffer = buffer;
+      s.connect(dest);
+      s.onended = () => {
+        if (source !== s) return;
+        source = null;
+        offset = buffer?.duration ?? 0;
+        state = 0;
+        emit(0);
+      };
+      source = s;
+      t0 = c.currentTime;
+      s.start(0, offset);
+      state = 1;
+      emit(1);
+    };
+    this.playVideo = () => {
+      if (state !== 1) start();
+    };
+    this.pauseVideo = () => {
+      if (state !== 1) return;
+      offset = now();
+      halt();
+      state = 2;
+      emit(2);
+    };
+    this.seekTo = (t: number) => {
+      const playing = state === 1;
+      if (playing) {
+        halt();
+        state = 2;
+      }
+      offset = Math.max(0, Math.min(t, buffer?.duration ?? 0));
+      if (playing) start();
+    };
+    this.getCurrentTime = now;
+    this.getDuration = () => buffer?.duration ?? 0;
+    this.getPlayerState = () => state;
+    this.setPlaybackRate = () => undefined;
+    this.getPlaybackRate = () => 1;
+    this.getAvailablePlaybackRates = () => [1];
+    this.setVolume = () => undefined;
+    this.getVolume = () => 100;
+    this.getVideoData = () => ({ title: 'Vidéo de test', author: 'Tests' });
+    this.destroy = () => halt();
+    const bytes = Uint8Array.from(atob(wavBase64), (ch) => ch.charCodeAt(0));
+    void c.decodeAudioData(bytes.buffer).then((b) => {
+      buffer = b;
+      setTimeout(() => options.events?.onReady?.(), 0);
+    });
+  }
+  w.YT = { Player };
+}
 
 test.describe('Sélection, boucle et vitesse', () => {
   test('critère : la boucle des mesures 5 à 8 est jouée sans trou à 50 %', async ({ page }, testInfo) => {

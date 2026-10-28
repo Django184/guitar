@@ -144,17 +144,27 @@ Une tablature texte n'écrit pas le rythme : il est déduit de la position des c
 mesure (ou, sans barres, de leur espacement), et un message invite à le vérifier à l'écoute.
 
 **Vidéo de référence et rythme calé.** Le bouton « Vidéo » du lecteur lie à la partition un
-enregistrement : une vidéo YouTube (trouvée automatiquement à partir du titre, ou lien collé) ou un
-fichier audio. La vidéo est jouée par le lecteur officiel de YouTube, jamais téléchargée : l'app ne
-lit que sa position. Deux façons de caler la partition dessus :
+enregistrement : une vidéo YouTube (trouvée automatiquement à partir du titre, ou lien collé), un
+fichier audio, ou une vidéo (un enregistrement d'écran, par exemple) dont l'app ne garde que le son.
+La vidéo YouTube est jouée par le lecteur officiel, jamais téléchargée : l'app ne lit que sa
+position. Deux façons de caler la partition dessus :
 
 - **Taper le rythme** : pendant l'écoute (ralentie au besoin), on touche « Note » (ou la barre
   d'espace) à chaque note ou accord ; le curseur montre la note attendue ;
 - **Écoute automatique** : l'app retrouve elle-même chaque note de la tablature dans le son
   (attaques du flux spectral, ce qui apparaît à chaque attaque ramené à ses 12 classes de hauteur,
   puis appariement ordonné avec les notes, transposition comprise). Un fichier audio est analysé
-  directement ; pour une vidéo YouTube, dont le son n'est pas accessible, l'app l'écoute au micro
-  pendant la lecture (haut-parleurs, pas de casque).
+  directement. Le son d'une vidéo YouTube n'est pas accessible au site ; il arrive à l'analyse sans
+  micro ni haut-parleurs :
+  - **sur ordinateur (Chrome, Edge)**, par le partage du son de l'onglet (`getDisplayMedia`) pendant
+    que la vidéo joue : le son est capté avant la carte son, rien n'est écrit dans un fichier ;
+  - **sur iPhone ou Android**, par un enregistrement d'écran (Centre de contrôle → Enregistrement
+    de l'écran, micro coupé ; ou l'enregistreur d'Android avec les sons multimédias) importé dans
+    l'app et analysé aussitôt. La piste AAC est lue directement dans le conteneur MP4 / MOV et
+    réécrite en flux ADTS (Safari ne décode pas les .mov de l'iPhone tels quels), sans rejouer la
+    vidéo ; seul le son est gardé (WAV mono 32 kHz, silence retiré), sur l'appareil, à la place de
+    la vidéo ;
+  - en dernier recours (hors iPhone, sans partage d'onglet), au micro pendant la lecture.
 
 Pour une tablature texte, les instants trouvés donnent le rythme : une programmation dynamique
 sur (position dans la mesure, tempo) arrondit chaque écart à la double croche en laissant le tempo
@@ -205,6 +215,10 @@ Automatique (CI, job **e2e**, profils ordinateur et mobile) :
 - une tablature texte jouée avec un autre rythme que son espacement (guitare synthétisée, fichier
   WAV) est recalée par l'écoute automatique comme en tapant le rythme : positions et tempo exacts,
   lecture qui suit l'enregistrement, calage conservé à la réouverture ;
+- le même jeu dans un enregistrement d'écran (vidéo QuickTime, son AAC) donne le même rythme : seul
+  le son est gardé ; avec une vidéo YouTube (lecteur simulé), le son de l'onglet (ordinateur) ou un
+  enregistrement d'écran importé depuis l'écoute automatique (téléphone) recalent le rythme sans
+  micro ;
 - la sélection des mesures 5 à 8 (glissé souris, ou appui long + glissé au doigt) donne la bonne
   plage de lecture ; à 50 %, la lecture reste dans le passage, revient au début sans trou
   (jamais plus de 300 ms sans avancer, bouclage compris) et avance à la moitié du tempo ;
@@ -241,9 +255,10 @@ src/
                         tablature et accordage, rythme et voix, tablatures texte (caractères
                         ou image, reconnaissance dédiée), écriture MusicXML
     sync/               enregistrement de référence : YouTube (lecteur, recherche), fichier
-                        audio, micro, alignement audio, rythme et tempo retrouvés, panneau Vidéo
+                        audio, son d'une vidéo MP4 / MOV, son de l'onglet, micro, alignement
+                        audio, rythme et tempo retrouvés, panneau Vidéo
   ui/                   helpers DOM, appui long, messages d'erreur en français
-tests/                  tests Vitest (unitaires)
+tests/                  tests Vitest (unitaires) ; fixtures/ : vidéos de test (sons synthétisés)
 e2e/                    tests Playwright (bout en bout)
 public/                 favicon et icônes PWA (font/ et soundfont/ copiés par le build)
 ```

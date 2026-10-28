@@ -162,13 +162,14 @@ export class AudioFileMedia implements ReferenceMedia {
 const DECODE_RATE = 22050;
 
 /**
- * Décode un fichier audio en échantillons mono (moyenne des canaux), rééchantillonnés à 22 050 Hz.
- * Contexte hors ligne : aucun périphérique audio n'est ouvert (la lecture en cours n'est pas gênée).
+ * Décode un fichier audio en échantillons mono (moyenne des canaux), rééchantillonnés à 22 050 Hz
+ * (ou à `rate`). Contexte hors ligne : aucun périphérique audio n'est ouvert (la lecture en cours
+ * n'est pas gênée).
  */
-export async function decodeAudio(bytes: Uint8Array): Promise<{ samples: Float32Array; sampleRate: number }> {
+export async function decodeAudio(bytes: Uint8Array, rate = DECODE_RATE): Promise<{ samples: Float32Array; sampleRate: number }> {
   const Offline =
     window.OfflineAudioContext ?? (window as unknown as { webkitOfflineAudioContext?: typeof OfflineAudioContext }).webkitOfflineAudioContext;
-  const ctx = new Offline(1, 1, DECODE_RATE);
+  const ctx = new Offline(1, 1, rate);
   const buffer = await ctx.decodeAudioData(bytes.slice().buffer);
   const samples = new Float32Array(buffer.length);
   for (let c = 0; c < buffer.numberOfChannels; c++) {

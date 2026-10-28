@@ -19,3 +19,9 @@ export const GP_FIXTURES = {
   gpx: path.join(FIXTURES_DIR, 'download', 'chords.gpx'),
   gp7: path.join(FIXTURES_DIR, 'download', 'serenade.gp'),
 };
+
+/**
+ * Enregistrement d'écran de test (QuickTime, image + son AAC, index à la fin) : la tablature de
+ * test jouée à la guitare synthétisée, produite par FFmpeg. Versionné avec les tests unitaires.
+ */
+export const SCREEN_RECORDING = path.join(here, '..', 'tests', 'fixtures', 'ecran-tablature.mov');
