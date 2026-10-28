@@ -6,7 +6,9 @@
  * tablature : seul le rythme change.
  * D'autres sources s'ajoutent à la main : liens trouvés par Claude (claude.ai), fichiers.
  */
+import { openSettings } from '../../shell/settings';
 import { h } from '../../ui/dom';
+import { menuRow, panelHead } from '../../ui/sheet';
 import { describeError } from '../../ui/errors';
 import { type AlphaTabModule, type Score, loadAlphaTab, parseScore } from '../alphatab';
 import type { ScoreEntry } from '../library';
@@ -19,18 +21,14 @@ import {
   type Found,
   claudeLink,
   claudePrompt,
-  normalizeProxy,
   parseClaudeAnswer,
   proxyUrl,
-  saveProxyUrl,
   searchBitMidi,
-  testProxy,
 } from './search';
 
 const NB = ' ';
 /** Typographie française : espace insécable avant « : ; ! ? » et à l'intérieur des guillemets. */
 const fr = (text: string): string => text.replace(/ ([:;!?»])/g, `${NB}$1`).replace(/« /g, `«${NB}`);
-const PROXY_GUIDE = 'https://github.com/Django184/guitar/tree/main/proxy#readme';
 const SOURCE_FILES = '.gp,.gp3,.gp4,.gp5,.gpx,.musicxml,.xml,.mxl,.mid,.midi';
 /** Une tablature plus courte ne se retrouve pas de façon fiable. */
 const MIN_ONSETS = 8;
@@ -91,25 +89,11 @@ export class RhythmPanel {
   });
   private readonly addButton = h('button', { type: 'button', class: 'btn btn--small', 'data-testid': 'rhythm-add' }, 'Ajouter ces liens');
   private readonly fileInput = h('input', { type: 'file', accept: SOURCE_FILES, multiple: true, hidden: true, 'data-testid': 'rhythm-file' });
-  private readonly proxyInput = h('input', {
-    type: 'url',
-    class: 'media__input',
-    placeholder: 'https://…workers.dev',
-    autocomplete: 'off',
-    spellcheck: 'false',
-    inputmode: 'url',
-    'aria-label': 'Adresse du proxy',
-    'data-testid': 'rhythm-proxy',
-  });
-  private readonly proxyState = h('p', { class: 'media__help', 'data-testid': 'rhythm-proxy-state' });
   private readonly messageEl = h('p', { class: 'media__message', role: 'status', 'data-testid': 'rhythm-message' });
 
   constructor(private readonly host: RhythmPanelHost) {
-    this.toggleButton = h(
-      'button',
-      { type: 'button', class: 'btn btn--small btn--ghost player__media-btn', 'aria-expanded': 'false', hidden: true, 'data-testid': 'rhythm-toggle' },
-      'Rythme',
-    );
+    this.toggleButton = menuRow('Rythme', 'Le retrouver dans des transcriptions du morceau.', { 'aria-expanded': 'false', 'data-testid': 'rhythm-toggle' });
+    this.toggleButton.hidden = true;
     this.toggleButton.addEventListener('click', () => this.setOpen(!this.isOpen));
 
     this.keepButton.addEventListener('click', () => void this.keep());
@@ -147,33 +131,15 @@ export class RhythmPanel {
     this.addButton.hidden = true;
 
     // Sans validation du navigateur : une adresse sans « https:// » est complétée par l'app.
-    const proxyForm = h('form', { class: 'media__row', novalidate: true }, this.proxyInput, h('button', { type: 'submit', class: 'btn btn--small' }, 'Enregistrer'));
-    proxyForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      void this.saveProxy(this.proxyInput.value);
-    });
-    const proxyBox = h(
-      'details',
-      { class: 'media__key' },
-      h('summary', {}, 'Proxy (liens d’autres sites)'),
-      h(
-        'p',
-        { class: 'media__help' },
-        fr('Pour télécharger les liens trouvés par Claude, l’app passe par votre propre proxy, gratuit (Cloudflare). '),
-        h('a', { href: PROXY_GUIDE, target: '_blank', rel: 'noopener noreferrer' }, 'L’installer (2 minutes)'),
-        '.',
-      ),
-      proxyForm,
-      this.proxyState,
-    );
-
+    const proxyLink = h('button', { type: 'button', class: 'link-btn' }, 'Proxy des partitions…');
+    proxyLink.addEventListener('click', () => openSettings('proxy'));
     this.moreBox.append(
       h('summary', {}, 'Autres sources'),
       h('p', { class: 'media__help' }, fr('Claude peut chercher d’autres transcriptions sur le web : envoyez-lui le message préparé, puis collez sa réponse ici.')),
       h('div', { class: 'media__row media__row--wrap' }, this.claudeButton, fileButton, this.fileInput),
       this.answerInput,
       h('div', { class: 'media__row media__row--end' }, this.addButton),
-      proxyBox,
+      h('p', { class: 'media__help' }, fr('Les liens d’autres sites passent par votre proxy : '), proxyLink),
     );
     this.sourcesBox.append(this.sourcesSummary, this.sourcesList);
     this.sourcesBox.hidden = true;
@@ -181,6 +147,7 @@ export class RhythmPanel {
     this.element = h(
       'section',
       { class: 'media rhythm', hidden: true, 'aria-label': 'Rythme de la tablature', 'data-testid': 'rhythm-panel' },
+      panelHead('Rythme', () => this.setOpen(false)),
       this.statusEl,
       this.detailEl,
       this.barsEl,
@@ -190,7 +157,6 @@ export class RhythmPanel {
       this.moreBox,
       this.messageEl,
     );
-    this.renderProxy();
   }
 
   get isOpen(): boolean {
@@ -468,35 +434,6 @@ export class RhythmPanel {
     this.pending = null;
     this.host.preview(null);
     this.host.markBars([]);
-  }
-
-  // --- Proxy ----------------------------------------------------------------------
-
-  private renderProxy(): void {
-    const url = proxyUrl();
-    this.proxyInput.value = url ?? '';
-    this.proxyState.textContent = fr(url ? 'Proxy enregistré.' : 'Pas de proxy : seuls BitMidi et vos fichiers sont utilisés.');
-  }
-
-  private async saveProxy(input: string): Promise<void> {
-    if (!input.trim()) {
-      saveProxyUrl(null);
-      this.renderProxy();
-      return;
-    }
-    const url = normalizeProxy(input);
-    if (!url) {
-      this.proxyState.textContent = fr('Adresse invalide : elle commence par https://');
-      return;
-    }
-    this.proxyState.textContent = 'Test du proxy…';
-    if (!(await testProxy(url))) {
-      this.proxyState.textContent = fr('Ce proxy ne répond pas : vérifiez l’adresse.');
-      return;
-    }
-    saveProxyUrl(url);
-    this.renderProxy();
-    this.proxyState.textContent = fr('Proxy prêt.');
   }
 
   private message(text: string | null, problem = false): void {

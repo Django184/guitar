@@ -22,6 +22,16 @@ export function savePref(key: string, value: unknown): void {
   } catch {
     // Stockage plein ou interdit : la préférence ne sera simplement pas mémorisée.
   }
+  // Les écrans concernés suivent (réglage changé dans la feuille « Réglages »).
+  document.dispatchEvent(new CustomEvent('prefchange', { detail: { key, value } }));
+}
+
+/** Préférence changée ailleurs dans l'app (feuille « Réglages ») : `fn(valeur)`. */
+export function onPrefChange(key: string, fn: (value: unknown) => void): void {
+  document.addEventListener('prefchange', (e) => {
+    const detail = (e as CustomEvent<{ key: string; value: unknown }>).detail;
+    if (detail?.key === key) fn(detail.value);
+  });
 }
 
 export const isNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);

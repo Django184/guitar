@@ -66,7 +66,9 @@ export class LibraryView {
   }
 
   private item(entry: ScoreEntry): HTMLLIElement {
-    const meta = [entry.artist, FORMAT_LABELS[entry.format]].filter(Boolean).join(', ');
+    // Format d'origine : un PDF lu par l'app reste « PDF » (même s'il est gardé en MusicXML).
+    const format = entry.origin === 'pdf' || entry.origin === 'pdf-tab' ? 'PDF' : FORMAT_LABELS[entry.format];
+    const meta = [entry.artist, format].filter(Boolean).join(', ');
     const title = h('span', { class: 'library__title' }, entry.title);
     const open = h(
       'a',

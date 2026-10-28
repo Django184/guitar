@@ -12,9 +12,8 @@ export interface PreparedScore {
   notice: string | null;
 }
 
-const MIDI_NOTICE =
-  'Partition déduite du fichier MIDI : rythmes arrondis à la double croche et tablature calculée. Vérifiez les doigtés.';
-const TAB_NOTICE = 'Ce fichier ne contenait pas de tablature : elle a été calculée. Vérifiez les doigtés.';
+const MIDI_NOTICE = 'Convertie depuis le MIDI : rythmes arrondis, tablature calculée.';
+const TAB_NOTICE = 'Tablature calculée : vérifiez les doigtés.';
 
 /**
  * Prépare un fichier pour alphaTab :

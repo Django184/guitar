@@ -104,8 +104,8 @@ des certificats sur iPhone).
    hors-ligne ».
 2. Installez-la :
    - iPhone / iPad (Safari) : bouton Partager › « Sur l'écran d'accueil ».
-   - Android (Chrome) : menu ⋮ › « Installer l'application » (ou le bouton « Installer » de l'app).
-   - Ordinateur (Chrome / Edge) : bouton « Installer » de l'app ou icône dans la barre d'adresse.
+   - Android (Chrome) : menu ⋮ › « Installer l'application » (ou Réglages › « Installer l'app »).
+   - Ordinateur (Chrome / Edge) : Réglages › « Installer l'app », ou icône dans la barre d'adresse.
 3. Passez en mode avion, puis ouvrez l'app depuis l'écran d'accueil : elle démarre, l'accordeur et
    le métronome fonctionnent.
 
@@ -151,7 +151,15 @@ gabarits, en noir comme en couleur ; les notes alignées verticalement sont jou�
 barres verticales au milieu de la ligne découpent les mesures. Le texte de la page donne le titre,
 l'accordage et le capodastre (« STANDARD TUN CAPO FRET 4 »).
 
-**Vidéo de référence et rythme calé.** Le bouton « Vidéo » du lecteur lie à la partition un
+**Interface.** Une action principale par écran, en bas, sous le pouce (Démarrer, Lire,
+Importer). Ce qui se règle une fois va dans **Réglages** (roue dentée de la barre du haut :
+thème, diapason, proxy des partitions, clé YouTube, installation) ; ce qui concerne une partition
+dans ses **options** (⋯ dans le lecteur : piste, doigtés, sélection par mesure, puis Rythme,
+Enrichir, Vidéo de référence, qui ouvrent chacun leur panneau). Pendant la lecture, la barre du
+haut s'efface au profit de la partition. Titres et chiffres (tempo, notes, vitesse) sont en
+Barlow Condensed (licence OFL, `public/fonts/`) ; le reste en police système.
+
+**Vidéo de référence et rythme calé.** « Vidéo de référence » (options ⋯ du lecteur) lie à la partition un
 enregistrement : une vidéo YouTube (trouvée automatiquement à partir du titre, ou lien collé), un
 fichier audio, ou une vidéo (un enregistrement d'écran, par exemple) dont l'app ne garde que le son.
 La vidéo YouTube est jouée par le lecteur officiel, jamais téléchargée : l'app ne lit que sa
@@ -183,7 +191,7 @@ qui joue (vitesse, boucle et passage compris) et le curseur le suit.
 
 La recherche automatique utilise l'API YouTube Data v3 avec une clé gratuite (Google Cloud),
 restreinte au site publié : variable de dépôt `YOUTUBE_API_KEY` (Settings → Secrets and variables
-→ Actions → Variables), lue au build (`VITE_YOUTUBE_API_KEY`), ou clé saisie dans l'app (gardée sur
+→ Actions → Variables), lue au build (`VITE_YOUTUBE_API_KEY`), ou clé saisie dans Réglages (gardée sur
 l'appareil). Sans clé, l'app ouvre la recherche YouTube et on colle le lien.
 
 Une partition scannée (portées en image) n'est pas lisible : l'app l'explique et propose la
@@ -192,11 +200,11 @@ notation, tablature, rythme, tablatures texte et reconnaissance en image, MusicX
 
 **Sélection.** À la souris : cliquer-glisser d'une mesure à l'autre. Au doigt : appui long
 (0,4 s) sur la première mesure, puis glisser ; un simple glissement fait défiler la partition.
-« Par mesure » (activé par défaut) étend la sélection aux bords des mesures ; désactivé, on
+« Sélection par mesure » (options ⋯, activé par défaut) étend la sélection aux bords des mesures ; désactivé, on
 choisit note par note. Un clic ou un toucher bref place le curseur sans effacer la sélection.
 
-**Lecture.** Boucle activable, vitesse de 25 à 100 % par pas de 5 % (appui long pour aller
-vite), bouton « Début » pour revenir au début du passage. L'écran reste allumé pendant la lecture.
+**Lecture.** Une seule rangée sous la partition : retour au début du passage, Lire, boucle,
+vitesse de 25 à 100 % par pas de 5 % (appui long pour aller vite). L'écran reste allumé pendant la lecture.
 La lecture se met en pause quand on quitte l'écran ou qu'on démarre l'accordeur.
 
 **Bibliothèque.** Chaque fichier importé est conservé dans IndexedDB avec ses réglages (piste,
@@ -205,7 +213,7 @@ depuis la liste. En navigation privée, la partition s'ouvre mais n'est pas cons
 
 **Doigtés de la main gauche.** Sur la tablature, une pastille colorée à gauche de chaque case
 indique le doigt (1 index, 2 majeur, 3 annulaire, 4 auriculaire, T pouce), comme dans les méthodes ;
-le bouton « Doigtés » les affiche ou les masque. Ils sont optimisés sur toute la pièce par
+« Doigtés » (options ⋯) les affiche ou les masque. Ils sont optimisés sur toute la pièce par
 programmation dynamique (Viterbi, `src/scores/fingering/`), et non note par note :
 
 - chaque instant où une note frettée commence a pour états les affectations jouables de doigts aux
@@ -226,7 +234,8 @@ des mesures 4 à 6, non utilisées pour le réglage, coïncident (les autres son
 jouables). Calcul : environ 0,2 s pour un morceau de 400 attaques.
 
 **Rythme retrouvé dans des transcriptions.** Une tablature lue dans un PDF n'a pas de rythme : il
-est deviné d'après l'espacement des chiffres. Le bouton « Rythme » le retrouve dans des
+est deviné d'après l'espacement des chiffres. « Rythme » (options ⋯, ou le lien « Retrouver le
+rythme » sous le titre) le retrouve dans des
 transcriptions du même morceau, sans toucher aux notes (cordes et cases restent celles de la
 tablature) — `src/scores/rhythm/` :
 
@@ -260,9 +269,9 @@ Les liens d'autres sites passent par un **proxy** gratuit que l'on installe sur 
 Cloudflare (dossier `proxy/` ; on relie tout le dépôt, la configuration `wrangler.jsonc` à la
 racine le déploie, ou bouton « Deploy to Cloudflare » de son [README](proxy/README.md)) : il ne
 sert que les pages de l'app et ne renvoie que des partitions.
-Son adresse se colle une fois dans « Rythme » → « Autres sources » → « Proxy ».
+Son adresse se colle une fois dans Réglages › « Proxy des partitions ».
 
-**Enrichissement (désactivé par défaut).** Le bouton « Enrichir » propose d'ajouter à la tablature
+**Enrichissement (désactivé par défaut).** « Enrichir » (options ⋯) propose d'ajouter à la tablature
 des notes prises dans les transcriptions qui la contiennent (`src/scores/embellish/`) : la basse et
 des notes de l'accord sur les temps, et les notes de passage de la mélodie d'une source entre deux
 notes de la tablature. Chaque note proposée doit être :
@@ -343,7 +352,7 @@ Automatique (CI, job **e2e**, profils ordinateur et mobile) :
 - l'enrichissement, désactivé par défaut, ajoute des notes en couleur (une par anneau), une note
   retirée d'un appui disparaît de l'aperçu, et les notes gardées sont dans la tablature ;
 - les doigtés s'affichent sur la tablature (une pastille par note frettée), une correction
-  faite à la main est gardée à la réouverture, et le bouton « Doigtés » les masque ;
+  faite à la main est gardée à la réouverture, et « Doigtés » (options ⋯) les masque ;
 - hors-ligne, une partition importée s'ouvre et le son se charge depuis le cache ; la banque
   utilisée est GeneralUser GS (et, en test unitaire, le fichier livré respecte ce qu'exige le
   synthétiseur d'alphaTab : échantillons mono, blocs RIFF pairs, zones sans valeurs additives).

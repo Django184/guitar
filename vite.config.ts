@@ -60,8 +60,8 @@ export default defineConfig({
       },
       workbox: {
         // Hors-ligne complet : app, alphaTab, lecteur de PDF (pdf.js et son worker .mjs),
-        // police musicale (woff2) et banque de sons (GeneralUser GS en sf3, 13,5 Mo).
-        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico}', 'font/Bravura.woff2', 'sons/*.sf3'],
+        // police musicale (woff2), police des chiffres (woff) et banque de sons (GeneralUser GS en sf3, 13,5 Mo).
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico}', 'font/Bravura.woff2', 'assets/*.woff', 'sons/*.sf3'],
         globIgnores: ['font/Bravura.svg'],
         maximumFileSizeToCacheInBytes: 16 * 1024 * 1024,
         navigateFallback: 'index.html',

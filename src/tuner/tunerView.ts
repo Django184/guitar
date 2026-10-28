@@ -1,10 +1,9 @@
 import { setAudioSession, unlockAudio } from '../audio/context';
 import type { View } from '../shell/view';
-import { isNumber, isOneOf, loadPref, savePref } from '../shell/storage';
+import { isNumber, isOneOf, loadPref, onPrefChange, savePref } from '../shell/storage';
 import { allowSleep, keepAwake } from '../shell/wakeLock';
 import { h } from '../ui/dom';
 import { describeError } from '../ui/errors';
-import { bindHoldRepeat } from '../ui/hold';
 import { IN_TUNE_CENTS, createGauge } from './gauge';
 import {
   A4_DEFAULT,
@@ -70,18 +69,8 @@ export function createTunerView({ beforeStart }: TunerDeps): View {
   const stringsGroup = h('div', { class: 'strings', role: 'group', 'aria-label': 'Cordes' });
   const stringInfo = h('p', { class: 'strings__info', 'data-testid': 'string-info' });
 
-  // --- Diapason ---------------------------------------------------------------
-  const a4Value = h('output', { class: 'stepper__value', 'aria-live': 'polite' });
-  const a4Minus = h('button', { type: 'button', class: 'btn btn--square', 'aria-label': 'Baisser le diapason de 1 Hz' }, '−');
-  const a4Plus = h('button', { type: 'button', class: 'btn btn--square', 'aria-label': 'Monter le diapason de 1 Hz' }, '+');
-  bindHoldRepeat(a4Minus, () => setA4(a4 - 1));
-  bindHoldRepeat(a4Plus, () => setA4(a4 + 1));
-  const a4Row = h(
-    'div',
-    { class: 'stepper' },
-    h('span', { class: 'stepper__label' }, 'Diapason (La 4)'),
-    h('div', { class: 'stepper__controls' }, a4Minus, a4Value, a4Plus),
-  );
+  // Diapason : réglé dans la feuille « Réglages », rappelé ici s'il n'est pas à 440 Hz.
+  const a4El = h('p', { class: 'tuner__a4', hidden: true });
 
   // --- Démarrage --------------------------------------------------------------
   const alertEl = h('p', { class: 'alert', role: 'alert', hidden: true });
@@ -102,7 +91,7 @@ export function createTunerView({ beforeStart }: TunerDeps): View {
     tuningGroup,
     h('div', { class: 'tuner__display' }, gauge.element, readout),
     h('div', { class: 'tuner__strings' }, stringsGroup, stringInfo),
-    a4Row,
+    a4El,
     h('div', { class: 'actions' }, alertEl, startButton),
   );
 
@@ -116,13 +105,9 @@ export function createTunerView({ beforeStart }: TunerDeps): View {
   }
 
   function setA4(value: number): void {
-    const next = clampA4(value);
-    if (next === a4) return;
-    a4 = next;
-    savePref('a4', a4);
-    a4Value.textContent = `${a4} Hz`;
-    a4Minus.disabled = a4 <= 430;
-    a4Plus.disabled = a4 >= 450;
+    a4 = clampA4(value);
+    a4El.hidden = a4 === A4_DEFAULT;
+    a4El.textContent = `La 4 = ${a4}\u00a0Hz`;
     renderReading();
   }
 
@@ -282,9 +267,10 @@ export function createTunerView({ beforeStart }: TunerDeps): View {
     if (document.visibilityState === 'hidden' && tracker.running) stopListening();
   });
 
-  a4Value.textContent = `${a4} Hz`;
-  a4Minus.disabled = a4 <= 430;
-  a4Plus.disabled = a4 >= 450;
+  onPrefChange('a4', (value) => {
+    if (isNumber(value)) setA4(value);
+  });
+  setA4(a4);
   renderTuning();
   renderReading();
 

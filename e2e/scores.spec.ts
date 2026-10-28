@@ -223,7 +223,7 @@ test.describe('Import des formats', () => {
     await expect(page.locator('.player__title')).toHaveText('Promenade en Sol');
     expect(info.tab).toBe(true);
     expect(info.fretted).toBe(info.notes);
-    await expect(page.locator('.player__notice')).toContainText('tablature');
+    await expect(page.locator('.player__notice')).toContainText('Tablature calculée');
   });
 
   test('MusicXML compressé (.mxl)', async ({ page }) => {
@@ -294,7 +294,7 @@ test.describe('Import des formats', () => {
       await importScore(page, { name: `tablature-${mode}.pdf`, mimeType: 'application/pdf', buffer: pdf });
       await waitForScore(page, { sound: false });
       await expect(page.locator('.player__title')).toHaveText('Exercice en arpèges');
-      await expect(page.locator('.player__notice')).toContainText('Tablature lue dans le PDF');
+      await expect(page.locator('.player__notice')).toContainText('Tablature du PDF');
       const info = await scoreApi(page);
       expect(info.tab).toBe(true);
       expect(info.notes).toBe(8);
@@ -364,6 +364,7 @@ test.describe('Calage sur un enregistrement de référence', () => {
     await openTextTab(page, context);
     expect((await noteStarts(page)).starts).toEqual([0, 1, 2, 3, 4, 6, 7]);
 
+    await page.getByTestId('score-options').click();
     await page.getByTestId('media-toggle').click();
     await page.getByTestId('media-file').setInputFiles(tabRecording());
     await expect(page.locator('.media__audio')).toBeAttached();
@@ -413,6 +414,7 @@ test.describe('Calage sur un enregistrement de référence', () => {
   test('rythme tapé pendant l’écoute', async ({ page, context }) => {
     test.setTimeout(120_000);
     await openTextTab(page, context);
+    await page.getByTestId('score-options').click();
     await page.getByTestId('media-toggle').click();
     await page.getByTestId('media-file').setInputFiles(tabRecording());
     await expect(page.locator('.media__audio')).toBeAttached();
@@ -444,6 +446,7 @@ test.describe('Calage sur un enregistrement de référence', () => {
   test('enregistrement d’écran importé (vidéo) : seul le son est gardé, rythme réécrit', async ({ page, context }) => {
     test.setTimeout(120_000);
     await openTextTab(page, context);
+    await page.getByTestId('score-options').click();
     await page.getByTestId('media-toggle').click();
     await page.getByTestId('media-file').setInputFiles(SCREEN_RECORDING);
     await expect(page.locator('.media__audio')).toBeAttached({ timeout: 30_000 });
@@ -465,6 +468,7 @@ test.describe('Calage sur un enregistrement de référence', () => {
     // de test, et le partage de l'onglet transmet ce qu'il joue.
     await page.addInitScript(fakeYouTubeTab, tabRecording().buffer.toString('base64'));
     await openTextTab(page, context);
+    await page.getByTestId('score-options').click();
     await page.getByTestId('media-toggle').click();
     await page.getByLabel('Lien YouTube').fill('https://youtu.be/abcdefghijk');
     await page.getByRole('button', { name: 'Lier', exact: true }).click();
@@ -649,6 +653,7 @@ test.describe('Rythme retrouvé dans des transcriptions', () => {
     // Rythme deviné d'après l'espacement des chiffres : faux.
     expect((await noteStarts(page)).starts).not.toEqual(WALK_RHYTHM);
 
+    await page.getByTestId('score-options').click();
     await page.getByTestId('rhythm-toggle').click();
     const status = page.getByTestId('rhythm-status');
     await expect(status).toContainText('2 transcriptions', { timeout: 60_000 });
@@ -701,15 +706,19 @@ test.describe('Rythme retrouvé dans des transcriptions', () => {
 
     await openTabPdf(page, context, 'Promenade du soir', eveningWalkAscii());
     const before = (await noteStarts(page)).starts;
+    await page.getByTestId('score-options').click();
     await page.getByTestId('rhythm-toggle').click();
     const status = page.getByTestId('rhythm-status');
     await expect(status).toHaveText('Aucune transcription trouvée.', { timeout: 60_000 });
 
-    // Proxy de l'utilisateur, testé avant d'être gardé.
-    await page.getByText('Proxy (liens d’autres sites)').click();
+    // Proxy de l'utilisateur (feuille « Réglages », ouverte depuis le panneau), testé avant d'être gardé.
+    await page.getByRole('button', { name: 'Proxy des partitions…' }).click();
+    await expect(page.getByTestId('settings')).toBeVisible();
     await page.getByTestId('rhythm-proxy').fill('pratique-guitare-proxy.test.workers.dev');
-    await page.getByRole('button', { name: 'Enregistrer' }).click();
+    await page.getByTestId('rhythm-proxy').press('Enter');
     await expect(page.getByTestId('rhythm-proxy-state')).toHaveText('Proxy prêt.');
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('settings')).toBeHidden();
 
     // Message prérempli pour Claude, puis sa réponse collée.
     const claude = page.getByTestId('rhythm-claude');
@@ -757,8 +766,9 @@ test.describe('Enrichissement depuis les transcriptions', () => {
     ]);
     await openTabPdf(page, context, 'Promenade du soir', eveningWalkAscii());
     const toggle = page.getByTestId('embellish-toggle');
+    await page.getByTestId('score-options').click();
     await expect(toggle).toBeVisible();
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await expect(page.getByTestId('additions')).toBeHidden();
     const before = await tabNoteCount(page);
 
@@ -778,7 +788,7 @@ test.describe('Enrichissement depuis les transcriptions', () => {
     expect(await tabNoteCount(page)).toBe(before + proposed - 1);
 
     await page.getByTestId('embellish-keep').click();
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await waitForScore(page);
     expect(await tabNoteCount(page)).toBe(before + proposed - 1);
     await expect(rings).toHaveCount(0);
@@ -790,8 +800,10 @@ test.describe('Doigtés de la main gauche', () => {
     test.setTimeout(120_000);
     await openTextTab(page, context);
     const toggle = page.getByTestId('fingering-toggle');
+    await page.getByTestId('score-options').click();
     await expect(toggle).toBeVisible();
-    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await page.keyboard.press('Escape');
 
     // Une pastille par note frettée de la tablature (cordes à vide : aucune).
     const fretted = await page.evaluate(() => {
@@ -838,8 +850,10 @@ test.describe('Doigtés de la main gauche', () => {
     await page.locator(`[data-testid="fingering"] .fingering__dot[data-id="${id}"]`).click();
     await page.getByRole('button', { name: 'Doigt calculé automatiquement' }).click();
     await expect(page.locator(`[data-testid="fingering"] .fingering__dot[data-id="${id}"]`)).not.toHaveClass(/is-forced/);
+    await page.getByTestId('score-options').click();
     await toggle.click();
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await page.keyboard.press('Escape');
     await expect(dots).toHaveCount(0);
   });
 });
