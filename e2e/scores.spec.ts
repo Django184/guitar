@@ -637,7 +637,7 @@ test.describe('Rythme retrouvé dans des transcriptions', () => {
     await page.getByRole('button', { name: 'Écouter la mesure 3' }).click();
     await expect.poll(async () => (await playerState(page)).range?.startTick).toBe(2 * 3840);
 
-    await page.getByTestId('rhythm-keep').click();
+    await page.getByTestId('sources-keep').click();
     await expect(page.locator('.player__notice')).toContainText('rythme repris de 2', { timeout: 30_000 });
     await waitForScore(page);
     const kept = await noteStarts(page);

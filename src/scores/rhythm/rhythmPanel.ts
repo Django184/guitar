@@ -79,7 +79,7 @@ export class RhythmPanel {
   private readonly sourcesBox = h('details', { class: 'media__key rhythm__sources-box' });
   private readonly sourcesSummary = h('summary', {}, 'Sources');
   private readonly sourcesList = h('ul', { class: 'rhythm__sources', 'data-testid': 'rhythm-sources' });
-  private readonly keepButton = h('button', { type: 'button', class: 'btn btn--small btn--accent', 'data-testid': 'rhythm-keep' }, 'Garder');
+  private readonly keepButton = h('button', { type: 'button', class: 'btn btn--small btn--accent', 'data-testid': 'sources-keep' }, 'Garder');
   private readonly cancelButton = h('button', { type: 'button', class: 'btn btn--small' }, 'Annuler');
   private readonly decision = h('div', { class: 'media__row', hidden: true }, this.keepButton, this.cancelButton);
   private readonly againButton = h('button', { type: 'button', class: 'btn btn--small rhythm__again', hidden: true }, 'Chercher à nouveau');
@@ -149,7 +149,8 @@ export class RhythmPanel {
     this.answerInput.hidden = true;
     this.addButton.hidden = true;
 
-    const proxyForm = h('form', { class: 'media__row' }, this.proxyInput, h('button', { type: 'submit', class: 'btn btn--small' }, 'Enregistrer'));
+    // Sans validation du navigateur : une adresse sans « https:// » est complétée par l'app.
+    const proxyForm = h('form', { class: 'media__row', novalidate: true }, this.proxyInput, h('button', { type: 'submit', class: 'btn btn--small' }, 'Enregistrer'));
     proxyForm.addEventListener('submit', (e) => {
       e.preventDefault();
       void this.saveProxy(this.proxyInput.value);
