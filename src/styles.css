@@ -964,7 +964,9 @@ a {
 
 .fingering {
   position: absolute;
-  z-index: 1;
+  /* Au-dessus des blocs de rendu d'alphaTab (z-index 1, sinon ils captent les appuis),
+     sous ses curseurs de lecture (z-index 1000). */
+  z-index: 2;
   overflow: visible;
   pointer-events: none;
 }
