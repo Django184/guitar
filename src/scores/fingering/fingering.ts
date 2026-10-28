@@ -481,3 +481,18 @@ export function fingerNotes(notes: readonly FingerNote[], options: FingeringOpti
   for (const n of fretted) if (!result.has(n.id)) result.set(n.id, Math.min(4, Math.max(1, n.fret)) as Finger);
   return result;
 }
+
+/**
+ * Forme jouable telle quelle, main posée normalement (4 cases, 5 en position haute ; sans pouce
+ * ni écart forcé) ? Coût propre minimal de la forme, ou null si elle ne se joue pas.
+ * `notes` : corde (0 = la plus grave) et case de chaque note, cordes à vide comprises.
+ */
+export function shapeCost(notes: ReadonlyArray<{ string: number; fret: number }>, strings = 6): number | null {
+  if (new Set(notes.map((n) => n.string)).size !== notes.length) return null;
+  const fretted: FingerNote[] = notes
+    .filter((n) => n.fret > 0)
+    .map((n, i) => ({ id: String(i), string: n.string, fret: n.fret, start: 0, end: 1 }));
+  if (!fretted.length) return 0;
+  const fingers: Finger[] = [1, 2, 3, 4];
+  return assignments(fretted, fretted.map(() => fingers), strings, 0)[0]?.cost ?? null;
+}

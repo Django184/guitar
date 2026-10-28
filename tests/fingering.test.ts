@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type Finger, type FingerNote, THUMB, fingerNotes } from '../src/scores/fingering/fingering';
+import { type Finger, type FingerNote, THUMB, fingerNotes, shapeCost } from '../src/scores/fingering/fingering';
 
 /* Doigtés de la main gauche : programmation dynamique sur toute la séquence. */
 
@@ -177,5 +177,19 @@ describe('Doigtés de la main gauche', () => {
     const result = fingers(specs);
     expect(performance.now() - started).toBeLessThan(1000);
     expect(result.every((r) => /:[0-4T]$/.test(r))).toBe(true);
+  });
+});
+
+describe('Formes jouables (enrichissement)', () => {
+  it('accepte un accord ouvert ou barré, refuse un écart de six cases ou cinq doigts', () => {
+    // Corde 0 = mi grave. Do majeur ouvert : x32010.
+    expect(shapeCost([{ string: 1, fret: 3 }, { string: 2, fret: 2 }, { string: 3, fret: 0 }, { string: 4, fret: 1 }, { string: 5, fret: 0 }])).not.toBeNull();
+    // Fa barré : 133211.
+    const f = [1, 3, 3, 2, 1, 1].map((fret, string) => ({ string, fret }));
+    expect(shapeCost(f)).not.toBeNull();
+    expect(shapeCost([{ string: 0, fret: 1 }, { string: 5, fret: 7 }])).toBeNull();
+    expect(shapeCost([1, 2, 3, 4, 5].map((fret, string) => ({ string, fret })))).toBeNull();
+    // Deux notes sur la même corde : impossible.
+    expect(shapeCost([{ string: 2, fret: 2 }, { string: 2, fret: 4 }])).toBeNull();
   });
 });

@@ -1,4 +1,5 @@
 import { setAudioSession } from '../audio/context';
+import { currentTheme } from '../shell/theme';
 import { allowSleep, keepAwake } from '../shell/wakeLock';
 import { h } from '../ui/dom';
 import { describeError } from '../ui/errors';
@@ -13,6 +14,8 @@ import {
   loadAlphaTab,
   scoreColors,
 } from './alphatab';
+import { AdditionLayer, type Ring } from './embellish/additionLayer';
+import { EmbellishPanel } from './embellish/embellishPanel';
 import type { Finger } from './fingering/fingering';
 import { FingeringLayer } from './fingering/fingeringLayer';
 import { type TabFingering, fingerTab, tabStaff } from './fingering/fromScore';
@@ -90,6 +93,10 @@ export class ScorePlayerView {
   /** Mesures surlignées (rythme à vérifier) et leur couche de dessin. */
   private marked: readonly number[] = [];
   private readonly barMarks: BarMarks;
+  /** Enrichissement (notes prises dans les transcriptions) et anneaux des notes ajoutées. */
+  private readonly embellish: EmbellishPanel;
+  private rings: readonly Ring[] = [];
+  private readonly additionLayer: AdditionLayer;
 
   private readonly titleEl = h('p', { class: 'player__title' });
   private readonly artistEl = h('p', { class: 'player__artist' });
@@ -148,10 +155,31 @@ export class ScorePlayerView {
       commit: (entry, xml) => deps.replaceScore(entry, xml),
       markBars: (bars) => this.markBars(bars),
       selectBar: (index) => this.selectBar(index),
-      opened: () => this.panel.hide(),
+      opened: () => {
+        this.panel.hide();
+        this.embellish.setOpen(false);
+      },
+    });
+    this.embellish = new EmbellishPanel({
+      current: () => (this.entry && this.score ? { entry: this.entry, score: this.score, trackIndex: this.trackIndex } : null),
+      knownSources: () => this.rhythm.currentSources(),
+      preview: (score) => this.preview(score),
+      commit: (entry, xml) => deps.replaceScore(entry, xml),
+      showRings: (rings) => {
+        this.rings = rings;
+        this.drawRings();
+      },
+      opened: () => {
+        this.panel.hide();
+        this.rhythm.setOpen(false);
+      },
+      theme: () => currentTheme(),
     });
     // Un seul panneau ouvert à la fois.
-    this.panel.toggleButton.addEventListener('click', () => this.rhythm.setOpen(false));
+    this.panel.toggleButton.addEventListener('click', () => {
+      this.rhythm.setOpen(false);
+      this.embellish.setOpen(false);
+    });
     const back = h(
       'button',
       { type: 'button', class: 'btn btn--ghost player__back', 'aria-label': 'Retour à la bibliothèque' },
@@ -175,6 +203,7 @@ export class ScorePlayerView {
       this.alertEl,
       this.panel.element,
       this.rhythm.element,
+      this.embellish.element,
       h('div', { class: 'player__stage' }, this.scroller, this.statusEl),
       h(
         'div',
@@ -186,6 +215,7 @@ export class ScorePlayerView {
           this.barsToggle,
           this.loopToggle,
           this.fingeringToggle,
+          this.embellish.toggleButton,
           h(
             'div',
             { class: 'stepper__controls player__speed', role: 'group', 'aria-label': 'Vitesse de lecture' },
@@ -208,6 +238,7 @@ export class ScorePlayerView {
     });
     this.fingeringLayer = new FingeringLayer(this.surface, { onChoose: (id, finger) => this.chooseFinger(id, finger) });
     this.barMarks = new BarMarks(this.surface);
+    this.additionLayer = new AdditionLayer(this.surface, (id) => this.embellish.toggle(id));
     bindHoldRepeat(this.speedMinus, () => this.updateSettings({ speed: this.settings.speed - SPEED_STEP }));
     bindHoldRepeat(this.speedPlus, () => this.updateSettings({ speed: this.settings.speed + SPEED_STEP }));
     this.rewindButton.addEventListener('click', () => this.api?.stop());
@@ -237,6 +268,8 @@ export class ScorePlayerView {
     this.fingeringLayer.clear();
     this.marked = [];
     this.barMarks.clear();
+    this.rings = [];
+    this.additionLayer.clear();
     // Calage sur l'enregistrement de référence : points de synchronisation de la partition.
     const synced = MediaPanel.syncValid(entry);
     if (synced && entry.sync) score.applyFlatSyncPoints(entry.sync.points);
@@ -258,6 +291,7 @@ export class ScorePlayerView {
     );
     this.trackLabel.hidden = score.tracks.length < 2;
     this.rhythm.load(entry, score, trackIndex);
+    this.embellish.load(RhythmPanel.applies(entry, score, trackIndex));
 
     try {
       const at = await loadAlphaTab();
@@ -287,6 +321,7 @@ export class ScorePlayerView {
   close(): void {
     this.panel.close();
     this.rhythm.close();
+    this.embellish.close();
     this.pause();
   }
 
@@ -399,6 +434,7 @@ export class ScorePlayerView {
     this.previewScore = score;
     this.fingeringLayer.clear();
     this.barMarks.clear();
+    this.additionLayer.clear();
     api.renderScore(score ?? this.score, [this.trackIndex]);
   }
 
@@ -463,6 +499,7 @@ export class ScorePlayerView {
     api.postRenderFinished.on(() => {
       this.drawFingering();
       this.drawMarks();
+      this.drawRings();
     });
     api.soundFontLoad.on((e) => {
       this.loadingSound = true;
@@ -532,7 +569,10 @@ export class ScorePlayerView {
     this.updateSettings({ trackIndex: index, selection: null });
     this.marked = [];
     this.barMarks.clear();
+    this.rings = [];
+    this.additionLayer.clear();
     this.rhythm.load(this.entry, this.score, index);
+    this.embellish.load(RhythmPanel.applies(this.entry, this.score, index));
     this.api.renderScore(this.score, [index]);
   }
 
@@ -612,6 +652,11 @@ export class ScorePlayerView {
   private drawMarks(): void {
     if (this.api && this.marked.length) this.barMarks.draw(this.api, this.marked);
     else this.barMarks.clear();
+  }
+
+  private drawRings(): void {
+    if (this.api && this.previewing && this.rings.length) this.additionLayer.draw(this.api, this.rings);
+    else this.additionLayer.clear();
   }
 
   /** Sélectionne une mesure entière (lecture en boucle) et la fait défiler à l'écran. */
