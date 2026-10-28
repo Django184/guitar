@@ -432,8 +432,10 @@ export class ScorePlayerView {
         this.pendingSelection = null;
       }
       this.status(this.loadingSound ? this.statusEl.textContent : null);
-      this.drawFingering();
     });
+    // Pastilles de doigtés : après postRenderFinished seulement. Le rendu se fait dans un Worker,
+    // et la position des notes (boundsLookup) n'arrive sur la page qu'avec cet événement.
+    api.postRenderFinished.on(() => this.drawFingering());
     api.soundFontLoad.on((e) => {
       this.loadingSound = true;
       const percent = e.total > 0 ? Math.round((e.loaded / e.total) * 100) : 0;
