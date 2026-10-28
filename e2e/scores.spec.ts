@@ -334,7 +334,8 @@ test.describe('Import des formats', () => {
     const expected = EVENING_WALK.map(([, notes]) => notes.map(([s, f]) => `${s}/${f}`).sort().join('+'));
     expect(read.events).toEqual(expected);
     expect(read.capo).toBe(2);
-    expect(read.title).toBe('Promenade du soir');
+    // Titre lu dans le PDF (espaces normalisés : le texte imprimé peut garder des espaces insécables).
+    expect(read.title.replace(/\s+/g, ' ').trim()).toBe('Promenade du soir');
   });
 
   test('PDF sans partition ou illisible : explication, rien n’est ajouté à la bibliothèque', async ({ page }) => {
