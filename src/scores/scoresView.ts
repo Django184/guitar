@@ -295,6 +295,9 @@ export function createScoresView(): ScoresView {
   }
 
   function showLibrary(): void {
+    // Réglages en attente écrits avant de relire la bibliothèque (sinon la liste, puis une
+    // réouverture, repartiraient de l'entrée enregistrée, sans les derniers changements).
+    flushSave();
     openId = null;
     player.close();
     player.element.hidden = true;
@@ -305,6 +308,8 @@ export function createScoresView(): ScoresView {
 
   async function openScore(id: string): Promise<void> {
     if (openId === id && !player.element.hidden) return;
+    // L'ouverture programme l'enregistrement de son entrée : celui en attente part d'abord.
+    flushSave();
     openId = id;
     libraryView.showMessage(null);
     libraryView.element.hidden = true;
