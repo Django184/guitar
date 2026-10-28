@@ -71,6 +71,8 @@ export interface ScoreEntry {
    * Effacés quand la partition est réécrite (les notes ne sont plus les mêmes).
    */
   fingers?: Record<string, number>;
+  /** Rythme repris de transcriptions (panneau « Rythme ») : sources et mesures à vérifier. */
+  rhythm?: { sources: string[]; doubtfulBars: number[]; at: number };
   /** Enregistrement de référence. */
   media?: MediaLink;
   sync?: ScoreSync;

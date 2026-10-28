@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { type Page, expect, test } from '@playwright/test';
-import { midiFile, musicXmlFile, mxlFile } from './fixtures';
+import { EVENING_WALK, type UploadFile, eveningWalkAscii, eveningWalkSources, midiFile, musicXmlFile, mxlFile } from './fixtures';
 import { barTicks, beatPoint, importScore, openApp, passagePoints, playerState, touchSelectBars, waitForScore } from './helpers';
 import { GP_FIXTURES, SCREEN_RECORDING } from './paths';
 
@@ -565,6 +565,148 @@ function fakeYouTubeTab(wavBase64: string): void {
   }
   w.YT = { Player };
 }
+
+/** Importe une tablature texte (PDF imprimé par Chromium) et l'ouvre. */
+async function openTabPdf(page: Page, context: import('@playwright/test').BrowserContext, title: string, lines: string[]): Promise<void> {
+  const printer = await context.newPage();
+  await printer.setContent(
+    `<!doctype html><html><head><meta charset="utf-8"></head><body style="font-family: sans-serif">` +
+      `<h1 style="font-size: 24px">${title}</h1><pre style="font: 11px 'Courier New', monospace">${lines.join('\n')}</pre></body></html>`,
+    { waitUntil: 'load' },
+  );
+  const pdf = await printer.pdf({ format: 'A4' });
+  await printer.close();
+  await openApp(page);
+  await importScore(page, { name: 'promenade.pdf', mimeType: 'application/pdf', buffer: pdf });
+  await waitForScore(page);
+}
+
+const CORS = { 'Access-Control-Allow-Origin': '*' };
+
+/** BitMidi simulé : la recherche renvoie `files` (dans l'ordre), chacun téléchargeable. */
+async function mockBitMidi(page: Page, files: Array<[string, UploadFile]>, searches: string[] = []): Promise<void> {
+  await page.route('https://bitmidi.com/**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === '/api/midi/search') {
+      searches.push(url.search);
+      const results = files.map(([name], i) => ({ name, downloadUrl: `/uploads/${i + 1}.mid` }));
+      await route.fulfill({ json: { result: { query: url.searchParams.get('q'), results, total: results.length, pageTotal: 1 } }, headers: CORS });
+      return;
+    }
+    const file = files[Number(/\/uploads\/(\d+)\.mid$/.exec(url.pathname)?.[1] ?? 0) - 1]?.[1];
+    await route.fulfill(file ? { body: file.buffer, contentType: 'audio/midi', headers: CORS } : { status: 404, headers: CORS });
+  });
+}
+
+const WALK_RHYTHM = EVENING_WALK.map(([start]) => start);
+
+test.describe('Rythme retrouvé dans des transcriptions', () => {
+  // Requêtes vers BitMidi simulées par la page de test (sans le service worker de l'app).
+  test.use({ serviceWorkers: 'block' });
+
+  test('un clic : transcriptions trouvées, alignées et votées, mesure douteuse signalée, rythme gardé', async ({ page, context }) => {
+    test.setTimeout(120_000);
+    const { guitar, piano, other } = eveningWalkSources();
+    const searches: string[] = [];
+    await mockBitMidi(
+      page,
+      [
+        ['Promenade du soir (guitare).mid', guitar],
+        ['Promenade du soir - piano.mid', piano],
+        ['Promenade du soir (remix).mid', other],
+      ],
+      searches,
+    );
+    await openTabPdf(page, context, 'Promenade du soir', eveningWalkAscii());
+    // Rythme deviné d'après l'espacement des chiffres : faux.
+    expect((await noteStarts(page)).starts).not.toEqual(WALK_RHYTHM);
+
+    await page.getByTestId('rhythm-toggle').click();
+    const status = page.getByTestId('rhythm-status');
+    await expect(status).toContainText('2 transcriptions', { timeout: 60_000 });
+    expect(searches[0]).toContain('q=Promenade%20du%20soir');
+    // Deux sources retenues, l'autre morceau écarté.
+    const sources = page.getByTestId('rhythm-sources').locator('li');
+    await expect(sources).toHaveCount(3);
+    await expect(page.getByTestId('rhythm-sources').locator('li.is-used')).toHaveCount(2);
+    await expect(sources.filter({ hasText: 'remix' })).toContainText('ne contient pas cette tablature');
+
+    // Mesure 3 : les deux sources se contredisent. Surlignée, et à écouter en boucle d'un appui.
+    await expect(page.locator('.bar-marks__bar')).toHaveCount(1);
+    await expect(page.locator('.bar-marks__bar')).toHaveAttribute('data-bar', '2');
+    await page.getByRole('button', { name: 'Écouter la mesure 3' }).click();
+    await expect.poll(async () => (await playerState(page)).range?.startTick).toBe(2 * 3840);
+
+    await page.getByTestId('rhythm-keep').click();
+    await expect(page.locator('.player__notice')).toContainText('rythme repris de 2', { timeout: 30_000 });
+    await waitForScore(page);
+    const kept = await noteStarts(page);
+    expect(kept.starts).toEqual(WALK_RHYTHM);
+    expect(kept.tempo).toBe(96);
+    await expect(status).toContainText('Rythme repris de 2');
+    await expect(page.getByRole('button', { name: 'Écouter la mesure 3' })).toBeVisible();
+
+    // Rouverte depuis la bibliothèque : le rythme gardé reste.
+    await page.getByRole('button', { name: 'Retour à la bibliothèque' }).click();
+    await page.locator('.library__open').first().click();
+    await waitForScore(page);
+    expect((await noteStarts(page)).starts).toEqual(WALK_RHYTHM);
+  });
+
+  test('autres sources : réponse de Claude téléchargée par le proxy, fichier importé, aperçu annulé', async ({ page, context }) => {
+    test.setTimeout(120_000);
+    const { guitar, piano } = eveningWalkSources();
+    await mockBitMidi(page, []);
+    const proxy = 'https://pratique-guitare-proxy.test.workers.dev';
+    const fetched: string[] = [];
+    await page.route(`${proxy}/**`, async (route) => {
+      const url = new URL(route.request().url());
+      if (url.pathname === '/') {
+        await route.fulfill({ json: { ok: true, name: 'pratique-guitare-proxy', version: 1 }, headers: CORS });
+      } else {
+        fetched.push(url.searchParams.get('url') ?? '');
+        await route.fulfill({ body: guitar.buffer, contentType: 'audio/midi', headers: CORS });
+      }
+    });
+    // claude.ai : la page ouverte n'est pas chargée pour de vrai.
+    await context.route('https://claude.ai/**', (route) => route.fulfill({ body: '<!doctype html><title>Claude</title>', contentType: 'text/html' }));
+
+    await openTabPdf(page, context, 'Promenade du soir', eveningWalkAscii());
+    const before = (await noteStarts(page)).starts;
+    await page.getByTestId('rhythm-toggle').click();
+    const status = page.getByTestId('rhythm-status');
+    await expect(status).toHaveText('Aucune transcription trouvée.', { timeout: 60_000 });
+
+    // Proxy de l'utilisateur, testé avant d'être gardé.
+    await page.getByText('Proxy (liens d’autres sites)').click();
+    await page.getByTestId('rhythm-proxy').fill('pratique-guitare-proxy.test.workers.dev');
+    await page.getByRole('button', { name: 'Enregistrer' }).click();
+    await expect(page.getByTestId('rhythm-proxy-state')).toHaveText('Proxy prêt.');
+
+    // Message prérempli pour Claude, puis sa réponse collée.
+    const claude = page.getByTestId('rhythm-claude');
+    const href = (await claude.getAttribute('href')) ?? '';
+    expect(href.startsWith('https://claude.ai/new?q=')).toBe(true);
+    expect(decodeURIComponent(href.split('q=')[1] ?? '')).toContain('« Promenade du soir »');
+    const popup = context.waitForEvent('page');
+    await claude.click();
+    await (await popup).close();
+    await page.getByTestId('rhythm-answer').fill('{"sources":[{"url":"https://files.example.org/promenade.mid","titre":"Promenade du soir"}]}');
+    await page.getByTestId('rhythm-add').click();
+    await expect(status).toHaveText('Rythme trouvé dans une transcription.', { timeout: 60_000 });
+    expect(fetched).toEqual(['https://files.example.org/promenade.mid']);
+
+    // Un fichier importé s'ajoute au vote.
+    await page.getByTestId('rhythm-file').setInputFiles(piano);
+    await expect(status).toContainText('2 transcriptions', { timeout: 60_000 });
+
+    // Annulé : la tablature n'a pas changé.
+    await page.getByRole('button', { name: 'Annuler' }).click();
+    await expect(status).toContainText('Aperçu annulé');
+    await waitForScore(page, { sound: false });
+    expect((await noteStarts(page)).starts).toEqual(before);
+  });
+});
 
 test.describe('Doigtés de la main gauche', () => {
   test('pastilles sur la tablature, correction à la main conservée, affichage désactivable', async ({ page, context }) => {

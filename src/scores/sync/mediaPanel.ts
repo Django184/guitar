@@ -976,6 +976,11 @@ export class MediaPanel {
     this.messageEl.classList.toggle('is-problem', problem);
   }
 
+  /** Ferme le panneau (un autre s'ouvre). */
+  hide(): void {
+    this.setOpen(false);
+  }
+
   /** Message affiché dans le panneau (ouvert pour l'occasion). */
   notify(text: string): void {
     this.setOpen(true);

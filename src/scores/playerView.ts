@@ -19,6 +19,8 @@ import { type TabFingering, fingerTab, tabStaff } from './fingering/fromScore';
 import type { ScoreEntry, ScoreSettings, StoredSelection } from './library';
 import { type Passage, SelectionController } from './selection';
 import type { ReferenceMedia } from './sync/media';
+import { BarMarks } from './rhythm/barMarks';
+import { RhythmPanel } from './rhythm/rhythmPanel';
 import { MediaPanel } from './sync/mediaPanel';
 import type { SyncPoint } from './sync/rhythmFit';
 
@@ -83,6 +85,11 @@ export class ScorePlayerView {
   private media: ReferenceMedia | null = null;
   private mediaFrame = 0;
   private readonly panel: MediaPanel;
+  /** Rythme retrouvé dans des transcriptions (tablatures lues dans un PDF). */
+  private readonly rhythm: RhythmPanel;
+  /** Mesures surlignées (rythme à vérifier) et leur couche de dessin. */
+  private marked: readonly number[] = [];
+  private readonly barMarks: BarMarks;
 
   private readonly titleEl = h('p', { class: 'player__title' });
   private readonly artistEl = h('p', { class: 'player__artist' });
@@ -135,6 +142,16 @@ export class ScorePlayerView {
       speed: () => this.entry?.settings.speed ?? 1,
       stopPlayback: () => this.api?.pause(),
     });
+    this.rhythm = new RhythmPanel({
+      current: () => (this.entry && this.score ? { entry: this.entry, score: this.score, trackIndex: this.trackIndex } : null),
+      preview: (score) => this.preview(score),
+      commit: (entry, xml) => deps.replaceScore(entry, xml),
+      markBars: (bars) => this.markBars(bars),
+      selectBar: (index) => this.selectBar(index),
+      opened: () => this.panel.hide(),
+    });
+    // Un seul panneau ouvert à la fois.
+    this.panel.toggleButton.addEventListener('click', () => this.rhythm.setOpen(false));
     const back = h(
       'button',
       { type: 'button', class: 'btn btn--ghost player__back', 'aria-label': 'Retour à la bibliothèque' },
@@ -151,11 +168,13 @@ export class ScorePlayerView {
         back,
         h('div', { class: 'player__heading' }, this.titleEl, this.artistEl),
         this.trackLabel,
+        this.rhythm.toggleButton,
         this.panel.toggleButton,
       ),
       this.noticeEl,
       this.alertEl,
       this.panel.element,
+      this.rhythm.element,
       h('div', { class: 'player__stage' }, this.scroller, this.statusEl),
       h(
         'div',
@@ -188,6 +207,7 @@ export class ScorePlayerView {
       this.drawFingering();
     });
     this.fingeringLayer = new FingeringLayer(this.surface, { onChoose: (id, finger) => this.chooseFinger(id, finger) });
+    this.barMarks = new BarMarks(this.surface);
     bindHoldRepeat(this.speedMinus, () => this.updateSettings({ speed: this.settings.speed - SPEED_STEP }));
     bindHoldRepeat(this.speedPlus, () => this.updateSettings({ speed: this.settings.speed + SPEED_STEP }));
     this.rewindButton.addEventListener('click', () => this.api?.stop());
@@ -215,6 +235,8 @@ export class ScorePlayerView {
     this.previewScore = null;
     this.fingering = null;
     this.fingeringLayer.clear();
+    this.marked = [];
+    this.barMarks.clear();
     // Calage sur l'enregistrement de référence : points de synchronisation de la partition.
     const synced = MediaPanel.syncValid(entry);
     if (synced && entry.sync) score.applyFlatSyncPoints(entry.sync.points);
@@ -235,6 +257,7 @@ export class ScorePlayerView {
       ),
     );
     this.trackLabel.hidden = score.tracks.length < 2;
+    this.rhythm.load(entry, score, trackIndex);
 
     try {
       const at = await loadAlphaTab();
@@ -263,6 +286,7 @@ export class ScorePlayerView {
   /** Partition quittée : tâche de calage arrêtée. */
   close(): void {
     this.panel.close();
+    this.rhythm.close();
     this.pause();
   }
 
@@ -374,6 +398,7 @@ export class ScorePlayerView {
     this.previewing = score !== null;
     this.previewScore = score;
     this.fingeringLayer.clear();
+    this.barMarks.clear();
     api.renderScore(score ?? this.score, [this.trackIndex]);
   }
 
@@ -435,7 +460,10 @@ export class ScorePlayerView {
     });
     // Pastilles de doigtés : après postRenderFinished seulement. Le rendu se fait dans un Worker,
     // et la position des notes (boundsLookup) n'arrive sur la page qu'avec cet événement.
-    api.postRenderFinished.on(() => this.drawFingering());
+    api.postRenderFinished.on(() => {
+      this.drawFingering();
+      this.drawMarks();
+    });
     api.soundFontLoad.on((e) => {
       this.loadingSound = true;
       const percent = e.total > 0 ? Math.round((e.loaded / e.total) * 100) : 0;
@@ -502,6 +530,9 @@ export class ScorePlayerView {
     this.selection?.forget();
     this.renderSelection(null);
     this.updateSettings({ trackIndex: index, selection: null });
+    this.marked = [];
+    this.barMarks.clear();
+    this.rhythm.load(this.entry, this.score, index);
     this.api.renderScore(this.score, [index]);
   }
 
@@ -569,6 +600,32 @@ export class ScorePlayerView {
     entry.fingers = fingers;
     this.deps.onSettingsChange(entry);
     this.drawFingering();
+  }
+
+  // --- Mesures à vérifier --------------------------------------------------------
+
+  private markBars(bars: readonly number[]): void {
+    this.marked = bars;
+    this.drawMarks();
+  }
+
+  private drawMarks(): void {
+    if (this.api && this.marked.length) this.barMarks.draw(this.api, this.marked);
+    else this.barMarks.clear();
+  }
+
+  /** Sélectionne une mesure entière (lecture en boucle) et la fait défiler à l'écran. */
+  private selectBar(index: number): void {
+    const api = this.api;
+    const beats = api?.tracks[0]?.staves[0]?.bars[index]?.voices[0]?.beats;
+    const first = beats?.[0];
+    const last = beats?.[beats.length - 1];
+    if (!api || !first || !last || !this.selection) return;
+    api.pause();
+    this.selection.select(first, last);
+    const bounds = api.boundsLookup?.findMasterBarByIndex(index)?.visualBounds;
+    const surface = this.surface.querySelector<HTMLElement>('.at-surface');
+    if (bounds && surface) this.scroller.scrollTo({ top: Math.max(0, surface.offsetTop + bounds.y - 24), behavior: 'smooth' });
   }
 
   // --- Sélection ---------------------------------------------------------------

@@ -217,6 +217,41 @@ capture d'exemple fournie, les mesures 1 et 6 sont reproduites à l'identique, e
 des mesures 4 à 6, non utilisées pour le réglage, coïncident (les autres sont des variantes
 jouables). Calcul : environ 0,2 s pour un morceau de 400 attaques.
 
+**Rythme retrouvé dans des transcriptions.** Une tablature lue dans un PDF n'a pas de rythme : il
+est deviné d'après l'espacement des chiffres. Le bouton « Rythme » le retrouve dans des
+transcriptions du même morceau, sans toucher aux notes (cordes et cases restent celles de la
+tablature) — `src/scores/rhythm/` :
+
+1. **Recherche** : [BitMidi](https://bitmidi.com) (archive publique de fichiers MIDI, logiciel libre,
+   interface ouverte aux autres sites) est interrogé avec le titre, et ses fichiers téléchargés
+   directement. D'autres sources s'ajoutent à la main : liens trouvés par Claude (bouton
+   « Demander à Claude » : claude.ai s'ouvre avec un message prérempli, à envoyer ; on colle sa
+   réponse, un petit JSON, dans l'app), ou fichiers importés (Guitar Pro, MusicXML, MIDI).
+   MuseScore, Songsterr et Ultimate Guitar interdisent l'accès automatisé : leurs fichiers
+   s'importent à la main.
+2. **Alignement** de la tablature dans chaque transcription : hauteurs des notes seulement,
+   transposition et octave estimées, programmation dynamique qui suit toute la tablature et saute
+   l'introduction, la fin et l'accompagnement (une paire dans un accord épais prouve moins qu'une
+   note seule). Chaque piste est essayée, et la voix du dessus d'un piano à part. Contrôle : la même
+   recherche avec la tablature à l'envers ; une transcription n'est retenue que si elle fait
+   nettement mieux (sinon c'est un autre morceau dans la même tonalité).
+3. **Vote** : pour chaque paire de notes consécutives, chaque source retenue donne l'écart qui les
+   sépare (ramené à l'échelle de la plus fiable si elle écrit en valeurs doublées). L'écart le plus
+   soutenu l'emporte ; la mesure, le chiffrage et le tempo viennent de la source la plus fiable.
+   Les mesures où les sources se contredisent, ou qu'aucune ne couvre, sont surlignées dans
+   l'aperçu, avec un bouton par mesure pour l'écouter en boucle.
+4. **Aperçu** (portée et tablature), puis « Garder » ou « Annuler ».
+
+Calibrage (corpus music21 : quatuors, sonates, ragtime) : la bonne pièce, même réduite au piano,
+transposée et en valeurs doublées, obtient une vraisemblance d'au moins 0,8 par note et 0,45 de
+plus qu'à l'envers ; une autre pièce du même style, au plus 0,4 et 0,15. Avec deux sources, les
+écarts entre notes sont justes à 98-100 %.
+
+Les liens d'autres sites passent par un **proxy** gratuit que l'on installe sur son propre compte
+Cloudflare (dossier `proxy/`, bouton « Deploy to Cloudflare » de son
+[README](proxy/README.md)) : il ne sert que les pages de l'app et ne renvoie que des partitions.
+Son adresse se colle une fois dans « Rythme » → « Autres sources » → « Proxy ».
+
 **Banque de sons.** La lecture utilise [GeneralUser GS](https://www.schristiancollins.com/generaluser)
 2.0.3 de S. Christian Collins : la banque General MIDI gratuite la plus recommandée (261 instruments,
 13 batteries), sous une licence qui autorise son usage et sa modification dans un logiciel
@@ -274,6 +309,10 @@ Automatique (CI, job **e2e**, profils ordinateur et mobile) :
   plage de lecture ; à 50 %, la lecture reste dans le passage, revient au début sans trou
   (jamais plus de 300 ms sans avancer, bouclage compris) et avance à la moitié du tempo ;
 - la bibliothèque, la sélection et la vitesse sont retrouvées après rechargement ;
+- une tablature texte au rythme deviné retrouve son rythme dans des transcriptions (BitMidi
+  simulé : guitare, piano en valeurs doublées, autre morceau du même nom écarté) : positions et
+  tempo exacts, mesure où les sources se contredisent surlignée et jouable en boucle ; les liens
+  donnés par Claude passent par le proxy (simulé), un fichier importé s'ajoute au vote ;
 - les doigtés s'affichent sur la tablature (une pastille par note frettée), une correction
   faite à la main est gardée à la réouverture, et le bouton « Doigtés » les masque ;
 - hors-ligne, une partition importée s'ouvre et le son se charge depuis le cache ; la banque
@@ -311,6 +350,8 @@ src/
                         ou image, reconnaissance dédiée), écriture MusicXML
     fingering/          doigtés de la main gauche : optimisation (Viterbi), lien avec la
                         partition, pastilles et menu de correction
+    rhythm/             rythme retrouvé dans des transcriptions : recherche (BitMidi, Claude,
+                        proxy), lecture des sources, alignement, vote, panneau Rythme
     sync/               enregistrement de référence : YouTube (lecteur, recherche), fichier
                         audio, son d'une vidéo MP4 / MOV, son de l'onglet, micro, alignement
                         audio, rythme et tempo retrouvés, panneau Vidéo
@@ -319,5 +360,7 @@ tests/                  tests Vitest (unitaires) ; fixtures/ : vidéos de test (
 e2e/                    tests Playwright (bout en bout)
 public/                 favicon et icônes PWA, sons/ : banque de sons GeneralUser GS et sa licence
                         (font/ et soundfont/ copiés par le build)
+proxy/                  proxy Cloudflare Workers (gratuit, à installer sur son compte) : partitions
+                        d'autres sites pour l'app
 scripts/                sf2-to-sf3.py : préparation d'une banque SF2 pour alphaTab (FFmpeg, libvorbis)
 ```
