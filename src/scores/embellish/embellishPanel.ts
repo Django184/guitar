@@ -141,8 +141,9 @@ export class EmbellishPanel {
     let sources = [...this.host.knownSources()];
     if (!sources.some((s) => s.used)) {
       // Alignements valables tant que la partition est la même (notes ajoutées : à refaire).
-      if (this.own?.score === ctx.score && this.own.track === ctx.trackIndex) {
-        sources = this.own.sources;
+      const own = this.own;
+      if (own && own.score === ctx.score && own.track === ctx.trackIndex) {
+        sources = own.sources;
       } else {
         this.show('Recherche de transcriptions…', null);
         const found = await searchBitMidi(ctx.entry.title, ctx.entry.artist).catch(() => []);

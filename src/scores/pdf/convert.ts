@@ -126,11 +126,11 @@ export async function convertPdf(
     const fromText = readAsciiTab(rows, texts);
     if (fromText) return done(fromText.score, measureCount(fromText.score), fromText.notes, 'text', fromText.bars);
 
-    // 3. Tablature texte en image. Document rouvert : une fois une page nettoyée, pdf.js ne
+    // 3. Tablature en image : texte (capture d'écran) ou dessinée (export de logiciel). Document rouvert : une fois une page nettoyée, pdf.js ne
     // renvoie plus ses images déjà décodées.
     const withImages = pages.filter((p) => p.images?.some(readableImage));
     if (withImages.length) {
-      const { ocrTabRows, toGray } = await import('./tabOcr');
+      const { drawnTabRows, ocrTabRows, toGray } = await import('./tabOcr');
       const imageTask = open();
       try {
         const imageDoc = await imageTask.promise;
@@ -141,7 +141,11 @@ export async function convertPdf(
           for (const img of (data.images ?? []).filter(readableImage)) {
             const obj = await pageObject(page, img.id);
             const gray = obj ? toGray(obj as Parameters<typeof toGray>[0]) : null;
-            if (gray) rows.push(...ocrTabRows(gray, index, img.box));
+            if (gray) {
+              // Tablature texte en image, sinon tablature dessinée (cordes en traits, cases dessus).
+              const ascii = ocrTabRows(gray, index, img.box);
+              rows.push(...(ascii.length ? ascii : drawnTabRows(gray, index, img.box)));
+            }
             // Laisse respirer l'interface entre deux images.
             await new Promise((resolve) => setTimeout(resolve, 0));
           }

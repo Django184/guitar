@@ -401,3 +401,228 @@ export function ocrTabRows(img: GrayImage, page: number, box?: Box): TextRow[] {
   }
   return out;
 }
+
+/* ------------------------------------------------------------------ */
+/* Tablature dessinée                                                  */
+/* ------------------------------------------------------------------ */
+
+/** Encre des cordes (traits gris compris) et des chiffres (sombres). */
+const LINE_INK = 215;
+const DIGIT_INK = 175;
+
+interface Staff {
+  /** Ordonnée de chaque corde (pixels), de la plus aiguë à la plus grave. */
+  lines: number[];
+  /** Écart entre deux cordes. */
+  gap: number;
+  /** Début et fin des cordes. */
+  x0: number;
+  x1: number;
+}
+
+/** Cordes : rangées dont l'encre couvre une bonne part de la largeur, regroupées par portées. */
+function findStaves(img: GrayImage): Staff[] {
+  const { width, height, data } = img;
+  const lineRows: Array<{ y: number; n: number }> = [];
+  for (let y = 0; y < height; y++) {
+    let n = 0;
+    for (let x = 0, i = y * width; x < width; x++, i++) if ((data[i] as number) < LINE_INK) n++;
+    if (n >= 0.3 * width) lineRows.push({ y, n });
+  }
+  // Rangées voisines : un même trait (épais de quelques pixels).
+  const lines: number[] = [];
+  let run: number[] = [];
+  const flush = (): void => {
+    if (run.length && run.length <= 8) lines.push(run.reduce((s, y) => s + y, 0) / run.length);
+    run = [];
+  };
+  for (const { y } of lineRows) {
+    if (run.length && y - (run[run.length - 1] as number) > 1) flush();
+    run.push(y);
+  }
+  flush();
+
+  // Portées : 4 à 8 traits également espacés.
+  const staves: Staff[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    let j = i + 1;
+    const gap = (lines[i + 1] ?? Infinity) - (lines[i] as number);
+    while (j < lines.length && Math.abs((lines[j] as number) - (lines[j - 1] as number) - gap) <= 0.15 * gap) j++;
+    const group = lines.slice(i, j);
+    if (group.length >= 4 && group.length <= 8 && gap >= 12) {
+      // Début des cordes : premier endroit où la plupart d'entre elles sont un trait continu
+      // (les noms de cordes, cercles et flèches qui les précèdent n'en sont pas).
+      const rows = group.map((ly) => Math.round(ly));
+      // Un trait fin : encre sur la corde, fond juste au-dessus et au-dessous (pas une zone grisée).
+      const d = Math.max(3, Math.round(0.2 * gap));
+      const solid = (y: number, x: number, len: number): boolean => {
+        if (y - d < 0 || y + d >= height) return false;
+        for (let k = 0; k < len; k++) {
+          const p = y * width + x + k;
+          if ((data[p] as number) >= LINE_INK || (data[p - d * width] as number) < LINE_INK || (data[p + d * width] as number) < LINE_INK) return false;
+        }
+        return true;
+      };
+      const seg = Math.max(4, Math.round(0.5 * gap));
+      let x0 = -1;
+      for (let x = 0; x + seg < width && x0 < 0; x++) {
+        if (rows.filter((y) => solid(y, x, seg)).length >= Math.ceil(group.length / 2)) x0 = x;
+      }
+      let x1 = -1;
+      for (let x = width - seg - 1; x > x0 && x1 < 0; x--) {
+        if (rows.filter((y) => solid(y, x, seg)).length >= Math.ceil(group.length / 2)) x1 = x + seg - 1;
+      }
+      if (x0 < 0 || x1 <= x0) {
+        i = j;
+        continue;
+      }
+      staves.push({ lines: group, gap, x0, x1 });
+      i = j;
+    } else i++;
+  }
+  return staves;
+}
+
+/** Barres de mesure : traits verticaux qui relient la première et la dernière corde. */
+function barLines(img: GrayImage, staff: Staff): number[] {
+  const { width, data } = img;
+  const top = Math.round(staff.lines[0] as number);
+  const bottom = Math.round(staff.lines[staff.lines.length - 1] as number);
+  const xs: number[] = [];
+  for (let x = staff.x0; x <= Math.min(width - 1, staff.x1 + 2); x++) {
+    let ok = true;
+    for (let y = top; y <= bottom && ok; y++) if ((data[y * width + x] as number) >= LINE_INK) ok = false;
+    if (ok) xs.push(x);
+  }
+  // Pixels voisins : une seule barre.
+  const bars: number[] = [];
+  for (const x of xs) {
+    const last = bars[bars.length - 1];
+    if (last !== undefined && x - last <= 0.3 * staff.gap) continue;
+    bars.push(x);
+  }
+  return bars;
+}
+
+/**
+ * Tablature dessinée (cordes en traits continus, cases posées dessus : export de logiciel,
+ * capture d'un site) → lignes de texte équivalentes pour readAsciiTab. Les noms de cordes ne
+ * sont pas repris (l'accordage vient du texte de la page, sinon standard).
+ */
+export function drawnTabRows(img: GrayImage, page: number, box?: Box): TextRow[] {
+  const top = box ? box.y0 : 0;
+  const scale = box ? (box.y1 - box.y0) / img.height : 1;
+  const staves = findStaves(img);
+  if (!staves.length) return [];
+  const { width } = img;
+  const ink = new Uint8Array(img.width * img.height);
+  for (let i = 0; i < ink.length; i++) ink[i] = (img.data[i] as number) < DIGIT_INK ? 1 : 0;
+  // Cordes effacées : longs traits horizontaux autour de chaque corde. Les chiffres, posés dans
+  // une interruption du trait, restent entiers (y compris en couleur, plus claire que le noir).
+  for (const staff of staves) {
+    for (const ly of staff.lines) {
+      for (let y = Math.max(0, Math.round(ly - 0.12 * staff.gap)); y <= Math.min(img.height - 1, Math.round(ly + 0.12 * staff.gap)); y++) {
+        let from = -1;
+        for (let x = 0; x <= width; x++) {
+          const on = x < width && ink[y * width + x] === 1;
+          if (on && from < 0) from = x;
+          if (!on && from >= 0) {
+            if (x - from >= 0.6 * staff.gap) ink.fill(0, y * width + from, y * width + x);
+            from = -1;
+          }
+        }
+        // Bouts de corde courts (entre deux cases, ou contre un nom de corde) : gris moyen, plus
+        // clair que les chiffres (noirs ou en couleur).
+        for (let x = 0; x < width; x++) if ((img.data[y * width + x] as number) >= 135) ink[y * width + x] = 0;
+      }
+    }
+  }
+  const { comps, labels } = components(ink, img.width, img.height);
+  const out: TextRow[] = [];
+
+  for (const staff of staves) {
+    const { lines, gap } = staff;
+    // Signes posés sur une corde : chiffres et lettres des liaisons (h, p, /…).
+    const glyphs: Array<Component & { line: number }> = [];
+    for (const c of comps) {
+      const h = c.y1 - c.y0 + 1;
+      const w = c.x1 - c.x0 + 1;
+      const cx = (c.x0 + c.x1) / 2;
+      const cy = (c.y0 + c.y1) / 2;
+      if (cx < staff.x0 || cx > staff.x1 + 0.2 * gap) continue;
+      if (h < 0.3 * gap || h > 1.05 * gap || w > 1.2 * gap) continue;
+      let line = -1;
+      lines.forEach((ly, k) => {
+        if (Math.abs(cy - ly) <= 0.4 * gap && (line < 0 || Math.abs(cy - ly) < Math.abs(cy - (lines[line] as number)))) line = k;
+      });
+      if (line >= 0) glyphs.push({ ...c, line });
+    }
+    if (glyphs.length < 4) continue;
+    const digitH = median(glyphs.map((g) => g.y1 - g.y0 + 1));
+
+    // Lettres collées (« 10 », « 4p2 ») : un groupe par corde.
+    type Token = { line: number; x0: number; x1: number; chars: string };
+    const tokens: Token[] = [];
+    for (let k = 0; k < lines.length; k++) {
+      const onLine = glyphs.filter((g) => g.line === k).sort((a, b) => a.x0 - b.x0);
+      let current: Token | null = null;
+      for (const g of onLine) {
+        const grid = gridOf(img, DIGIT_INK, g.x0, g.y0, g.x1, g.y1, (x, y) => labels[y * img.width + x] === g.id);
+        const ch = classify(grid, (g.x1 - g.x0 + 1) / (g.y1 - g.y0 + 1), '0123456789hpbrs/\\~x');
+        if (current && g.x0 - current.x1 <= 0.25 * digitH) {
+          current.chars += ch;
+          current.x1 = g.x1;
+        } else {
+          current = { line: k, x0: g.x0, x1: g.x1, chars: ch };
+          tokens.push(current);
+        }
+      }
+    }
+    if (!tokens.some((t) => /\d/.test(t.chars))) continue;
+
+    // Colonnes : une case de texte ≈ un chiffre ; les notes jouées ensemble partagent la leur.
+    const unit = Math.max(4, 0.6 * digitH);
+    // Barres de début et de fin de ligne ignorées : seules celles du milieu découpent les mesures
+    // (une ligne sans barre intérieure est lue d'un seul tenant, rythme déduit de l'espacement).
+    const bars = barLines(img, staff).filter((x) => x > staff.x0 + 0.5 * gap && x < staff.x1 - 0.5 * gap);
+    type Item = { x: number; tokens: Token[]; bar?: boolean };
+    const items: Item[] = [...tokens.map((t) => ({ x: (t.x0 + Math.min(t.x1, t.x0 + digitH * 0.6)) / 2, tokens: [t] })), ...bars.map((x) => ({ x, tokens: [], bar: true }))].sort((a, b) => a.x - b.x);
+    const clustered: Item[] = [];
+    for (const it of items) {
+      const last = clustered[clustered.length - 1];
+      if (last && !last.bar && !it.bar && it.x - last.x <= 0.35 * unit) last.tokens.push(...it.tokens);
+      else clustered.push({ ...it, tokens: [...it.tokens] });
+    }
+    const rows = lines.map(() => [] as string[]);
+    let col = 1;
+    let prevX = staff.x0;
+    for (const it of clustered) {
+      col = Math.max(col + 1, 1 + Math.round((it.x - staff.x0) / unit));
+      if (it.bar) {
+        for (const r of rows) r[col] = '|';
+        prevX = it.x;
+        continue;
+      }
+      let width = 1;
+      for (const t of it.tokens) {
+        [...t.chars].forEach((ch, i) => {
+          (rows[t.line] as string[])[col + i] = ch;
+        });
+        width = Math.max(width, t.chars.length);
+      }
+      col += width - 1;
+      prevX = it.x;
+    }
+    void prevX;
+    const end = col + 2;
+    lines.forEach((ly, k) => {
+      const cells = rows[k] as string[];
+      let text = '|';
+      for (let c = 1; c <= end; c++) text += cells[c] ?? '-';
+      if (!text.endsWith('|')) text += '|';
+      out.push({ text, page, y: top + ly * scale, size: gap * scale });
+    });
+  }
+  return out;
+}

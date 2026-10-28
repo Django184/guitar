@@ -251,7 +251,8 @@ export function tuningFromText(lines: TextLine[], strings: number): { tuning: nu
   if (!base) return null;
   const all = lines.map((l) => l.text).join('\n');
   let capo = 0;
-  const capoMatch = /capo\.?\s*(?:on\s*|sur\s*|à la\s*|at\s*)?(\d{1,2}|[IVX]{1,4})/i.exec(all);
+  // « Capo 2 », « Capo on 3 », « capo sur la case 4 », « CAPO FRET 4 », « Capo: 2nd fret ».
+  const capoMatch = /capo\.?\s*:?\s*(?:on\s*|sur\s*|à la\s*|at\s*)?(?:(?:the\s*|la\s*)?(?:fret|case|frette)\s*)?(\d{1,2}(?!\d)|[IVX]{1,4}\b)/i.exec(all);
   if (capoMatch) {
     const v = capoMatch[1] as string;
     capo = /^\d+$/.test(v) ? Number(v) : romanToInt(v);
