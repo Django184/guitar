@@ -373,7 +373,8 @@ export class ScorePlayerView {
       },
       player: {
         playerMode: at.PlayerMode.EnabledSynthesizer,
-        soundFont: `${ASSET_BASE}soundfont/sonivox.sf3`,
+        // GeneralUser GS 2.0.3, préparée pour alphaTab (scripts/sf2-to-sf3.py ; voir le README).
+        soundFont: `${ASSET_BASE}sons/generaluser-gs-2.0.3.sf3`,
         scrollElement: this.scroller,
         scrollOffsetY: -24,
         enableCursor: true,

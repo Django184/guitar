@@ -30,7 +30,8 @@ export default defineConfig({
       transformIndexHtml: (html: string) => html.replace('%APP_VERSION%', APP_VERSION),
     },
     // alphaTab : Web Worker de rendu, Audio Worklet du synthétiseur, police Bravura
-    // (public/font/) et banque de sons SONiVOX (public/soundfont/) copiées à chaque build.
+    // (public/font/) copiés à chaque build (sa banque SONiVOX, public/soundfont/, ne sert plus :
+    // l'app joue GeneralUser GS, public/sons/).
     alphaTab(),
     VitePWA({
       // « prompt » : la mise à jour ne recharge jamais la page en pleine séance de métronome.
@@ -59,10 +60,10 @@ export default defineConfig({
       },
       workbox: {
         // Hors-ligne complet : app, alphaTab, lecteur de PDF (pdf.js et son worker .mjs),
-        // police musicale (woff2) et banque de sons (sf3, ~1 Mo).
-        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico}', 'font/Bravura.woff2', 'soundfont/sonivox.sf3'],
+        // police musicale (woff2) et banque de sons (GeneralUser GS en sf3, 13,5 Mo).
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico}', 'font/Bravura.woff2', 'sons/*.sf3'],
         globIgnores: ['font/Bravura.svg'],
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 16 * 1024 * 1024,
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
       },

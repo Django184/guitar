@@ -195,9 +195,38 @@ La lecture se met en pause quand on quitte l'écran ou qu'on démarre l'accordeu
 vitesse, boucle, sélection), restaurés à la réouverture. Renommer et supprimer (avec « Annuler »)
 depuis la liste. En navigation privée, la partition s'ouvre mais n'est pas conservée.
 
-**Hors-ligne.** alphaTab, sa police musicale (Bravura, 0,3 Mo), la banque de sons SONiVOX
-(1 Mo) et pdf.js (1,8 Mo, chargé seulement à l'import d'un PDF) sont précachés avec l'app : une
-partition déjà importée s'ouvre et se joue sans réseau, et un PDF s'importe hors-ligne.
+**Banque de sons.** La lecture utilise [GeneralUser GS](https://www.schristiancollins.com/generaluser)
+2.0.3 de S. Christian Collins : la banque General MIDI gratuite la plus recommandée (261 instruments,
+13 batteries), sous une licence qui autorise son usage et sa modification dans un logiciel
+(`public/sons/GeneralUser-GS-LICENSE.txt`). Elle remplace SONiVOX (1 Mo), la banque d'exemple
+d'alphaTab, très sommaire. Autre raison du choix : ses 920 échantillons sont tous mono, or le
+synthétiseur d'alphaTab 1.8.4 ignore les échantillons stéréo — avec MS Basic (MuseScore 4) ou
+FluidR3Mono, le piano et plusieurs cordes seraient muets.
+
+Le synthétiseur d'alphaTab (un portage de TinySoundFont) s'écarte de la norme SoundFont : il ignore
+les modulateurs, le décalage de début des échantillons en SF3, et additionne certaines valeurs de
+la zone globale à celles des zones. `scripts/sf2-to-sf3.py` prépare donc la banque pour lui, à partir
+du SF2 d'origine (dépôt [mrbumpy409/GeneralUser-GS](https://github.com/mrbumpy409/GeneralUser-GS),
+commit `684543d`, SHA-256 `9575028c…cfe`) :
+
+- échantillons compressés en Ogg Vorbis (qualité 0,8, −1 dB, réglages conseillés par l'auteur),
+  suivis d'un peu de silence pour que le décodage couvre toujours l'original : 32 → 13,5 Mo ;
+- décalages de début et points de boucle inscrits dans les échantillons (copies découpées) ;
+- atténuation et accord écrits zone par zone, atténuation × 0,4 comme FluidSynth (lecteur de
+  référence de la banque) ;
+- effet des modulateurs de vélocité et de hauteur (ouverture du filtre, enveloppes) calculé pour
+  la nuance « f » d'alphaTab (vélocité 95) et inscrit dans les réglages.
+
+Vérification (moteur d'alphaTab exécuté depuis ses sources, une note par instrument, comparé à
+FluidSynth jouant le SF2 d'origine) : aucun instrument muet ; volume à ±1,5 dB de FluidSynth
+(écart-type, 134 sons), guitares à ±0,6 dB, basses à ±1,1 dB ; timbre (centre spectral) à 1,4 demi-ton près
+en médiane, contre 7,6 pour SONiVOX ; crêtes d'un accord de six cordes comparables à SONiVOX.
+Écarts restants : quelques sons de synthé (enveloppe de filtre propre à alphaTab), et ni
+réverbération ni chorus (non pris en charge par alphaTab).
+
+**Hors-ligne.** alphaTab, sa police musicale (Bravura, 0,3 Mo), la banque de sons (13,5 Mo) et
+pdf.js (1,8 Mo, chargé seulement à l'import d'un PDF) sont précachés avec l'app : une partition
+déjà importée s'ouvre et se joue sans réseau, et un PDF s'importe hors-ligne.
 
 **Limite connue d'alphaTab 1.8.4.** S'abonner à l'événement `midiLoaded` provoque une récursion
 infinie (`AlphaSynthWebWorkerApi.loadedMidiInfo`) ; l'app utilise `playerReady` à la place.
@@ -223,7 +252,9 @@ Automatique (CI, job **e2e**, profils ordinateur et mobile) :
   plage de lecture ; à 50 %, la lecture reste dans le passage, revient au début sans trou
   (jamais plus de 300 ms sans avancer, bouclage compris) et avance à la moitié du tempo ;
 - la bibliothèque, la sélection et la vitesse sont retrouvées après rechargement ;
-- hors-ligne, une partition importée s'ouvre et le son se charge depuis le cache.
+- hors-ligne, une partition importée s'ouvre et le son se charge depuis le cache ; la banque
+  utilisée est GeneralUser GS (et, en test unitaire, le fichier livré respecte ce qu'exige le
+  synthétiseur d'alphaTab : échantillons mono, blocs RIFF pairs, zones sans valeurs additives).
 
 Manuel (téléphone) : importez un fichier, appui long sur la mesure 5, glissez jusqu'à la 8,
 réglez 50 %, touchez « Lire » : le passage boucle sans pause audible. Fermez l'app, passez
@@ -260,5 +291,7 @@ src/
   ui/                   helpers DOM, appui long, messages d'erreur en français
 tests/                  tests Vitest (unitaires) ; fixtures/ : vidéos de test (sons synthétisés)
 e2e/                    tests Playwright (bout en bout)
-public/                 favicon et icônes PWA (font/ et soundfont/ copiés par le build)
+public/                 favicon et icônes PWA, sons/ : banque de sons GeneralUser GS et sa licence
+                        (font/ et soundfont/ copiés par le build)
+scripts/                sf2-to-sf3.py : préparation d'une banque SF2 pour alphaTab (FFmpeg, libvorbis)
 ```
