@@ -13,6 +13,9 @@ import {
   loadAlphaTab,
   scoreColors,
 } from './alphatab';
+import type { Finger } from './fingering/fingering';
+import { FingeringLayer } from './fingering/fingeringLayer';
+import { type TabFingering, fingerTab, tabStaff } from './fingering/fromScore';
 import type { ScoreEntry, ScoreSettings, StoredSelection } from './library';
 import { type Passage, SelectionController } from './selection';
 import type { ReferenceMedia } from './sync/media';
@@ -71,6 +74,10 @@ export class ScorePlayerView {
   private currentScale = scaleForWidth();
   /** Partition affichée à la place de celle enregistrée (aperçu d'un rythme recalé). */
   private previewing = false;
+  private previewScore: Score | null = null;
+  /** Doigtés calculés pour la partition et la piste affichées (et les doigts imposés). */
+  private fingering: { score: Score; track: number; key: string; result: TabFingering | null } | null = null;
+  private readonly fingeringLayer: FingeringLayer;
   /** Lecture avec l'enregistrement de référence (alphaTab en mode « média externe »). */
   private following = false;
   private media: ReferenceMedia | null = null;
@@ -95,6 +102,11 @@ export class ScorePlayerView {
     'Par mesure',
   );
   private readonly loopToggle = h('button', { type: 'button', class: 'toggle', 'aria-pressed': 'true' }, 'Boucle');
+  private readonly fingeringToggle = h(
+    'button',
+    { type: 'button', class: 'toggle', 'aria-pressed': 'true', hidden: true, title: 'Doigts de la main gauche sur la tablature', 'data-testid': 'fingering-toggle' },
+    'Doigtés',
+  );
   private readonly speedValue = h('output', { class: 'stepper__value', 'data-testid': 'speed' });
   private readonly speedMinus = h('button', { type: 'button', class: 'btn btn--square', 'aria-label': 'Ralentir de 5 %' }, '−');
   private readonly speedPlus = h('button', { type: 'button', class: 'btn btn--square', 'aria-label': 'Accélérer de 5 %' }, '+');
@@ -154,6 +166,7 @@ export class ScorePlayerView {
           { class: 'player__row player__row--options' },
           this.barsToggle,
           this.loopToggle,
+          this.fingeringToggle,
           h(
             'div',
             { class: 'stepper__controls player__speed', role: 'group', 'aria-label': 'Vitesse de lecture' },
@@ -170,6 +183,11 @@ export class ScorePlayerView {
     this.clearButton.addEventListener('click', () => this.selection?.clear());
     this.barsToggle.addEventListener('click', () => this.updateSettings({ wholeBars: !this.settings.wholeBars }));
     this.loopToggle.addEventListener('click', () => this.updateSettings({ loop: !this.settings.loop }));
+    this.fingeringToggle.addEventListener('click', () => {
+      this.updateSettings({ fingering: this.settings.fingering === false });
+      this.drawFingering();
+    });
+    this.fingeringLayer = new FingeringLayer(this.surface, { onChoose: (id, finger) => this.chooseFinger(id, finger) });
     bindHoldRepeat(this.speedMinus, () => this.updateSettings({ speed: this.settings.speed - SPEED_STEP }));
     bindHoldRepeat(this.speedPlus, () => this.updateSettings({ speed: this.settings.speed + SPEED_STEP }));
     this.rewindButton.addEventListener('click', () => this.api?.stop());
@@ -194,6 +212,9 @@ export class ScorePlayerView {
     this.entry = entry;
     this.score = score;
     this.previewing = false;
+    this.previewScore = null;
+    this.fingering = null;
+    this.fingeringLayer.clear();
     // Calage sur l'enregistrement de référence : points de synchronisation de la partition.
     const synced = MediaPanel.syncValid(entry);
     if (synced && entry.sync) score.applyFlatSyncPoints(entry.sync.points);
@@ -351,6 +372,8 @@ export class ScorePlayerView {
     this.selection?.forget();
     this.renderSelection(null);
     this.previewing = score !== null;
+    this.previewScore = score;
+    this.fingeringLayer.clear();
     api.renderScore(score ?? this.score, [this.trackIndex]);
   }
 
@@ -363,6 +386,8 @@ export class ScorePlayerView {
       core: {
         fontDirectory: `${ASSET_BASE}font/`,
         logLevel: at.LogLevel.Warning,
+        // Position de chaque note (désactivée par défaut) : sert à poser les pastilles de doigtés.
+        includeNoteBounds: true,
       },
       display: {
         layoutMode: at.LayoutMode.Page,
@@ -407,6 +432,7 @@ export class ScorePlayerView {
         this.pendingSelection = null;
       }
       this.status(this.loadingSound ? this.statusEl.textContent : null);
+      this.drawFingering();
     });
     api.soundFontLoad.on((e) => {
       this.loadingSound = true;
@@ -468,6 +494,8 @@ export class ScorePlayerView {
   private changeTrack(index: number): void {
     if (!this.api || !this.score || !this.entry) return;
     this.previewing = false;
+    this.previewScore = null;
+    this.fingeringLayer.clear();
     this.api.pause();
     this.selection?.forget();
     this.renderSelection(null);
@@ -489,6 +517,56 @@ export class ScorePlayerView {
     this.api.settings.display.scale = scale;
     this.api.updateSettings();
     this.api.render();
+  }
+
+  // --- Doigtés ------------------------------------------------------------------
+
+  /** Doigts imposés par l'utilisateur pour la piste affichée. */
+  private forcedFingers(): Map<string, Finger> {
+    const out = new Map<string, Finger>();
+    const prefix = `${this.trackIndex}|`;
+    for (const [key, finger] of Object.entries(this.entry?.fingers ?? {})) {
+      if (key.startsWith(prefix) && finger >= 1 && finger <= 5) out.set(key.slice(prefix.length), finger as Finger);
+    }
+    return out;
+  }
+
+  /** Pastilles de doigtés pour le rendu actuel (calcul refait si la partition ou les doigts imposés changent). */
+  private drawFingering(): void {
+    const api = this.api;
+    const entry = this.entry;
+    const score = this.previewing ? this.previewScore : this.score;
+    if (!api || !entry || !score) return;
+    const hasTab = !!tabStaff(score, this.trackIndex);
+    this.fingeringToggle.hidden = !hasTab;
+    this.fingeringToggle.setAttribute('aria-pressed', String(entry.settings.fingering !== false));
+    if (!hasTab || entry.settings.fingering === false) {
+      this.fingeringLayer.clear();
+      return;
+    }
+    // Aperçu d'un rythme recalé : notes différentes, doigtés calculés sans les doigts imposés.
+    const forced = this.previewing ? new Map<string, Finger>() : this.forcedFingers();
+    const key = JSON.stringify([...forced]);
+    const cache = this.fingering;
+    if (!cache || cache.score !== score || cache.track !== this.trackIndex || cache.key !== key) {
+      this.fingering = { score, track: this.trackIndex, key, result: fingerTab(score, this.trackIndex, forced) };
+    }
+    const result = this.fingering?.result;
+    if (result) this.fingeringLayer.draw(api, result, new Set(forced.keys()));
+    else this.fingeringLayer.clear();
+  }
+
+  /** Doigt choisi à la main pour une note (null : retour au calcul) ; le reste se réorganise autour. */
+  private chooseFinger(id: string, finger: Finger | null): void {
+    const entry = this.entry;
+    if (!entry || this.previewing) return;
+    const fingers = { ...(entry.fingers ?? {}) };
+    const key = `${this.trackIndex}|${id}`;
+    if (finger === null) delete fingers[key];
+    else fingers[key] = finger;
+    entry.fingers = fingers;
+    this.deps.onSettingsChange(entry);
+    this.drawFingering();
   }
 
   // --- Sélection ---------------------------------------------------------------

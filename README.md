@@ -195,6 +195,28 @@ La lecture se met en pause quand on quitte l'écran ou qu'on démarre l'accordeu
 vitesse, boucle, sélection), restaurés à la réouverture. Renommer et supprimer (avec « Annuler »)
 depuis la liste. En navigation privée, la partition s'ouvre mais n'est pas conservée.
 
+**Doigtés de la main gauche.** Sur la tablature, une pastille colorée à gauche de chaque case
+indique le doigt (1 index, 2 majeur, 3 annulaire, 4 auriculaire, T pouce), comme dans les méthodes ;
+le bouton « Doigtés » les affiche ou les masque. Ils sont optimisés sur toute la pièce par
+programmation dynamique (Viterbi, `src/scores/fingering/`), et non note par note :
+
+- chaque instant où une note frettée commence a pour états les affectations jouables de doigts aux
+  notes qui sonnent (écart de 4 cases, 5 en position haute ou faute de mieux ; barré de l'index,
+  ou de l'annulaire sur des cordes voisines ; pouce sur les deux cordes graves) ;
+- coût propre : écartement (progressif), doigts serrés, auriculaire, barré, pouce ; coût de
+  passage : déplacement de la main (surtout le fait de bouger, pondéré par le temps disponible),
+  même case jouée d'un autre doigt, doigt qui saute d'une note à l'autre, hammer-on ou pull-off
+  d'un même doigt, glissé changeant de doigt ; une note qui sonne encore garde son doigt (ou est
+  lâchée, moyennant un coût) ;
+- second passage : un accord ou motif qui revient garde de préférence son doigté le plus fréquent.
+
+Les doigts écrits dans un fichier Guitar Pro sont respectés. Toucher une pastille ouvre un menu
+(1, 2, 3, 4, T, Auto) : le doigt choisi est imposé et le reste de la pièce se réorganise autour ;
+les corrections sont gardées avec la partition (effacées si son rythme est réécrit). Sur la
+capture d'exemple fournie, les mesures 1 et 6 sont reproduites à l'identique, et 24 doigts sur 28
+des mesures 4 à 6, non utilisées pour le réglage, coïncident (les autres sont des variantes
+jouables). Calcul : environ 0,2 s pour un morceau de 400 attaques.
+
 **Banque de sons.** La lecture utilise [GeneralUser GS](https://www.schristiancollins.com/generaluser)
 2.0.3 de S. Christian Collins : la banque General MIDI gratuite la plus recommandée (261 instruments,
 13 batteries), sous une licence qui autorise son usage et sa modification dans un logiciel
@@ -252,6 +274,8 @@ Automatique (CI, job **e2e**, profils ordinateur et mobile) :
   plage de lecture ; à 50 %, la lecture reste dans le passage, revient au début sans trou
   (jamais plus de 300 ms sans avancer, bouclage compris) et avance à la moitié du tempo ;
 - la bibliothèque, la sélection et la vitesse sont retrouvées après rechargement ;
+- les doigtés s'affichent sur la tablature (une pastille par note frettée), une correction
+  faite à la main est gardée à la réouverture, et le bouton « Doigtés » les masque ;
 - hors-ligne, une partition importée s'ouvre et le son se charge depuis le cache ; la banque
   utilisée est GeneralUser GS (et, en test unitaire, le fichier livré respecte ce qu'exige le
   synthétiseur d'alphaTab : échantillons mono, blocs RIFF pairs, zones sans valeurs additives).
@@ -285,6 +309,8 @@ src/
     pdf/                lecture des PDF : extraction pdf.js, portées et systèmes, notation,
                         tablature et accordage, rythme et voix, tablatures texte (caractères
                         ou image, reconnaissance dédiée), écriture MusicXML
+    fingering/          doigtés de la main gauche : optimisation (Viterbi), lien avec la
+                        partition, pastilles et menu de correction
     sync/               enregistrement de référence : YouTube (lecteur, recherche), fichier
                         audio, son d'une vidéo MP4 / MOV, son de l'onglet, micro, alignement
                         audio, rythme et tempo retrouvés, panneau Vidéo

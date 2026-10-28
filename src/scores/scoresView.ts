@@ -276,6 +276,8 @@ export function createScoresView(): ScoresView {
 
   /** Partition réécrite (rythme calé sur un enregistrement) : enregistrée, puis rouverte. */
   async function replaceScore(entry: ScoreEntry, xml: Uint8Array): Promise<void> {
+    // Notes réécrites : les doigts imposés ne désignent plus les mêmes notes.
+    delete entry.fingers;
     const at = await loadAlphaTab();
     const score = parseScore(at, xml, true);
     const session = sessionScores.get(entry.id);

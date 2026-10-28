@@ -566,6 +566,65 @@ function fakeYouTubeTab(wavBase64: string): void {
   w.YT = { Player };
 }
 
+test.describe('Doigtés de la main gauche', () => {
+  test('pastilles sur la tablature, correction à la main conservée, affichage désactivable', async ({ page, context }) => {
+    test.setTimeout(120_000);
+    await openTextTab(page, context);
+    const toggle = page.getByTestId('fingering-toggle');
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+
+    // Une pastille par note frettée de la tablature (cordes à vide : aucune).
+    const fretted = await page.evaluate(() => {
+      const { api } = (window as unknown as { __scores: { debug(): { api: any } } }).__scores.debug();
+      const staff = api.score.tracks[0].staves.find((s: any) => s.showTablature);
+      let count = 0;
+      for (const bar of staff.bars) for (const voice of bar.voices) for (const beat of voice.beats) for (const note of beat.notes) if (note.fret > 0) count++;
+      return count;
+    });
+    expect(fretted).toBeGreaterThan(0);
+    const dots = page.locator('[data-testid="fingering"] .fingering__dot');
+    await expect(dots).toHaveCount(fretted);
+    for (const finger of await dots.evaluateAll((els) => els.map((e) => (e as SVGElement).dataset.finger))) expect(['1', '2', '3', '4', '5']).toContain(finger);
+
+    // Pastille à gauche de son numéro de case, sur la ligne de sa corde.
+    const placement = await page.evaluate(() => {
+      const dot = document.querySelector('[data-testid="fingering"] .fingering__dot .fingering__disc') as SVGCircleElement;
+      const r = dot.getBoundingClientRect();
+      return { w: r.width, h: r.height };
+    });
+    expect(placement.w).toBeGreaterThan(8);
+    expect(placement.w).toBeLessThan(24);
+
+    // Correction : auriculaire imposé sur la première pastille, puis repli du menu.
+    const first = dots.first();
+    const id = (await first.getAttribute('data-id')) as string;
+    const before = (await first.getAttribute('data-finger')) as string;
+    const target = before === '4' ? '3' : '4';
+    await first.click();
+    await expect(page.getByRole('dialog', { name: 'Doigt de la note' })).toBeVisible();
+    await page.getByRole('button', { name: new RegExp(`^Doigt ${target} `) }).click();
+    await expect(page.getByRole('dialog', { name: 'Doigt de la note' })).toBeHidden();
+    const forced = page.locator(`[data-testid="fingering"] .fingering__dot[data-id="${id}"]`);
+    await expect(forced).toHaveAttribute('data-finger', target);
+    await expect(forced).toHaveClass(/is-forced/);
+
+    // Rouverte depuis la bibliothèque : la correction est gardée.
+    await page.getByRole('button', { name: 'Retour à la bibliothèque' }).click();
+    await page.locator('.library__open').first().click();
+    await waitForScore(page, { sound: false });
+    await expect(page.locator(`[data-testid="fingering"] .fingering__dot[data-id="${id}"]`)).toHaveAttribute('data-finger', target);
+
+    // Retour au calcul automatique, puis affichage désactivé.
+    await page.locator(`[data-testid="fingering"] .fingering__dot[data-id="${id}"]`).click();
+    await page.getByRole('button', { name: 'Doigt calculé automatiquement' }).click();
+    await expect(page.locator(`[data-testid="fingering"] .fingering__dot[data-id="${id}"]`)).not.toHaveClass(/is-forced/);
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(dots).toHaveCount(0);
+  });
+});
+
 test.describe('Sélection, boucle et vitesse', () => {
   test('critère : la boucle des mesures 5 à 8 est jouée sans trou à 50 %', async ({ page }, testInfo) => {
     const mobile = testInfo.project.name === 'mobile';
