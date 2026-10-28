@@ -1423,6 +1423,47 @@ a {
   gap: 6px;
 }
 
+/* --- Enrichissement : notes ajoutées depuis les transcriptions ---------------- */
+
+:root {
+  --added: #5ccfc0;
+}
+
+:root[data-theme='light'] {
+  --added: #0f7a6c;
+}
+
+/* Anneaux des notes ajoutées : au-dessus du rendu, sous les curseurs ; seuls les anneaux captent les appuis. */
+.additions {
+  position: absolute;
+  z-index: 2;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.additions__ring {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.additions__hit {
+  fill: transparent;
+}
+
+.additions__circle {
+  fill: none;
+  stroke: var(--added);
+  stroke-width: 1.5;
+}
+
+.additions--passing .additions__circle {
+  stroke-dasharray: 3 2;
+}
+
+.embellish__kind[aria-pressed='true'] {
+  border-color: var(--added);
+}
+
 /* --- Rythme retrouvé dans des transcriptions ------------------------------------ */
 
 /* Mesures à vérifier : surlignées sous les pastilles de doigtés, sans capter les appuis. */

@@ -707,6 +707,56 @@ test.describe('Rythme retrouvé dans des transcriptions', () => {
   });
 });
 
+/** Notes de la tablature de la partition affichée (hors notes liées). */
+const tabNoteCount = (page: Page) =>
+  page.evaluate(() => {
+    const { api } = (window as unknown as { __scores: { debug(): { api: any } } }).__scores.debug();
+    let n = 0;
+    for (const bar of api.score.tracks[0].staves[0].bars)
+      for (const voice of bar.voices) for (const beat of voice.beats) n += beat.notes.filter((x: any) => !x.isTieDestination).length;
+    return n;
+  });
+
+test.describe('Enrichissement depuis les transcriptions', () => {
+  test.use({ serviceWorkers: 'block' });
+
+  test('désactivé par défaut ; notes ajoutées en couleur, retirées d’un appui, gardées', async ({ page, context }) => {
+    test.setTimeout(150_000);
+    const { guitar, piano } = eveningWalkSources();
+    await mockBitMidi(page, [
+      ['Promenade du soir (guitare).mid', guitar],
+      ['Promenade du soir - piano.mid', piano],
+    ]);
+    await openTabPdf(page, context, 'Promenade du soir', eveningWalkAscii());
+    const toggle = page.getByTestId('embellish-toggle');
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.getByTestId('additions')).toBeHidden();
+    const before = await tabNoteCount(page);
+
+    await toggle.click();
+    const status = page.getByTestId('embellish-status');
+    await expect(status).toContainText('ajoutée', { timeout: 60_000 });
+    const rings = page.locator('.additions__ring');
+    await expect.poll(() => rings.count()).toBeGreaterThan(2);
+    const proposed = await rings.count();
+    expect(await tabNoteCount(page)).toBe(before + proposed);
+    // Basse et accords, chacun désactivable.
+    await expect(page.getByTestId('embellish-kinds').getByRole('button', { name: /^Basse / })).toHaveAttribute('aria-pressed', 'true');
+
+    // Un appui sur une note ajoutée la retire.
+    await rings.first().click();
+    await expect(rings).toHaveCount(proposed - 1);
+    expect(await tabNoteCount(page)).toBe(before + proposed - 1);
+
+    await page.getByTestId('embellish-keep').click();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await waitForScore(page);
+    expect(await tabNoteCount(page)).toBe(before + proposed - 1);
+    await expect(rings).toHaveCount(0);
+  });
+});
+
 test.describe('Doigtés de la main gauche', () => {
   test('pastilles sur la tablature, correction à la main conservée, affichage désactivable', async ({ page, context }) => {
     test.setTimeout(120_000);

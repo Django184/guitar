@@ -13,14 +13,12 @@ import type { ScoreEntry } from '../library';
 import { type ScoreEvent, hasRepeats, rewriteTab, scoreEvents } from '../sync/scoreEvents';
 import type { Onset } from './align';
 import type { Consensus } from './consensus';
-import { type AlignedSource, alignSource, combine, tabOnsets, trackName } from './findRhythm';
-import { readSource } from './readSource';
+import { collectSources, fileItems, foundItems } from './collect';
+import { type AlignedSource, combine, tabOnsets, trackName } from './findRhythm';
 import {
   type Found,
-  SearchFailure,
   claudeLink,
   claudePrompt,
-  download,
   normalizeProxy,
   parseClaudeAnswer,
   proxyUrl,
@@ -37,7 +35,6 @@ const SOURCE_FILES = '.gp,.gp3,.gp4,.gp5,.gpx,.musicxml,.xml,.mxl,.mid,.midi';
 /** Une tablature plus courte ne se retrouve pas de façon fiable. */
 const MIN_ONSETS = 8;
 
-const pause = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 const plural = (n: number, word: string): string => `${n}${NB}${word}${n > 1 ? 's' : ''}`;
 
 export interface RhythmPanelHost {
@@ -309,35 +306,25 @@ export class RhythmPanel {
       this.message(describeError(error), true);
       return;
     }
-    const total = found.length + files.length;
-    let done = 0;
-    const failures: string[] = [];
-    const step = async (label: string, bytes: () => Promise<Uint8Array>): Promise<void> => {
-      this.show(`Analyse des transcriptions… ${done + 1}/${total}`, null);
-      try {
-        const source = await readSource(at, await bytes(), label);
-        if (session !== this.session) return;
-        const aligned = await alignSource(ctx.tab, source, pause);
-        if (session !== this.session) return;
-        this.sources = [...this.sources.filter((s) => s.label !== label), aligned];
-      } catch (error) {
-        failures.push(`${label}${NB}: ${error instanceof SearchFailure ? error.message : 'fichier illisible.'}`);
-      }
-      done++;
-    };
-    const proxy = proxyUrl();
-    for (const f of found) {
-      if (session !== this.session) return;
-      await step(`${f.title} (${f.source})`, () => download(f.url, proxy));
-    }
-    for (const file of files) {
-      if (session !== this.session) return;
-      await step(file.name, async () => new Uint8Array(await file.arrayBuffer()));
-    }
-    if (session !== this.session) return;
+    const items = [...foundItems(found, proxyUrl()), ...fileItems(files)];
+    const result = await collectSources(
+      at,
+      ctx.tab,
+      items,
+      (n, total) => this.show(`Analyse des transcriptions… ${n}/${total}`, null),
+      () => session === this.session,
+    );
+    if (!result) return;
+    const labels = new Set(result.sources.map((s) => s.label));
+    this.sources = [...this.sources.filter((s) => !labels.has(s.label)), ...result.sources];
     this.state = 'idle';
     await this.showResult();
-    if (failures.length) this.message(failures.join(' '), true);
+    if (result.failures.length) this.message(result.failures.join(' '), true);
+  }
+
+  /** Sources déjà confrontées à la tablature affichée (pour l'enrichissement). */
+  currentSources(): readonly AlignedSource[] {
+    return this.sources;
   }
 
   private async addFound(found: Found[]): Promise<void> {

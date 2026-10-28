@@ -253,6 +253,22 @@ Cloudflare (dossier `proxy/`, bouton « Deploy to Cloudflare » de son
 [README](proxy/README.md)) : il ne sert que les pages de l'app et ne renvoie que des partitions.
 Son adresse se colle une fois dans « Rythme » → « Autres sources » → « Proxy ».
 
+**Enrichissement (désactivé par défaut).** Le bouton « Enrichir » propose d'ajouter à la tablature
+des notes prises dans les transcriptions qui la contiennent (`src/scores/embellish/`) : la basse et
+des notes de l'accord sur les temps, et les notes de passage de la mélodie d'une source entre deux
+notes de la tablature. Chaque note proposée doit être :
+
+- **jouable** : corde libre, case à vide ou dans la position de la main (4 cases d'écart, 5 en
+  position haute, d'après les notes jouées au même instant ou juste autour), forme tenable à quatre
+  doigts (barré compris, sans pouce : vérifié par l'optimiseur de doigtés) ; au plus deux notes
+  ajoutées par temps ;
+- **cohérente** : présente dans au moins la moitié des sources qui couvrent cet instant, sans
+  frottement d'un demi-ton avec les notes déjà là, sous la mélodie (qui reste en haut).
+
+Les notes ajoutées s'affichent en couleur dans un aperçu (portée et tablature), entourées ; un appui
+en retire une, un bouton par famille (Basse, Accords, Passages) les retire ou les remet toutes.
+« Garder » les écrit dans la tablature.
+
 **Banque de sons.** La lecture utilise [GeneralUser GS](https://www.schristiancollins.com/generaluser)
 2.0.3 de S. Christian Collins : la banque General MIDI gratuite la plus recommandée (261 instruments,
 13 batteries), sous une licence qui autorise son usage et sa modification dans un logiciel
@@ -314,6 +330,8 @@ Automatique (CI, job **e2e**, profils ordinateur et mobile) :
   simulé : guitare, piano en valeurs doublées, autre morceau du même nom écarté) : positions et
   tempo exacts, mesure où les sources se contredisent surlignée et jouable en boucle ; les liens
   donnés par Claude passent par le proxy (simulé), un fichier importé s'ajoute au vote ;
+- l'enrichissement, désactivé par défaut, ajoute des notes en couleur (une par anneau), une note
+  retirée d'un appui disparaît de l'aperçu, et les notes gardées sont dans la tablature ;
 - les doigtés s'affichent sur la tablature (une pastille par note frettée), une correction
   faite à la main est gardée à la réouverture, et le bouton « Doigtés » les masque ;
 - hors-ligne, une partition importée s'ouvre et le son se charge depuis le cache ; la banque
@@ -351,6 +369,7 @@ src/
                         ou image, reconnaissance dédiée), écriture MusicXML
     fingering/          doigtés de la main gauche : optimisation (Viterbi), lien avec la
                         partition, pastilles et menu de correction
+    embellish/          enrichissement : basse, accords et notes de passage jouables, aperçu
     rhythm/             rythme retrouvé dans des transcriptions : recherche (BitMidi, Claude,
                         proxy), lecture des sources, alignement, vote, panneau Rythme
     sync/               enregistrement de référence : YouTube (lecteur, recherche), fichier
