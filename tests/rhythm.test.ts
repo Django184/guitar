@@ -134,6 +134,13 @@ describe('Rythme : vote des sources', () => {
     expect(c?.counts.sure).toBe(8);
   });
 
+  it('la version pour guitare donne la mesure et les valeurs, même un peu moins fiable', () => {
+    const a = [4, 5, 5.5, 6, 7, 7.5, 8, 9];
+    const c = consensus([timing('piano', a.map((x) => x * 2), 1), { ...timing('guitare', a, 0.9), guitar: true }], original);
+    expect(c?.positions).toEqual([0, 1, 1.5, 2, 3, 3.5, 4, 5]);
+    expect(c?.sources).toEqual(['guitare', 'piano']);
+  });
+
   it('majorité de trois sources ; une contradiction à deux est signalée', () => {
     const good = [0, 1, 1.5, 2, 3, 3.5, 4, 5];
     const odd = [0, 1, 1.5, 2, 3, 4, 4.5, 5.5];

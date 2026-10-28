@@ -4,7 +4,8 @@
  * les mesures où les sources se contredisent, ou qu'aucune ne couvre, sont signalées.
  *
  * Les sources n'écrivent pas toujours à la même échelle (croches d'une version = doubles croches
- * d'une autre) : chacune est ramenée à l'échelle de la plus fiable, par puissance de deux.
+ * d'une autre) : chacune est ramenée à l'échelle de la référence (une version pour guitare, sinon
+ * la plus fiable), par puissance de deux.
  */
 import type { SourceBar } from './sources';
 
@@ -12,6 +13,8 @@ export interface SourceTiming {
   label: string;
   /** Fiabilité de l'alignement (0 à 1). */
   weight: number;
+  /** Transcription pour guitare : sa notation (mesure, valeurs) sert de référence avant les autres. */
+  guitar?: boolean;
   /** Position (noires) de chaque attaque de la tablature dans la source ; NaN si non retrouvée. */
   at: Float64Array;
   /** Ressemblance de chaque paire : 0 pour une « fausse note » (place retenue, poids réduit). */
@@ -115,7 +118,10 @@ function tempoAt(tempos: Array<{ start: number; bpm: number }>, position: number
  */
 export function consensus(timings: SourceTiming[], original: number[]): Consensus | null {
   const n = original.length;
-  const sources = timings.filter((t) => t.at.length === n && t.at.some(known)).sort((a, b) => b.weight - a.weight);
+  // Référence : une transcription pour guitare d'abord, puis la plus fiable.
+  const sources = timings
+    .filter((t) => t.at.length === n && t.at.some(known))
+    .sort((a, b) => Number(!!b.guitar) - Number(!!a.guitar) || b.weight - a.weight);
   const ref = sources[0];
   if (!ref || n === 0) return null;
   // Toutes les sources à l'échelle de la plus fiable.

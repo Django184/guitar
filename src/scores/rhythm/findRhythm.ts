@@ -34,10 +34,12 @@ export function combine(events: readonly ScoreEvent[], sources: readonly Aligned
   for (const s of sources) {
     const a = s.alignment;
     if (!s.used || !a) continue;
-    const onsets = s.song.tracks[a.track]?.onsets ?? [];
+    const track = s.song.tracks[a.track];
+    const onsets = track?.onsets ?? [];
     timings.push({
       label: s.label,
       weight: Math.max(0.05, a.score - a.control),
+      guitar: !!track?.guitar,
       at: Float64Array.from(a.match, (j) => (j >= 0 ? (onsets[j]?.start ?? Number.NaN) : Number.NaN)),
       similarity: a.similarity,
       bars: s.song.bars,

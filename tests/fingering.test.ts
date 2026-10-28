@@ -171,6 +171,8 @@ describe('Doigtés de la main gauche', () => {
       }
       return { notes, step: 0.25 };
     });
+    // Mise en route du compilateur JIT à part (les autres fichiers de test tournent en parallèle).
+    fingers(specs.slice(0, 200));
     const started = performance.now();
     const result = fingers(specs);
     expect(performance.now() - started).toBeLessThan(1000);
