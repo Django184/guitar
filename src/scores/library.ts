@@ -31,6 +31,8 @@ export interface ScoreSettings {
   selection: StoredSelection | null;
   /** Lecture avec l'enregistrement de référence (vidéo ou audio) au lieu du synthétiseur. */
   followMedia?: boolean;
+  /** Doigtés affichés sur la tablature (oui par défaut). */
+  fingering?: boolean;
 }
 
 /** Enregistrement de référence lié à la partition : vidéo YouTube ou fichier audio. */
@@ -64,6 +66,11 @@ export interface ScoreEntry {
   origin?: 'pdf' | 'pdf-tab';
   /** Tablature texte : ses barres de mesure étaient écrites (les mesures sont donc fiables). */
   tabBars?: boolean;
+  /**
+   * Doigts imposés par l'utilisateur (1 à 4, 5 pouce), par « piste|mesure:voix:temps:corde ».
+   * Effacés quand la partition est réécrite (les notes ne sont plus les mêmes).
+   */
+  fingers?: Record<string, number>;
   /** Enregistrement de référence. */
   media?: MediaLink;
   sync?: ScoreSync;

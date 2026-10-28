@@ -35,7 +35,7 @@ function walk(suite, titles = []) {
           .join(' / ');
         const located = errors.find((e) => e.location);
         const where = located ? ` (${located.location.file.split('/').pop()}:${located.location.line})` : '';
-        unstable.push(`[${test.projectName}] ${spec.title} (${status})${where} : ${lines.slice(0, 300)}`);
+        unstable.push(`[${test.projectName}] ${spec.title} (${status})${where} : ${lines.slice(0, 700)}`);
       }
       for (const result of test.results ?? []) {
         for (const a of [...(result.annotations ?? []), ...(test.annotations ?? [])]) {
