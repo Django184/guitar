@@ -46,8 +46,8 @@ export class EmbellishPanel {
   readonly toggleButton: HTMLButtonElement;
 
   private session = 0;
-  /** Sources trouvées ici (recherche automatique), pour la tablature courante. */
-  private own: { key: string; sources: AlignedSource[] } | null = null;
+  /** Sources trouvées ici (recherche automatique), pour la partition et la piste affichées. */
+  private own: { score: Score; track: number; sources: AlignedSource[] } | null = null;
   private additions: Addition[] = [];
   private rejected = new Set<string>();
   private hiddenKinds = new Set<AddKind>();
@@ -108,10 +108,10 @@ export class EmbellishPanel {
 
   // --- Propositions -------------------------------------------------------------------
 
-  private context(): { entry: ScoreEntry; score: Score; trackIndex: number; events: ScoreEvent[]; key: string } | null {
+  private context(): { entry: ScoreEntry; score: Score; trackIndex: number; events: ScoreEvent[] } | null {
     const cur = this.host.current();
     if (!cur) return null;
-    return { ...cur, events: scoreEvents(cur.score, cur.trackIndex), key: `${cur.entry.id}|${cur.trackIndex}` };
+    return { ...cur, events: scoreEvents(cur.score, cur.trackIndex) };
   }
 
   private guitar(score: Score, trackIndex: number): GuitarSetup | null {
@@ -140,7 +140,8 @@ export class EmbellishPanel {
     }
     let sources = [...this.host.knownSources()];
     if (!sources.some((s) => s.used)) {
-      if (this.own?.key === ctx.key) {
+      // Alignements valables tant que la partition est la même (notes ajoutées : à refaire).
+      if (this.own?.score === ctx.score && this.own.track === ctx.trackIndex) {
         sources = this.own.sources;
       } else {
         this.show('Recherche de transcriptions…', null);
@@ -155,7 +156,7 @@ export class EmbellishPanel {
         );
         if (!result) return;
         sources = result.sources;
-        this.own = { key: ctx.key, sources };
+        this.own = { score: ctx.score, track: ctx.trackIndex, sources };
       }
     }
     if (!sources.some((s) => s.used)) {
