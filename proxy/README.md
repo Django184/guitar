@@ -6,12 +6,24 @@ Petit service gratuit (Cloudflare Workers) qui permet à l'app, publiée sur Git
 
 ## Installation (une fois, 2 minutes)
 
-1. Cliquez sur le bouton ci-dessus et connectez-vous à Cloudflare.
-2. Acceptez les choix proposés, puis cliquez sur **Create and deploy**. Cloudflare copie ce dossier dans votre GitHub et publie le service.
-3. Copiez l'adresse affichée à la fin, de la forme `https://pratique-guitare-proxy.<votre-nom>.workers.dev`.
-4. Dans l'app, ouvrez une partition, puis **Rythme** → **Réglages**, et collez cette adresse.
+Deux façons, au choix :
 
-L'offre gratuite de Cloudflare permet 100 000 requêtes par jour : bien plus que nécessaire.
+- **Relier tout le dépôt** (Workers & Pages → Create → Import a repository → `guitar`) : la
+  configuration à la racine du dépôt (`wrangler.jsonc`) déploie ce proxy. Réglages de build : pas
+  de commande de build, commande de déploiement `npx wrangler deploy`, dossier racine vide. Le
+  Worker doit s'appeler `guitar` (sinon, changer `name` dans `wrangler.jsonc`).
+- **Bouton ci-dessus** : Cloudflare copie ce dossier dans votre GitHub et le publie.
+
+Ensuite :
+
+1. Ouvrez l'adresse du Worker (onglet **Domains**, ligne « Production »), de la forme
+   `https://guitar.<votre-nom>.workers.dev`. Elle doit afficher
+   `{"ok":true,"name":"pratique-guitare-proxy","version":1}`.
+2. Dans l'app, ouvrez une partition, puis **Rythme** → **Autres sources** → **Proxy**, collez
+   cette adresse et touchez **Enregistrer** (« Proxy prêt »).
+
+À chaque modification du dépôt, Cloudflare redéploie le proxy tout seul. L'offre gratuite de
+Cloudflare permet 100 000 requêtes par jour : bien plus que nécessaire.
 
 ## Garde-fous
 

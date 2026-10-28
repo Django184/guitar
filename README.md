@@ -249,8 +249,9 @@ plus qu'à l'envers ; une autre pièce du même style, au plus 0,4 et 0,15. Avec
 écarts entre notes sont justes à 98-100 %.
 
 Les liens d'autres sites passent par un **proxy** gratuit que l'on installe sur son propre compte
-Cloudflare (dossier `proxy/`, bouton « Deploy to Cloudflare » de son
-[README](proxy/README.md)) : il ne sert que les pages de l'app et ne renvoie que des partitions.
+Cloudflare (dossier `proxy/` ; on relie tout le dépôt, la configuration `wrangler.jsonc` à la
+racine le déploie, ou bouton « Deploy to Cloudflare » de son [README](proxy/README.md)) : il ne
+sert que les pages de l'app et ne renvoie que des partitions.
 Son adresse se colle une fois dans « Rythme » → « Autres sources » → « Proxy ».
 
 **Enrichissement (désactivé par défaut).** Le bouton « Enrichir » propose d'ajouter à la tablature
