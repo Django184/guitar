@@ -1,20 +1,25 @@
 /**
  * Panneau « Vidéo » du lecteur : choisir l'enregistrement de référence (recherche YouTube,
- * lien collé, ou fichier audio), le jouer, et caler la partition dessus — en tapant chaque
- * note pendant l'écoute, ou par écoute automatique (fichier audio, ou micro pendant la vidéo).
+ * lien collé, fichier audio ou vidéo), le jouer, et caler la partition dessus — en tapant chaque
+ * note pendant l'écoute, ou par écoute automatique. Le son d'une vidéo YouTube arrive à l'analyse
+ * sans micro ni haut-parleurs : son de l'onglet (Chrome / Edge sur ordinateur) ou enregistrement
+ * d'écran importé (iPhone, Android), dont seul le son est gardé.
  * Pour une tablature texte (rythme deviné), le calage réécrit le rythme ; pour une autre
  * partition, il sert seulement à suivre l'enregistrement pendant la lecture.
  */
 import { unlockAudio } from '../../audio/context';
+import { closeMicrophone, openMicrophone } from '../../audio/microphone';
 import { h } from '../../ui/dom';
 import { describeError } from '../../ui/errors';
 import { type AlphaTabModule, type Score, parseScore } from '../alphatab';
 import { type MediaLink, type ScoreEntry, mediaKey } from '../library';
 import { alignAudio } from './audioAlign';
+import { CaptureError, canCaptureTab, isAndroid, isIOS, openTabAudio } from './capture';
 import { AudioFileMedia, type ReferenceMedia, decodeAudio } from './media';
 import { PcmRecorder, type Recording } from './recorder';
 import { barSyncPoints, fitRhythm, scalePositions, type SyncPoint } from './rhythmFit';
 import { type ScoreEvent, barLength, fitEvents, hasRepeats, rewriteTab, scoreEvents, syncFromTimes } from './scoreEvents';
+import { encodeWav, isVideoFile, peakOf, trimSilence, videoAudio } from './videoAudio';
 import {
   SearchError,
   type VideoResult,
@@ -27,8 +32,25 @@ import {
   youtubeSearchUrl,
 } from './youtube';
 
-const NB = ' ';
+const NB = '\u00a0';
 const MAX_AUDIO_BYTES = 50 * 1024 * 1024;
+/** Son extrait d'une vidéo : WAV mono à 32 kHz (3,8 Mo par minute, son quasi intact). */
+const VIDEO_AUDIO_RATE = 32000;
+const MAX_VIDEO_MINUTES = Math.floor(MAX_AUDIO_BYTES / (VIDEO_AUDIO_RATE * 2) / 60);
+
+/** Typographie française : espace insécable avant « : ; ! ? » et à l'intérieur des guillemets. */
+const fr = (text: string): string => text.replace(/ ([:;!?»])/g, `${NB}$1`).replace(/« /g, `«${NB}`);
+const help = (text: string): HTMLElement => h('p', { class: 'media__help' }, fr(text));
+
+type Source = 'tab' | 'mic';
+
+const IMPORT_HELP = {
+  ios:
+    'Sur iPhone : Centre de contrôle → Enregistrement de l’écran (micro coupé), jouez la vidéo ici ou dans l’app YouTube jusqu’à la fin du passage, arrêtez l’enregistrement, puis choisissez-le ici (Photothèque). L’app n’en garde que le son, sur cet appareil, à la place de la vidéo.',
+  android:
+    'Sur Android : lancez l’enregistreur d’écran avec le son de l’appareil (« Sons multimédias », pas le micro), jouez la vidéo jusqu’à la fin du passage, puis choisissez l’enregistrement ici. L’app n’en garde que le son, sur cet appareil, à la place de la vidéo.',
+  other: 'Ou choisissez une vidéo (enregistrement d’écran) ou un fichier son du morceau : l’app n’en garde que le son, sur cet appareil, à la place de la vidéo.',
+};
 
 export interface MediaPanelHost {
   current(): { entry: ScoreEntry; score: Score; trackIndex: number } | null;
@@ -79,6 +101,8 @@ export class MediaPanel {
   private results: VideoResult[] = [];
   private searchedFor: string | null = null;
   private recorder: PcmRecorder | null = null;
+  /** Fichier choisi depuis l'écoute automatique : l'analyser dès qu'il est lié. */
+  private listenAfterImport = false;
   private keyHandler: ((e: KeyboardEvent) => void) | null = null;
   /** Numéro de la tâche en cours : les écouteurs d'une tâche terminée n'agissent plus. */
   private session = 0;
@@ -90,7 +114,12 @@ export class MediaPanel {
   private readonly resultsList = h('ul', { class: 'media__results', 'data-testid': 'media-results' });
   private readonly linkInput = h('input', { type: 'url', class: 'media__input', placeholder: 'Coller un lien YouTube', 'aria-label': 'Lien YouTube', inputmode: 'url' });
   private readonly youtubeLink = h('a', { class: 'btn btn--small btn--link', target: '_blank', rel: 'noopener noreferrer' }, 'Chercher sur YouTube');
-  private readonly fileInput = h('input', { type: 'file', accept: 'audio/*,.mp3,.m4a,.aac,.wav,.ogg,.opus,.flac', hidden: true, 'data-testid': 'media-file' });
+  private readonly fileInput = h('input', {
+    type: 'file',
+    accept: 'audio/*,video/*,.mp3,.m4a,.aac,.wav,.ogg,.opus,.flac,.mp4,.mov,.m4v',
+    hidden: true,
+    'data-testid': 'media-file',
+  });
   private readonly keyInput = h('input', { type: 'text', class: 'media__input', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Clé API YouTube' });
   private readonly keyBox = h('details', { class: 'media__key' });
   private readonly unlinkButton = h('button', { type: 'button', class: 'btn btn--small btn--ghost' }, 'Retirer le lien');
@@ -128,12 +157,17 @@ export class MediaPanel {
       e.preventDefault();
       this.linkPasted(this.linkInput.value);
     });
-    const fileButton = h('button', { type: 'button', class: 'btn btn--small' }, 'Fichier audio…');
-    fileButton.addEventListener('click', () => this.fileInput.click());
+    const fileButton = h('button', { type: 'button', class: 'btn btn--small' }, 'Fichier audio ou vidéo…');
+    fileButton.addEventListener('click', () => {
+      this.listenAfterImport = false;
+      this.fileInput.click();
+    });
     this.fileInput.addEventListener('change', () => {
       const file = this.fileInput.files?.[0];
+      const listen = this.listenAfterImport;
+      this.listenAfterImport = false;
       this.fileInput.value = '';
-      if (file) void this.linkFile(file);
+      if (file) void this.linkFile(file, listen);
     });
     const keyForm = h(
       'form',
@@ -164,6 +198,7 @@ export class MediaPanel {
       this.resultsList,
       linkForm,
       h('div', { class: 'media__row media__row--wrap' }, fileButton, this.youtubeLink, this.fileInput),
+      help('Une vidéo (un enregistrement d’écran, par exemple) : l’app n’en garde que le son, sur cet appareil.'),
       this.keyBox,
       h('div', { class: 'media__row media__row--end' }, this.unlinkButton, this.backButton),
     );
@@ -355,21 +390,59 @@ export class MediaPanel {
     void this.link({ kind: 'youtube', id, title: '' });
   }
 
-  private async linkFile(file: File): Promise<void> {
+  /** Fichier audio lié tel quel ; vidéo : seul le son est gardé (WAV). `listen` : analyse ensuite. */
+  private async linkFile(file: File, listen = false): Promise<void> {
     const cur = this.host.current();
     if (!cur) return;
-    if (file.size > MAX_AUDIO_BYTES) {
-      this.message(`Fichier trop lourd (50${NB}Mo au plus).`, true);
-      return;
+    let bytes: Uint8Array;
+    let link: MediaLink;
+    if (isVideoFile(file)) {
+      const from = cur.entry.media?.kind === 'youtube' ? cur.entry.media.title : '';
+      const extracted = await this.extractVideoAudio(file);
+      if (!extracted) return;
+      bytes = extracted;
+      const base = file.name.replace(/\.[^.]+$/, '').trim() || 'Enregistrement';
+      link = { kind: 'audio', name: listen && from ? `Enregistrement — ${from}` : `${base} (son)`, type: 'audio/wav', size: bytes.length };
+    } else {
+      if (file.size > MAX_AUDIO_BYTES) {
+        this.message(`Fichier trop lourd (50${NB}Mo au plus).`, true);
+        return;
+      }
+      bytes = new Uint8Array(await file.arrayBuffer());
+      link = { kind: 'audio', name: file.name, type: file.type || 'audio/mpeg', size: file.size };
     }
-    const bytes = new Uint8Array(await file.arrayBuffer());
     try {
       await this.host.saveMediaFile(cur.entry, bytes);
     } catch (error) {
       this.message(describeError(error), true);
       return;
     }
-    await this.link({ kind: 'audio', name: file.name, type: file.type || 'audio/mpeg', size: file.size });
+    await this.link(link);
+    if (listen && this.host.current()?.entry === cur.entry) await this.startListen();
+  }
+
+  /** Son d'une vidéo, en WAV prêt à garder ; null (message affiché) en cas d'échec. */
+  private async extractVideoAudio(file: File): Promise<Uint8Array | null> {
+    this.endTask();
+    this.beginTask('analyze');
+    this.taskEl.replaceChildren(h('p', { class: 'media__progress', 'data-testid': 'media-extract' }, 'Extraction du son de la vidéo…'));
+    await pause();
+    try {
+      const { samples, sampleRate } = await videoAudio(file, VIDEO_AUDIO_RATE);
+      if (peakOf(samples) < 0.002) {
+        throw new Error('Cette vidéo est muette : à l’enregistrement, le son de l’appareil doit être actif (et le micro coupé).');
+      }
+      const trimmed = trimSilence(samples, sampleRate);
+      if (trimmed.length * 2 + 44 > MAX_AUDIO_BYTES) {
+        throw new Error(`Enregistrement trop long (${MAX_VIDEO_MINUTES}${NB}min au plus) : arrêtez-le à la fin du passage.`);
+      }
+      return encodeWav(trimmed, sampleRate);
+    } catch (error) {
+      this.message(error instanceof Error && error.message ? error.message : describeError(error), true);
+      return null;
+    } finally {
+      this.endTask();
+    }
   }
 
   private async link(link: MediaLink): Promise<void> {
@@ -600,79 +673,138 @@ export class MediaPanel {
       }
       return;
     }
-    this.listenWithMicrophone(ready, media);
+    this.chooseListen(ready, media);
   }
 
-  /** Vidéo YouTube : le son n'est pas accessible, l'app l'écoute au micro pendant la lecture. */
-  private listenWithMicrophone(ready: NonNullable<ReturnType<MediaPanel['prepare']>>, media: ReferenceMedia): void {
+  /**
+   * Vidéo YouTube : son inaccessible au site. Il arrive à l'analyse par le partage de l'onglet
+   * (ordinateur), par un enregistrement d'écran importé (téléphone), ou en dernier recours au micro.
+   */
+  private chooseListen(ready: NonNullable<ReturnType<MediaPanel['prepare']>>, media: ReferenceMedia): void {
     this.beginTask('listen');
-    const start = h('button', { type: 'button', class: 'btn btn--primary media__tap' }, 'Commencer l’écoute');
+    const tab = canCaptureTab();
+    const ios = isIOS();
+    const items: HTMLElement[] = [
+      help('L’analyse a besoin du son de la vidéo, transmis directement à l’app — sans micro ni haut-parleurs. Placez d’abord la vidéo juste avant le passage, si besoin.'),
+    ];
+    if (tab) {
+      const capture = h('button', { type: 'button', class: 'btn btn--primary media__tap', 'data-testid': 'listen-tab' }, 'Capter le son de l’onglet');
+      capture.addEventListener('click', () => this.listenLive(ready, media, 'tab'));
+      items.push(
+        capture,
+        help('Le navigateur demande de partager cet onglet : acceptez en laissant cochée l’option du son. La vidéo est jouée et analysée jusqu’à la fin, ou jusqu’à « Terminer ». Le volume de l’ordinateur ne compte pas.'),
+      );
+    }
+    const record = h(
+      'button',
+      { type: 'button', class: tab ? 'btn btn--small' : 'btn btn--primary media__tap', 'data-testid': 'listen-import' },
+      'Importer un enregistrement d’écran…',
+    );
+    record.addEventListener('click', () => {
+      this.listenAfterImport = true;
+      this.fileInput.click();
+    });
+    items.push(record, help(ios ? IMPORT_HELP.ios : isAndroid() ? IMPORT_HELP.android : IMPORT_HELP.other));
+    const row = h('div', { class: 'media__row media__row--wrap' });
+    // Micro : inutilisable sur iPhone (le son bascule sur l'écouteur), superflu avec le son de l'onglet.
+    if (!tab && !ios) {
+      const mic = h('button', { type: 'button', class: 'btn btn--small btn--ghost', 'data-testid': 'listen-mic' }, 'Au micro (moins fiable)');
+      mic.addEventListener('click', () => this.listenLive(ready, media, 'mic'));
+      row.append(mic);
+    }
+    const cancel = h('button', { type: 'button', class: 'btn btn--small btn--ghost' }, 'Abandonner');
+    cancel.addEventListener('click', () => {
+      this.endTask();
+      this.renderFollow();
+    });
+    row.append(cancel);
+    items.push(row);
+    this.taskEl.replaceChildren(...items);
+  }
+
+  /** Écoute pendant la lecture de la vidéo : son de l'onglet, ou micro. Appelée pendant un clic. */
+  private listenLive(ready: NonNullable<ReturnType<MediaPanel['prepare']>>, media: ReferenceMedia, source: Source): void {
+    // Contexte audio et partage (ou micro) demandés pendant le geste : iOS et Chrome l'exigent.
+    const unlocked = unlockAudio();
+    const opened = source === 'tab' ? openTabAudio() : openMicrophone();
+    const session = this.session;
+    const status = help(source === 'tab' ? 'Partage du son de l’onglet…' : 'Ouverture du micro…');
+    const finish = h('button', { type: 'button', class: 'btn btn--primary media__tap', disabled: true, 'data-testid': 'listen-stop' }, 'Terminer l’écoute');
     const cancel = h('button', { type: 'button', class: 'btn btn--small btn--ghost' }, 'Abandonner');
     const level = h('span', { class: 'media__level-bar' });
-    this.taskEl.replaceChildren(
-      h(
-        'p',
-        { class: 'media__help' },
-        'L’app écoute la vidéo par le micro : montez le son (haut-parleurs, pas de casque) et évitez le bruit. Placez la vidéo juste avant le passage, puis commencez.',
-      ),
-      start,
-      h('div', { class: 'media__row' }, h('span', { class: 'media__level', 'aria-hidden': 'true' }, level), cancel),
-    );
+    this.taskEl.replaceChildren(status, finish, h('div', { class: 'media__row' }, h('span', { class: 'media__level', 'aria-hidden': 'true' }, level), cancel));
     cancel.addEventListener('click', () => {
       media.pause();
       this.endTask();
       this.renderFollow();
     });
-    start.addEventListener('click', () => {
-      // Le contexte audio et le micro s'ouvrent pendant le geste (iOS).
-      const unlocked = unlockAudio();
-      const session = this.session;
-      void (async () => {
-        const recorder = new PcmRecorder();
-        this.recorder = recorder;
-        try {
-          const ctx = await unlocked;
-          await recorder.start(ctx, (rms) => {
-            level.style.width = `${Math.min(100, Math.round(Math.sqrt(rms) * 300))}%`;
-          });
-        } catch (error) {
-          this.endTask();
-          this.message(describeError(error), true);
+    const live = (): boolean => this.session === session && this.task === 'listen';
+    // Position de la vidéo relevée à chaque image, sur l'horloge de la page.
+    const track: Array<{ at: number; media: number; playing: boolean }> = [];
+    let frame = 0;
+    let started = false;
+    let stopped = false;
+    const recorder = new PcmRecorder();
+    const stop = (): void => {
+      if (stopped || !started || !live()) return;
+      stopped = true;
+      cancelAnimationFrame(frame);
+      media.pause();
+      const recording = recorder.stop();
+      this.recorder = null;
+      void this.analyzeRecording(ready, recording, track, source);
+    };
+    void (async () => {
+      try {
+        const [ctx, stream] = await Promise.all([unlocked, opened]);
+        if (!live()) {
+          closeMicrophone(stream);
           return;
         }
-        media.playbackRate = 1;
-        media.play();
-        start.textContent = 'Terminer l’écoute';
-        // Position de la vidéo relevée à chaque image, sur l'horloge de la page.
-        const track: Array<{ at: number; media: number; playing: boolean }> = [];
-        let frame = 0;
-        const sample = (): void => {
-          track.push({ at: performance.now(), media: media.currentTime(), playing: media.playing });
-          frame = requestAnimationFrame(sample);
-        };
+        this.recorder = recorder;
+        await recorder.start(
+          ctx,
+          stream,
+          (rms) => {
+            level.style.width = `${Math.min(100, Math.round(Math.sqrt(rms) * 300))}%`;
+          },
+          stop,
+        );
+      } catch (error) {
+        void opened.then(closeMicrophone, () => undefined);
+        if (!live()) return;
+        this.recorder = null;
+        this.endTask();
+        this.message(error instanceof CaptureError ? error.message : describeError(error), true);
+        return;
+      }
+      started = true;
+      if (source === 'tab') media.volume = 1;
+      media.playbackRate = 1;
+      media.play();
+      status.textContent = fr(
+        source === 'tab'
+          ? 'Écoute du son de l’onglet : laissez jouer la vidéo jusqu’à la fin du passage, puis « Terminer ».'
+          : 'Écoute au micro : montez le son (haut-parleurs, pas de casque) et évitez le bruit.',
+      );
+      finish.disabled = false;
+      const sample = (): void => {
+        track.push({ at: performance.now(), media: media.currentTime(), playing: media.playing });
         frame = requestAnimationFrame(sample);
-        let stopped = false;
-        const stop = (): void => {
-          if (stopped || this.session !== session) return;
-          stopped = true;
-          cancelAnimationFrame(frame);
-          media.pause();
-          const recording = recorder.stop();
-          this.recorder = null;
-          void this.analyzeRecording(ready, recording, track);
-        };
-        start.onclick = stop;
-        media.onState((state) => {
-          if (state === 'ended' && this.task === 'listen') stop();
-        });
-      })();
-    });
+      };
+      frame = requestAnimationFrame(sample);
+      finish.addEventListener('click', stop);
+      media.onState((state) => {
+        if (state === 'ended') stop();
+      });
+    })();
   }
 
   private async analyzeRecording(
     ready: NonNullable<ReturnType<MediaPanel['prepare']>>,
     recording: Recording | null,
     track: Array<{ at: number; media: number; playing: boolean }>,
+    source: Source,
   ): Promise<void> {
     if (!recording || recording.samples.length < recording.sampleRate * 2) {
       this.endTask();
@@ -685,9 +817,14 @@ export class MediaPanel {
     await pause();
     let peak = 0;
     for (let i = 0; i < recording.samples.length; i += 64) peak = Math.max(peak, Math.abs(recording.samples[i] as number));
-    if (peak < 0.01) {
+    if (peak < (source === 'tab' ? 0.002 : 0.01)) {
       this.endTask();
-      this.message('Le micro n’a presque rien entendu : montez le volume (sans casque), puis recommencez.', true);
+      this.message(
+        source === 'tab'
+          ? 'Aucun son n’est arrivé de l’onglet : vérifiez que le son du lecteur YouTube n’est pas coupé et que le partage du son était coché.'
+          : 'Le micro n’a presque rien entendu : montez le volume (sans casque), puis recommencez.',
+        true,
+      );
       return;
     }
     const result = await alignAudio(
@@ -834,7 +971,7 @@ export class MediaPanel {
   }
 
   private message(text: string | null, problem = false): void {
-    this.messageEl.textContent = text ?? '';
+    this.messageEl.textContent = text ? fr(text) : '';
     this.messageEl.hidden = !text;
     this.messageEl.classList.toggle('is-problem', problem);
   }

@@ -1,9 +1,9 @@
 /**
- * Enregistrement du micro en échantillons bruts, daté sur l'horloge de la page
- * (performance.now) : permet de retrouver, pour chaque instant enregistré, la position
- * de la vidéo jouée au même moment.
+ * Enregistrement d'un flux audio (son de l'onglet, ou micro) en échantillons bruts, daté sur
+ * l'horloge de la page (performance.now) : permet de retrouver, pour chaque instant enregistré,
+ * la position de la vidéo jouée au même moment. Rien n'est écrit dans un fichier.
  */
-import { closeMicrophone, openMicrophone } from '../../audio/microphone';
+import { closeMicrophone } from '../../audio/microphone';
 
 export interface Recording {
   samples: Float32Array;
@@ -23,8 +23,8 @@ export class PcmRecorder {
   private marks: Array<{ at: number; count: number }> = [];
   private sampleRate = 44100;
 
-  async start(ctx: AudioContext, onLevel?: (rms: number) => void): Promise<void> {
-    const stream = await openMicrophone();
+  /** `stream` est déjà ouvert ; il sera fermé par stop(). `onEnded` : le partage a été arrêté. */
+  async start(ctx: AudioContext, stream: MediaStream, onLevel?: (rms: number) => void, onEnded?: () => void): Promise<void> {
     if (ctx.state !== 'running') await ctx.resume();
     const source = ctx.createMediaStreamSource(stream);
     // ScriptProcessor : obsolète mais disponible partout (Safari compris), et suffisant ici.
@@ -46,6 +46,7 @@ export class PcmRecorder {
       }
     };
     source.connect(processor).connect(mute).connect(ctx.destination);
+    if (onEnded) stream.getAudioTracks().forEach((t) => t.addEventListener('ended', onEnded, { once: true }));
     this.stream = stream;
     this.nodes = [source, processor, mute];
   }
