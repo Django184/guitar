@@ -1258,6 +1258,11 @@ a {
   font-size: 0.9375rem;
 }
 
+.media__row > .media__input {
+  /* Largeur propre d'un champ (≈ 20 caractères) : sinon la ligne déborde sur téléphone. */
+  width: 0;
+}
+
 .media__results {
   display: grid;
   gap: 4px;
@@ -1416,6 +1421,77 @@ a {
 .media__key[open] {
   display: grid;
   gap: 6px;
+}
+
+/* --- Rythme retrouvé dans des transcriptions ------------------------------------ */
+
+/* Mesures à vérifier : surlignées sous les pastilles de doigtés, sans capter les appuis. */
+.bar-marks {
+  position: absolute;
+  z-index: 2;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.bar-marks__bar {
+  fill: var(--accent);
+  fill-opacity: 0.14;
+  stroke: var(--accent);
+  stroke-opacity: 0.7;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.rhythm {
+  /* Sur téléphone, la partition reste visible sous le panneau, qui défile au besoin. */
+  max-height: 55vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.rhythm__again {
+  justify-self: start;
+}
+
+.rhythm__bar {
+  min-width: 44px;
+  padding: 0 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rhythm__sources {
+  display: grid;
+  gap: 2px;
+  margin: 4px 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  list-style: none;
+}
+
+.rhythm__source {
+  overflow-wrap: anywhere;
+}
+
+.rhythm__source.is-used {
+  color: var(--text);
+}
+
+.rhythm__source.is-used span {
+  color: var(--ok);
+}
+
+.rhythm__more[open],
+.rhythm__sources-box[open] {
+  display: grid;
+  gap: 8px;
+}
+
+.rhythm__answer {
+  width: 100%;
+  min-height: 72px;
+  padding: 8px 12px;
+  resize: vertical;
 }
 
 .btn--accent {

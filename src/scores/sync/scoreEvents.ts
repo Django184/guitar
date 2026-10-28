@@ -93,8 +93,9 @@ export function syncFromTimes(score: Score, events: ScoreEvent[], times: Array<n
 
 /**
  * Tablature réécrite avec le rythme retrouvé : mêmes notes (cordes, cases), nouvelles positions
- * (en noires depuis le début), tempo de l'enregistrement. Renvoie le MusicXML et les débuts
- * de mesure (en noires) de la nouvelle partition.
+ * (en noires depuis le début), tempo de l'enregistrement (ou des transcriptions). Renvoie le
+ * MusicXML et les débuts de mesure (en noires) de la nouvelle partition. `time` : chiffrage
+ * de la nouvelle partition (par défaut, celui de la partition actuelle).
  */
 export function rewriteTab(
   score: Score,
@@ -102,11 +103,12 @@ export function rewriteTab(
   events: ScoreEvent[],
   positions: number[],
   tempo: number,
+  time?: { beats: number; beatType: number },
 ): { xml: string; barStarts: number[] } {
   const track = score.tracks[trackIndex];
   const staff = track && mainStaff(track);
   const master = score.masterBars[0];
-  const time = { beats: master?.timeSignatureNumerator ?? 4, beatType: master?.timeSignatureDenominator ?? 4 };
+  time ??= { beats: master?.timeSignatureNumerator ?? 4, beatType: master?.timeSignatureDenominator ?? 4 };
   const length = (time.beats * 4) / time.beatType;
   const first = Math.min(0, ...positions);
   const measures: TabOnset[][] = [];

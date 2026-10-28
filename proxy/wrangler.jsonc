@@ -1,0 +1,11 @@
+{
+  // Proxy de Pratique Guitare : voir README.md de ce dossier.
+  "name": "pratique-guitare-proxy",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-01",
+  "workers_dev": true,
+  "vars": {
+    // Origines supplémentaires autorisées (séparées par des virgules), si l'app est publiée ailleurs.
+    "ALLOWED_ORIGINS": ""
+  }
+}

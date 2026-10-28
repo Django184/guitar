@@ -100,3 +100,93 @@ export function midiFile(): UploadFile {
   const bytes = writeMidi({ bpm: 100, tracks: [{ name: 'Guitare acoustique', program: 25, notes }] });
   return { name: 'arpeges.mid', mimeType: 'audio/midi', buffer: Buffer.from(bytes) };
 }
+
+// --- Rythme retrouvé dans des transcriptions ----------------------------------------
+
+const STANDARD = [64, 59, 55, 50, 45, 40];
+
+/**
+ * Mélodie originale « Promenade du soir » (guitare, accordage standard) : début en noires,
+ * et notes [corde (1 = mi aigu), case]. 7 mesures de 4/4.
+ */
+export const EVENING_WALK: Array<[number, Array<[number, number]>]> = [
+  [0, [[1, 0]]], [1, [[1, 3]]], [1.5, [[1, 5]]], [2, [[1, 7]]], [3, [[1, 5]]],
+  [4, [[1, 3]]], [4.5, [[1, 0]]], [5, [[2, 3]]], [6, [[1, 0], [6, 0]]],
+  [8, [[2, 0]]], [8.5, [[2, 3]]], [9, [[1, 0]]], [10.5, [[1, 3]]], [11, [[1, 5]]],
+  [12, [[1, 7]]], [13, [[1, 10]]], [13.5, [[1, 7]]], [14, [[1, 5]]], [15, [[1, 3]]],
+  [16, [[1, 5]]], [17.5, [[1, 3]]], [18, [[1, 0]]], [19, [[2, 3]]],
+  [20, [[1, 0], [6, 0]]], [21, [[1, 3]]], [22, [[1, 7]]], [23, [[1, 12]]],
+  [24, [[1, 0], [6, 0]]],
+];
+
+/**
+ * La même mélodie en tablature texte (deux lignes de mesures), chiffres régulièrement espacés :
+ * le rythme n'y est pas.
+ */
+export function eveningWalkAscii(): string[] {
+  const names = ['e', 'B', 'G', 'D', 'A', 'E'];
+  const bars = new Map<number, Array<Array<[number, number]>>>();
+  for (const [start, notes] of EVENING_WALK) bars.set(Math.floor(start / 4), [...(bars.get(Math.floor(start / 4)) ?? []), notes]);
+  const systems = [[0, 1, 2, 3], [4, 5, 6]];
+  return systems.flatMap((system, si) => {
+    const lines = names.map((n) => `${n}|`);
+    for (const bar of system) {
+      for (const notes of bars.get(bar) ?? []) {
+        names.forEach((_, s) => {
+          const fret = notes.find(([string]) => string === s + 1)?.[1];
+          lines[s] += fret === undefined ? '----' : `-${String(fret).padEnd(3, '-')}`;
+        });
+      }
+      names.forEach((_, s) => (lines[s] += '--|'));
+    }
+    return si ? ['', ...lines] : lines;
+  });
+}
+
+const walkPitches = EVENING_WALK.map(([, notes]) => notes.map(([s, f]) => (STANDARD[s - 1] as number) + f));
+const walkEnds = EVENING_WALK.map(([t], i) => EVENING_WALK[i + 1]?.[0] ?? t + 4);
+
+/**
+ * Transcriptions de test du même morceau, au rythme juste :
+ * - guitare (MIDI) ;
+ * - piano : une octave plus haut, valeurs doublées, accords à la main gauche, deux notes
+ *   oubliées et un rythme différent dans la mesure 3 (mesure à vérifier) ;
+ * - un autre morceau du même nom, dans la même tonalité (à écarter).
+ */
+export function eveningWalkSources(): { guitar: UploadFile; piano: UploadFile; other: UploadFile } {
+  const guitar = writeMidi({
+    bpm: 96,
+    tracks: [
+      {
+        name: 'Guitare',
+        program: 25,
+        notes: EVENING_WALK.flatMap(([t], i) => (walkPitches[i] as number[]).map((pitch) => ({ beat: t, length: (walkEnds[i] as number) - t, pitch }))),
+      },
+    ],
+  });
+  const chords = [[45, 52, 57], [43, 50, 55], [40, 47, 52], [45, 52, 57], [43, 50, 55], [40, 47, 52], [40, 47, 52]];
+  const piano = writeMidi({
+    bpm: 192,
+    tracks: [
+      {
+        name: 'Piano',
+        program: 0,
+        notes: [
+          ...EVENING_WALK.flatMap(([t], i) =>
+            i === 15 || i === 21 ? [] : [{ beat: (i === 12 ? 10 : t) * 2, length: ((walkEnds[i] as number) - t) * 2, pitch: Math.max(...(walkPitches[i] as number[])) + 12 }],
+          ),
+          ...chords.flatMap((c, bar) => [0, 4].flatMap((o) => c.map((pitch) => ({ beat: bar * 8 + o, length: 4, pitch })))),
+        ],
+      },
+    ],
+  });
+  let seed = 5;
+  const rnd = (): number => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const scale = [64, 66, 67, 69, 71, 72, 74, 76, 59, 62];
+  const other = writeMidi({
+    bpm: 120,
+    tracks: [{ name: 'Lead', program: 81, notes: Array.from({ length: 60 }, (_, i) => ({ beat: i * 0.5, length: 0.5, pitch: scale[Math.floor(rnd() * scale.length)] as number })) }],
+  });
+  const file = (name: string, bytes: Uint8Array): UploadFile => ({ name, mimeType: 'audio/midi', buffer: Buffer.from(bytes) });
+  return { guitar: file('promenade-guitare.mid', guitar), piano: file('promenade-piano.mid', piano), other: file('promenade-remix.mid', other) };
+}

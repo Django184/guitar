@@ -1,0 +1,20 @@
+{
+  "name": "pratique-guitare-proxy",
+  "private": true,
+  "type": "module",
+  "description": "Proxy gratuit (Cloudflare Workers) qui permet à Pratique Guitare de télécharger des partitions publiques.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  },
+  "cloudflare": {
+    "bindings": {
+      "ALLOWED_ORIGINS": {
+        "description": "Laisser vide. Autres adresses de l'app autorisées, séparées par des virgules."
+      }
+    }
+  }
+}
