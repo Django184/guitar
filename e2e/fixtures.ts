@@ -190,3 +190,51 @@ export function eveningWalkSources(): { guitar: UploadFile; piano: UploadFile; o
   const file = (name: string, bytes: Uint8Array): UploadFile => ({ name, mimeType: 'audio/midi', buffer: Buffer.from(bytes) });
   return { guitar: file('promenade-guitare.mid', guitar), piano: file('promenade-piano.mid', piano), other: file('promenade-remix.mid', other) };
 }
+
+/**
+ * La même mélodie en tablature « dessinée » (cordes en traits, cases posées dessus, comme les
+ * exports de logiciels et de sites), une image par ligne de mesures, dans une page imprimable.
+ */
+export function eveningWalkDrawnHtml(): string {
+  const systems = [[0, 1, 2, 3], [4, 5, 6]];
+  const data = JSON.stringify(
+    systems.map((bars) => EVENING_WALK.filter(([start]) => bars.includes(Math.floor(start / 4))).map(([start, notes]) => [start - (bars[0] as number) * 4, notes])),
+  );
+  return `<!doctype html><html><head><meta charset="utf-8"></head><body style="font-family: sans-serif">
+<h1 style="font-size: 24px">Promenade du soir</h1><p style="font-size: 12px">STANDARD TUNING · CAPO FRET 2</p>
+<script>
+  for (const events of ${data}) {
+    const c = document.createElement('canvas');
+    c.width = 1400; c.height = 300;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    const y = (s) => 50 + (s - 1) * 40;
+    const x = (t) => 140 + t * 70;
+    // Noms de cordes cerclés, à gauche.
+    ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ['e', 'B', 'G', 'D', 'A', 'E'].forEach((n, i) => {
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(60, y(i + 1), 13, 0, 2 * Math.PI); ctx.stroke();
+      ctx.fillStyle = '#000'; ctx.fillText(n, 60, y(i + 1) + 1);
+    });
+    for (let s = 1; s <= 6; s++) {
+      const cuts = events.filter(([, notes]) => notes.some(([str]) => str === s)).map(([t]) => x(t));
+      ctx.strokeStyle = '#999'; ctx.lineWidth = 3;
+      let from = 90;
+      for (const cx of [...cuts, 99999]) {
+        const to = Math.min(1360, cx - 20);
+        if (to > from) { ctx.beginPath(); ctx.moveTo(from, y(s)); ctx.lineTo(to, y(s)); ctx.stroke(); }
+        from = cx + 20;
+      }
+    }
+    ctx.fillStyle = '#111'; ctx.fillRect(1360, y(1), 5, y(6) - y(1));
+    ctx.font = 'bold 28px sans-serif';
+    for (const [t, notes] of events) for (const [s, fret] of notes) ctx.fillText(String(fret), x(t), y(s) + 1);
+    const img = document.createElement('img');
+    img.src = c.toDataURL('image/png');
+    img.style.width = '700px';
+    img.style.display = 'block';
+    img.style.margin = '12px 0';
+    document.body.append(img);
+  }
+</script></body></html>`;
+}

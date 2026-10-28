@@ -169,6 +169,14 @@ describe('Accordage écrit', () => {
     expect(tuningFromText(lines('Guitar Tune down 1 step'), 6)?.tuning).toEqual([62, 57, 53, 48, 43, 38]);
     expect(tuningFromText(lines('Allegro moderato'), 6)).toBeNull();
   });
+  it('capodastre écrit de plusieurs façons', () => {
+    const capo = (text: string) => tuningFromText(lines(text), 6)?.capo ?? 0;
+    expect(capo('STANDARD TUN CAPO FRET 4')).toBe(4);
+    expect(capo('Capo sur la case 3')).toBe(3);
+    expect(capo('Capo: 5')).toBe(5);
+    expect(capo('Capo II')).toBe(2);
+    expect(capo('Capo 7th fret')).toBe(7);
+  });
   it('lignes de texte : glyphes regroupés, blancs rétablis', () => {
     const glyphs = text('Capo 2', 10, 20, 8);
     glyphs.splice(4, 1); // l'espace n'est pas un glyphe dessiné

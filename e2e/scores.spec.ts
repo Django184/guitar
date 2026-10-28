@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { type Page, expect, test } from '@playwright/test';
-import { EVENING_WALK, type UploadFile, eveningWalkAscii, eveningWalkSources, midiFile, musicXmlFile, mxlFile } from './fixtures';
+import { EVENING_WALK, type UploadFile, eveningWalkAscii, eveningWalkDrawnHtml, eveningWalkSources, midiFile, musicXmlFile, mxlFile } from './fixtures';
 import { barTicks, beatPoint, importScore, openApp, passagePoints, playerState, touchSelectBars, waitForScore } from './helpers';
 import { GP_FIXTURES, SCREEN_RECORDING } from './paths';
 
@@ -309,6 +309,34 @@ test.describe('Import des formats', () => {
       expect([...frets].sort((a, b) => a - b)).toEqual([0, 0, 1, 1, 2, 2, 3, 10]);
     });
   }
+
+  test('PDF de tablature dessinée en image (cordes en traits) : cases, cordes et capodastre lus', async ({ page, context }) => {
+    test.setTimeout(120_000);
+    const printer = await context.newPage();
+    await printer.setContent(eveningWalkDrawnHtml(), { waitUntil: 'load' });
+    await printer.waitForFunction(() => document.querySelectorAll('img').length === 2 && [...document.querySelectorAll('img')].every((i) => i.complete));
+    const pdf = await printer.pdf({ format: 'A4' });
+    await printer.close();
+    await openApp(page);
+    await importScore(page, { name: 'promenade-dessinee.pdf', mimeType: 'application/pdf', buffer: pdf });
+    await waitForScore(page);
+    const read = await page.evaluate(() => {
+      const { api } = (window as unknown as { __scores: { debug(): { api: any } } }).__scores.debug();
+      const staff = api.score.tracks[0].staves[0];
+      const events: string[] = [];
+      for (const bar of staff.bars)
+        for (const beat of bar.voices[0].beats) {
+          const notes = beat.notes.filter((n: any) => !n.isTieDestination);
+          if (notes.length) events.push(notes.map((n: any) => `${staff.tuning.length - n.string + 1}/${n.fret}`).sort().join('+'));
+        }
+      return { events, capo: staff.capo as number, title: api.score.title as string };
+    });
+    const expected = EVENING_WALK.map(([, notes]) => notes.map(([s, f]) => `${s}/${f}`).sort().join('+'));
+    expect(read.events).toEqual(expected);
+    expect(read.capo).toBe(2);
+    // Titre lu dans le PDF (espaces normalisés : le texte imprimé peut garder des espaces insécables).
+    expect(read.title.replace(/\s+/g, ' ').trim()).toBe('Promenade du soir');
+  });
 
   test('PDF sans partition ou illisible : explication, rien n’est ajouté à la bibliothèque', async ({ page }) => {
     await openApp(page);

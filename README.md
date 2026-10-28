@@ -143,6 +143,14 @@ barre, nom de corde) par comparaison à des gabarits. L'accordage vient des noms
 Une tablature texte n'écrit pas le rythme : il est déduit de la position des chiffres dans la
 mesure (ou, sans barres, de leur espacement), et un message invite à le vérifier à l'écoute.
 
+Les **tablatures dessinées en image** (cordes en traits continus, cases posées dans une
+interruption du trait : exports de logiciels ou de sites, souvent une image par ligne) sont lues de
+la même façon : cordes retrouvées comme traits fins également espacés (les noms cerclés, flèches et
+bandeaux grisés qui les précèdent sont écartés), traits effacés, puis chaque case lue par les mêmes
+gabarits, en noir comme en couleur ; les notes alignées verticalement sont jouées ensemble, les
+barres verticales au milieu de la ligne découpent les mesures. Le texte de la page donne le titre,
+l'accordage et le capodastre (« STANDARD TUN CAPO FRET 4 »).
+
 **Vidéo de référence et rythme calé.** Le bouton « Vidéo » du lecteur lie à la partition un
 enregistrement : une vidéo YouTube (trouvée automatiquement à partir du titre, ou lien collé), un
 fichier audio, ou une vidéo (un enregistrement d'écran, par exemple) dont l'app ne garde que le son.
@@ -314,7 +322,8 @@ Automatique (CI, job **e2e**, profils ordinateur et mobile) :
 - un PDF de partition (gravé par alphaTab puis imprimé par Chromium pendant le test) est lu dans
   l'app : mêmes notes, mesures, positions et durées que la partition d'origine, tablature
   comprise ; une tablature texte imprimée en PDF, en caractères comme en image, donne les mêmes
-  cases et l'accordage écrit ; un PDF sans musique ou illisible est expliqué, sans rien ajouter à
+  cases et l'accordage écrit ; une tablature dessinée en image (cordes en traits, noms cerclés)
+  donne les mêmes cases, cordes, accords et capodastre ; un PDF sans musique ou illisible est expliqué, sans rien ajouter à
   la bibliothèque ;
 - une tablature texte jouée avec un autre rythme que son espacement (guitare synthétisée, fichier
   WAV) est recalée par l'écoute automatique comme en tapant le rythme : positions et tempo exacts,
