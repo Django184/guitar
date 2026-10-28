@@ -10,6 +10,8 @@
 import { unlockAudio } from '../../audio/context';
 import { closeMicrophone, openMicrophone } from '../../audio/microphone';
 import { h } from '../../ui/dom';
+import { openSettings } from '../../shell/settings';
+import { menuRow, panelHead } from '../../ui/sheet';
 import { describeError } from '../../ui/errors';
 import { type AlphaTabModule, type Score, parseScore } from '../alphatab';
 import { type MediaLink, type ScoreEntry, mediaKey } from '../library';
@@ -25,7 +27,6 @@ import {
   type VideoResult,
   YouTubeMedia,
   parseYouTubeUrl,
-  saveYoutubeKey,
   searchQuery,
   searchYouTube,
   youtubeKey,
@@ -120,8 +121,8 @@ export class MediaPanel {
     hidden: true,
     'data-testid': 'media-file',
   });
-  private readonly keyInput = h('input', { type: 'text', class: 'media__input', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Clé API YouTube' });
-  private readonly keyBox = h('details', { class: 'media__key' });
+  /** Clé YouTube : réglée dans la feuille « Réglages ». */
+  private readonly keyLink = h('button', { type: 'button', class: 'link-btn' }, 'Clé YouTube…');
   private readonly unlinkButton = h('button', { type: 'button', class: 'btn btn--small btn--ghost' }, 'Retirer le lien');
   private readonly backButton = h('button', { type: 'button', class: 'btn btn--small' }, 'Retour');
 
@@ -139,11 +140,7 @@ export class MediaPanel {
   private readonly messageEl = h('p', { class: 'media__message', role: 'status', 'data-testid': 'media-message' });
 
   constructor(private readonly host: MediaPanelHost) {
-    this.toggleButton = h(
-      'button',
-      { type: 'button', class: 'btn btn--small btn--ghost player__media-btn', 'aria-expanded': 'false', 'data-testid': 'media-toggle' },
-      'Vidéo',
-    );
+    this.toggleButton = menuRow('Vidéo de référence', 'Suivre un enregistrement pendant la lecture.', { 'aria-expanded': 'false', 'data-testid': 'media-toggle' });
     this.toggleButton.addEventListener('click', () => this.setOpen(this.toggleButton.getAttribute('aria-expanded') !== 'true'));
 
     // --- Sélecteur ---
@@ -169,28 +166,7 @@ export class MediaPanel {
       this.fileInput.value = '';
       if (file) void this.linkFile(file, listen);
     });
-    const keyForm = h(
-      'form',
-      { class: 'media__row' },
-      this.keyInput,
-      h('button', { type: 'submit', class: 'btn btn--small' }, 'Enregistrer'),
-    );
-    keyForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      saveYoutubeKey(this.keyInput.value);
-      this.keyBox.open = false;
-      this.searchedFor = null;
-      void this.search(this.queryInput.value);
-    });
-    this.keyBox.append(
-      h('summary', {}, 'Clé YouTube (recherche automatique)'),
-      h(
-        'p',
-        { class: 'media__help' },
-        'Clé de l’API « YouTube Data API v3 », créée gratuitement sur console.cloud.google.com et réservée à ce site. Elle reste sur cet appareil.',
-      ),
-      keyForm,
-    );
+    this.keyLink.addEventListener('click', () => openSettings('youtube'));
     this.unlinkButton.addEventListener('click', () => void this.unlink());
     this.backButton.addEventListener('click', () => this.showLinked());
     this.picker.append(
@@ -199,7 +175,7 @@ export class MediaPanel {
       linkForm,
       h('div', { class: 'media__row media__row--wrap' }, fileButton, this.youtubeLink, this.fileInput),
       help('Une vidéo (un enregistrement d’écran, par exemple) : l’app n’en garde que le son, sur cet appareil.'),
-      this.keyBox,
+      h('div', { class: 'media__row' }, this.keyLink),
       h('div', { class: 'media__row media__row--end' }, this.unlinkButton, this.backButton),
     );
 
@@ -212,7 +188,15 @@ export class MediaPanel {
     this.actions.append(this.followToggle, this.tapButton, this.listenButton);
     this.linked.append(this.frame, h('div', { class: 'media__row' }, this.titleEl, change), this.actions);
 
-    this.element = h('section', { class: 'media', hidden: true, 'aria-label': 'Enregistrement de référence', 'data-testid': 'media-panel' }, this.picker, this.linked, this.taskEl, this.messageEl);
+    this.element = h(
+      'section',
+      { class: 'media', hidden: true, 'aria-label': 'Enregistrement de référence', 'data-testid': 'media-panel' },
+      panelHead('Vidéo de référence', () => this.setOpen(false)),
+      this.picker,
+      this.linked,
+      this.taskEl,
+      this.messageEl,
+    );
   }
 
   // --- Ouverture d'une partition ------------------------------------------------
@@ -315,7 +299,6 @@ export class MediaPanel {
     const query = entry ? searchQuery(entry.title, entry.artist) : '';
     if (!this.queryInput.value || this.searchedFor === null) this.queryInput.value = query;
     this.youtubeLink.href = youtubeSearchUrl(this.queryInput.value || query);
-    this.keyInput.value = youtubeKey();
     this.renderResults();
     if (!this.element.hidden) void this.autoSearch();
   }
@@ -344,8 +327,7 @@ export class MediaPanel {
     const key = youtubeKey();
     if (!q) return;
     if (!key) {
-      this.keyBox.open = true;
-      this.message('La recherche automatique demande une clé YouTube (ci-dessous) ; sinon, cherchez sur YouTube et collez le lien.');
+      this.message('La recherche automatique demande une clé YouTube (Réglages) ; sinon, cherchez sur YouTube et collez le lien.');
       return;
     }
     this.searchedFor = q;
@@ -357,7 +339,6 @@ export class MediaPanel {
     } catch (error) {
       this.results = [];
       this.message(error instanceof SearchError ? error.message : 'Recherche impossible pour le moment.', true);
-      if (error instanceof SearchError && (error.problem === 'key' || error.problem === 'referer')) this.keyBox.open = true;
     } finally {
       this.searchButton.disabled = false;
     }

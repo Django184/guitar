@@ -26,35 +26,3 @@ export function setupPwa(): void {
     },
   });
 }
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt(): Promise<void>;
-  readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
-
-/**
- * Bouton « Installer » (Chrome, Edge, Android) : visible uniquement quand le
- * navigateur propose l'installation. Sur iOS : Partager › Sur l'écran d'accueil.
- */
-export function setupInstallButton(button: HTMLButtonElement): void {
-  let deferred: BeforeInstallPromptEvent | null = null;
-
-  window.addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault();
-    deferred = event as BeforeInstallPromptEvent;
-    button.hidden = false;
-  });
-
-  button.addEventListener('click', async () => {
-    if (!deferred) return;
-    const prompt = deferred;
-    deferred = null;
-    button.hidden = true;
-    await prompt.prompt();
-  });
-
-  window.addEventListener('appinstalled', () => {
-    deferred = null;
-    button.hidden = true;
-  });
-}

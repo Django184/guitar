@@ -2,6 +2,7 @@ import { setAudioSession } from '../audio/context';
 import { currentTheme } from '../shell/theme';
 import { allowSleep, keepAwake } from '../shell/wakeLock';
 import { h } from '../ui/dom';
+import { ICONS, Sheet, fieldRow, group, icon, switchRow } from '../ui/sheet';
 import { describeError } from '../ui/errors';
 import { bindHoldRepeat } from '../ui/hold';
 import {
@@ -100,32 +101,43 @@ export class ScorePlayerView {
 
   private readonly titleEl = h('p', { class: 'player__title' });
   private readonly artistEl = h('p', { class: 'player__artist' });
-  private readonly trackSelect = h('select', { class: 'player__track-select', 'aria-label': 'Piste affichée' });
-  private readonly trackLabel = h('label', { class: 'player__track', hidden: true }, this.trackSelect);
-  private readonly noticeEl = h('p', { class: 'player__notice', hidden: true });
+  private readonly trackSelect = h('select', { class: 'field field--select', 'aria-label': 'Piste affichée' });
+  private readonly trackRow: HTMLElement;
+  private readonly noticeText = h('span', { class: 'player__notice-text' });
+  private readonly noticeAction = h('button', { type: 'button', class: 'link-btn', hidden: true }, 'Retrouver le rythme');
+  private readonly noticeEl = h('p', { class: 'player__notice', hidden: true }, this.noticeText, this.noticeAction);
   private readonly alertEl = h('p', { class: 'alert', role: 'alert', hidden: true });
   private readonly statusEl = h('p', { class: 'player__status', role: 'status' });
   private readonly surface = h('div', { class: 'player__surface' });
   private readonly scroller = h('div', { class: 'player__score' }, this.surface);
   private readonly selectionLabel = h('span', { class: 'player__sel-label', 'data-testid': 'selection-label' });
   private readonly timeEl = h('span', { class: 'player__time', 'data-testid': 'time' });
-  private readonly clearButton = h('button', { type: 'button', class: 'btn btn--small', hidden: true }, 'Effacer');
-  private readonly barsToggle = h(
+  private readonly clearButton = h('button', { type: 'button', class: 'icon-btn icon-btn--small', hidden: true, 'aria-label': 'Effacer la sélection' }, icon(ICONS.close));
+  /** Options de la partition (feuille) : piste, doigtés, sélection, rythme, enrichissement, vidéo. */
+  private readonly options = new Sheet('Options de la partition', { testId: 'score-options-sheet' });
+  private readonly optionsButton = h(
     'button',
-    { type: 'button', class: 'toggle', 'aria-pressed': 'true', title: 'Sélectionner des mesures entières (sinon, note par note)' },
-    'Par mesure',
+    { type: 'button', class: 'icon-btn', 'aria-label': 'Options de la partition', title: 'Options', 'data-testid': 'score-options' },
+    icon(ICONS.more, 'icon--bold'),
   );
-  private readonly loopToggle = h('button', { type: 'button', class: 'toggle', 'aria-pressed': 'true' }, 'Boucle');
-  private readonly fingeringToggle = h(
+  private readonly bars = switchRow('Sélection par mesure', 'Sinon, note par note.');
+  private readonly fingeringSwitch = switchRow('Doigtés', 'Doigts de la main gauche sur la tablature.', { 'data-testid': 'fingering-toggle' });
+  private readonly loopToggle = h(
     'button',
-    { type: 'button', class: 'toggle', 'aria-pressed': 'true', hidden: true, title: 'Doigts de la main gauche sur la tablature', 'data-testid': 'fingering-toggle' },
-    'Doigtés',
+    { type: 'button', class: 'icon-btn icon-btn--toggle', 'aria-pressed': 'true', 'aria-label': 'Boucle', title: 'Boucle' },
+    icon(ICONS.loop),
   );
-  private readonly speedValue = h('output', { class: 'stepper__value', 'data-testid': 'speed' });
-  private readonly speedMinus = h('button', { type: 'button', class: 'btn btn--square', 'aria-label': 'Ralentir de 5 %' }, '−');
-  private readonly speedPlus = h('button', { type: 'button', class: 'btn btn--square', 'aria-label': 'Accélérer de 5 %' }, '+');
-  private readonly rewindButton = h('button', { type: 'button', class: 'btn btn--rewind', 'aria-label': 'Revenir au début du passage' }, 'Début');
-  private readonly playButton = h('button', { type: 'button', class: 'btn btn--primary', 'aria-pressed': 'false', disabled: true }, 'Lire');
+  private readonly speedValue = h('output', { class: 'stepper__value readout-num', 'data-testid': 'speed' });
+  private readonly speedMinus = h('button', { type: 'button', class: 'btn btn--square btn--quiet', 'aria-label': 'Ralentir de 5 %' }, '−');
+  private readonly speedPlus = h('button', { type: 'button', class: 'btn btn--square btn--quiet', 'aria-label': 'Accélérer de 5 %' }, '+');
+  private readonly rewindButton = h(
+    'button',
+    { type: 'button', class: 'icon-btn icon-btn--large', 'aria-label': 'Revenir au début du passage', title: 'Début' },
+    icon(ICONS.rewind),
+  );
+  private readonly playIcon = icon(ICONS.play, 'icon--fill');
+  private readonly playLabel = h('span', {}, 'Lire');
+  private readonly playButton = h('button', { type: 'button', class: 'btn btn--primary btn--play', 'aria-pressed': 'false', disabled: true }, this.playIcon, this.playLabel);
 
   constructor(private readonly deps: PlayerDeps) {
     this.panel = new MediaPanel({
@@ -180,25 +192,21 @@ export class ScorePlayerView {
       this.rhythm.setOpen(false);
       this.embellish.setOpen(false);
     });
-    const back = h(
-      'button',
-      { type: 'button', class: 'btn btn--ghost player__back', 'aria-label': 'Retour à la bibliothèque' },
-      '‹ Bibliothèque',
-    );
+    const back = h('button', { type: 'button', class: 'icon-btn player__back', 'aria-label': 'Retour à la bibliothèque', title: 'Bibliothèque' }, icon(ICONS.back));
     back.addEventListener('click', () => deps.onBack());
+
+    // Feuille d'options : réglages de lecture, puis outils (chacun ouvre son panneau).
+    this.trackRow = fieldRow('Piste', this.trackSelect);
+    const tools = [this.rhythm.toggleButton, this.embellish.toggleButton, this.panel.toggleButton];
+    for (const tool of tools) tool.addEventListener('click', () => this.options.close());
+    this.options.body.append(group(this.trackRow, this.fingeringSwitch.row, this.bars.row), group(...tools));
+    this.optionsButton.addEventListener('click', () => this.options.open());
+    this.noticeAction.addEventListener('click', () => this.rhythm.setOpen(true));
 
     this.element = h(
       'div',
       { class: 'player' },
-      h(
-        'div',
-        { class: 'player__bar' },
-        back,
-        h('div', { class: 'player__heading' }, this.titleEl, this.artistEl),
-        this.trackLabel,
-        this.rhythm.toggleButton,
-        this.panel.toggleButton,
-      ),
+      h('div', { class: 'player__bar' }, back, h('div', { class: 'player__heading' }, this.titleEl, this.artistEl), this.optionsButton),
       this.noticeEl,
       this.alertEl,
       this.panel.element,
@@ -208,31 +216,23 @@ export class ScorePlayerView {
       h(
         'div',
         { class: 'player__controls' },
-        h('div', { class: 'player__row player__row--selection' }, this.selectionLabel, this.timeEl, this.clearButton),
+        h('div', { class: 'player__row player__row--selection' }, this.selectionLabel, this.clearButton, this.timeEl),
         h(
           'div',
-          { class: 'player__row player__row--options' },
-          this.barsToggle,
+          { class: 'player__row player__row--transport' },
+          this.rewindButton,
+          this.playButton,
           this.loopToggle,
-          this.fingeringToggle,
-          this.embellish.toggleButton,
-          h(
-            'div',
-            { class: 'stepper__controls player__speed', role: 'group', 'aria-label': 'Vitesse de lecture' },
-            this.speedMinus,
-            this.speedValue,
-            this.speedPlus,
-          ),
+          h('div', { class: 'stepper__controls player__speed', role: 'group', 'aria-label': 'Vitesse de lecture' }, this.speedMinus, this.speedValue, this.speedPlus),
         ),
-        h('div', { class: 'player__row player__row--transport' }, this.rewindButton, this.playButton),
       ),
     );
 
     this.trackSelect.addEventListener('change', () => this.changeTrack(Number(this.trackSelect.value)));
     this.clearButton.addEventListener('click', () => this.selection?.clear());
-    this.barsToggle.addEventListener('click', () => this.updateSettings({ wholeBars: !this.settings.wholeBars }));
+    this.bars.row.addEventListener('click', () => this.updateSettings({ wholeBars: !this.settings.wholeBars }));
     this.loopToggle.addEventListener('click', () => this.updateSettings({ loop: !this.settings.loop }));
-    this.fingeringToggle.addEventListener('click', () => {
+    this.fingeringSwitch.row.addEventListener('click', () => {
       this.updateSettings({ fingering: this.settings.fingering === false });
       this.drawFingering();
     });
@@ -278,8 +278,10 @@ export class ScorePlayerView {
     this.titleEl.textContent = entry.title;
     this.artistEl.textContent = entry.artist;
     this.artistEl.hidden = !entry.artist;
-    this.noticeEl.textContent = notice ?? '';
+    this.noticeText.textContent = notice ?? '';
     this.noticeEl.hidden = !notice;
+    // Tablature au rythme deviné : un lien direct vers « Rythme ».
+    this.noticeAction.hidden = !(entry.origin === 'pdf-tab' && !entry.rhythm && RhythmPanel.applies(entry, score, Math.min(Math.max(0, entry.settings.trackIndex), score.tracks.length - 1)));
     this.showAlert(null);
     this.status('Mise en page de la partition…');
 
@@ -289,7 +291,7 @@ export class ScorePlayerView {
         h('option', { value: i, selected: i === trackIndex }, track.name || `Piste ${i + 1}`),
       ),
     );
-    this.trackLabel.hidden = score.tracks.length < 2;
+    this.trackRow.hidden = score.tracks.length < 2;
     this.rhythm.load(entry, score, trackIndex);
     this.embellish.load(RhythmPanel.applies(entry, score, trackIndex));
 
@@ -319,6 +321,7 @@ export class ScorePlayerView {
 
   /** Partition quittée : tâche de calage arrêtée. */
   close(): void {
+    this.options.close();
     this.panel.close();
     this.rhythm.close();
     this.embellish.close();
@@ -524,7 +527,8 @@ export class ScorePlayerView {
     });
     api.playerStateChanged.on((e) => {
       this.playing = e.state === at.synth.PlayerState.Playing;
-      this.playButton.textContent = this.playing ? 'Pause' : 'Lire';
+      this.playLabel.textContent = this.playing ? 'Pause' : 'Lire';
+      this.playIcon.querySelector('path')?.setAttribute('d', this.playing ? ICONS.pause : ICONS.play);
       this.playButton.setAttribute('aria-pressed', String(this.playing));
       if (this.playing) keepAwake('player');
       else allowSleep('player');
@@ -611,8 +615,8 @@ export class ScorePlayerView {
     const score = this.previewing ? this.previewScore : this.score;
     if (!api || !entry || !score) return;
     const hasTab = !!tabStaff(score, this.trackIndex);
-    this.fingeringToggle.hidden = !hasTab;
-    this.fingeringToggle.setAttribute('aria-pressed', String(entry.settings.fingering !== false));
+    this.fingeringSwitch.row.hidden = !hasTab;
+    this.fingeringSwitch.set(entry.settings.fingering !== false);
     if (!hasTab || entry.settings.fingering === false) {
       this.fingeringLayer.clear();
       return;
@@ -736,7 +740,7 @@ export class ScorePlayerView {
     this.speedMinus.disabled = settings.speed <= MIN_SPEED;
     this.speedPlus.disabled = settings.speed >= MAX_SPEED;
     this.loopToggle.setAttribute('aria-pressed', String(settings.loop));
-    this.barsToggle.setAttribute('aria-pressed', String(settings.wholeBars));
+    this.bars.set(settings.wholeBars);
   }
 
   private status(text: string | null): void {

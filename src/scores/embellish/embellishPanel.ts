@@ -5,6 +5,7 @@
  * retire d'un appui, chaque famille d'un bouton ; « Garder » les écrit dans la tablature.
  */
 import { h } from '../../ui/dom';
+import { menuRow, panelHead } from '../../ui/sheet';
 import { describeError } from '../../ui/errors';
 import { type AlphaTabModule, type Score, loadAlphaTab, parseScore } from '../alphatab';
 import type { ScoreEntry } from '../library';
@@ -62,17 +63,15 @@ export class EmbellishPanel {
   private readonly messageEl = h('p', { class: 'media__message', role: 'status' });
 
   constructor(private readonly host: EmbellishHost) {
-    this.toggleButton = h(
-      'button',
-      { type: 'button', class: 'toggle', 'aria-pressed': 'false', hidden: true, title: 'Ajouter des notes prises dans des transcriptions du morceau', 'data-testid': 'embellish-toggle' },
-      'Enrichir',
-    );
+    this.toggleButton = menuRow('Enrichir', 'Basse et accords jouables, pris dans des transcriptions.', { 'aria-expanded': 'false', 'data-testid': 'embellish-toggle' });
+    this.toggleButton.hidden = true;
     this.toggleButton.addEventListener('click', () => this.setOpen(!this.isOpen));
     this.keepButton.addEventListener('click', () => void this.keep());
     this.cancelButton.addEventListener('click', () => this.setOpen(false));
     this.element = h(
       'section',
       { class: 'media embellish', hidden: true, 'aria-label': 'Enrichissement de la tablature', 'data-testid': 'embellish-panel' },
+      panelHead('Enrichir', () => this.setOpen(false)),
       this.statusEl,
       this.helpEl,
       this.kindsEl,
@@ -95,7 +94,7 @@ export class EmbellishPanel {
     if (open === this.isOpen) return;
     this.session++;
     this.element.hidden = !open;
-    this.toggleButton.setAttribute('aria-pressed', String(open));
+    this.toggleButton.setAttribute('aria-expanded', String(open));
     if (open) {
       this.host.opened();
       void this.start();
@@ -273,7 +272,7 @@ export class EmbellishPanel {
     this.session++;
     this.additions = [];
     this.element.hidden = true;
-    this.toggleButton.setAttribute('aria-pressed', 'false');
+    this.toggleButton.setAttribute('aria-expanded', 'false');
   }
 
   private async keep(): Promise<void> {
@@ -283,7 +282,7 @@ export class EmbellishPanel {
     this.session++;
     this.additions = [];
     this.element.hidden = true;
-    this.toggleButton.setAttribute('aria-pressed', 'false');
+    this.toggleButton.setAttribute('aria-expanded', 'false');
     this.host.showRings([]);
     ctx.entry.settings.selection = null;
     try {

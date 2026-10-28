@@ -3,10 +3,11 @@ import { Metronome } from './metronome/metronome';
 import { createMetronomeView } from './metronome/metronomeView';
 import { DEFAULT_BPM, METERS, type Meter } from './metronome/scheduler';
 import { createScoresView } from './scores/scoresView';
-import { setupInstallButton, setupPwa } from './shell/pwa';
+import { setupPwa } from './shell/pwa';
 import { type RouteId, startRouter } from './shell/router';
 import { isNumber, isOneOf, loadPref } from './shell/storage';
-import { setupThemeToggle } from './shell/theme';
+import { setupSettingsButton } from './shell/settings';
+import { initTheme } from './shell/theme';
 import type { View } from './shell/view';
 import { createTunerView } from './tuner/tunerView';
 import { byId } from './ui/dom';
@@ -70,6 +71,6 @@ document.addEventListener('visibilitychange', () => {
 });
 document.addEventListener('pointerdown', () => metronome.resumeIfInterrupted(), { capture: true });
 
-setupThemeToggle(byId<HTMLButtonElement>('theme-btn'));
-setupInstallButton(byId<HTMLButtonElement>('install-btn'));
+initTheme();
+setupSettingsButton(byId<HTMLButtonElement>('settings-btn'));
 setupPwa();

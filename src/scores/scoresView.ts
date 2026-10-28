@@ -31,9 +31,9 @@ const alert = (message: string): HTMLElement => h('p', { class: 'alert', role: '
 /** alphaTab remplace les espaces des titres MusicXML par des espaces insécables : on les normalise. */
 const cleanText = (text: string): string => text.replace(/\s+/g, ' ').trim();
 
-const PDF_NOTICE = `Partition lue dans le PDF${NB}: vérifiez les notes et les rythmes.`;
-const PDF_TAB_NOTICE = `Tablature lue dans le PDF${NB}: le rythme, absent d'une tablature texte, est déduit de l'espacement des chiffres. Le bouton «${NB}Rythme${NB}» le retrouve dans des transcriptions du morceau.`;
-const PDF_TAB_SYNCED_NOTICE = `Tablature lue dans le PDF, rythme calé sur l'enregistrement de référence.`;
+const PDF_NOTICE = `Lue dans le PDF${NB}: vérifiez notes et rythmes.`;
+const PDF_TAB_NOTICE = `Tablature du PDF, rythme deviné.`;
+const PDF_TAB_SYNCED_NOTICE = `Tablature du PDF, rythme calé sur l'enregistrement.`;
 
 /** Partition convertie depuis un PDF (portée de notation affichée au-dessus de la tablature). */
 const fromPdf = (origin: ScoreEntry['origin']): boolean => origin === 'pdf' || origin === 'pdf-tab';
@@ -42,11 +42,11 @@ const fromPdf = (origin: ScoreEntry['origin']): boolean => origin === 'pdf' || o
 function noticeFor(entry: ScoreEntry, prepared: string | null): string | null {
   if (entry.origin === 'pdf-tab') {
     const n = entry.rhythm?.sources.length ?? 0;
-    if (n) return `Tablature lue dans le PDF, rythme repris de ${n}${NB}transcription${n > 1 ? 's' : ''}.`;
+    if (n) return `Tablature du PDF, rythme repris de ${n}${NB}transcription${n > 1 ? 's' : ''}.`;
     return entry.sync?.points.length ? PDF_TAB_SYNCED_NOTICE : PDF_TAB_NOTICE;
   }
   if (entry.origin !== 'pdf') return prepared;
-  return prepared ? `${PDF_NOTICE} La tablature a été calculée${NB}: vérifiez les doigtés.` : PDF_NOTICE;
+  return prepared ? `Lue dans le PDF, tablature calculée${NB}: vérifiez notes et doigtés.` : PDF_NOTICE;
 }
 
 /**

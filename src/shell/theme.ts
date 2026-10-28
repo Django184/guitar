@@ -20,17 +20,7 @@ export function applyTheme(theme: Theme): void {
   if (changed) document.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
 }
 
-/** Relie le bouton de thème : sombre par défaut, clair au choix, mémorisé. */
-export function setupThemeToggle(button: HTMLButtonElement): void {
-  const sync = (): void => {
-    const theme = currentTheme();
-    button.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre');
-    button.title = button.getAttribute('aria-label') ?? '';
-  };
+/** Thème mémorisé (sombre par défaut), appliqué au démarrage. */
+export function initTheme(): void {
   applyTheme(loadPref<Theme>('theme', 'dark', isOneOf<Theme>(['dark', 'light'])));
-  sync();
-  button.addEventListener('click', () => {
-    applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
-    sync();
-  });
 }

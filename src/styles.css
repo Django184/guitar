@@ -1,7 +1,16 @@
 /* ==========================================================================
    Pratique Guitare : thème « palissandre » (sombre, par défaut) et « nickel » (clair).
-   Palissandre de la touche, os du sillet, laiton des mécaniques.
+   Palissandre de la touche, os du sillet, laiton des mécaniques. Les chiffres et les titres
+   sont gravés comme sur la façade d'un ampli (Barlow Condensed) ; le reste en police système.
    ========================================================================== */
+
+@font-face {
+  font-family: 'Readout';
+  src: url('./assets/fonts/barlow-condensed-600.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   color-scheme: dark;
@@ -19,7 +28,7 @@
   --danger-soft: rgb(240 138 118 / 0.12);
 
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-display: ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Readout', 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
 
   --tap: 48px;
   --radius: 14px;
@@ -118,8 +127,8 @@ a {
 
 .topbar__title {
   margin: 0;
-  font: 700 1.25rem/1.2 var(--font-display);
-  letter-spacing: -0.01em;
+  font: 600 1.75rem/1.1 var(--font-display);
+  letter-spacing: 0.01em;
   outline: none;
 }
 
@@ -144,20 +153,6 @@ a {
 
 .icon-btn:hover {
   color: var(--text);
-}
-
-#install-btn {
-  color: var(--accent);
-}
-
-/* Le soleil propose le thème clair, la lune le thème sombre. */
-.icon--moon,
-[data-theme='light'] .icon--sun {
-  display: none;
-}
-
-[data-theme='light'] .icon--moon {
-  display: block;
 }
 
 .nav {
@@ -265,7 +260,8 @@ a {
   .nav__brand {
     display: block;
     padding: 4px 14px 20px;
-    font: 700 1.0625rem/1.2 var(--font-display);
+    font: 600 1.375rem/1.2 var(--font-display);
+    letter-spacing: 0.01em;
     color: var(--accent);
   }
 
@@ -303,7 +299,7 @@ a {
   }
 
   .topbar__title {
-    font-size: 1.5rem;
+    font-size: 2rem;
   }
 
   .view {
@@ -402,9 +398,10 @@ a {
 }
 
 .stepper__value {
-  min-width: 5.5ch;
+  min-width: 4.5ch;
   text-align: center;
-  font-weight: 600;
+  font: 600 1.25rem var(--font-display);
+  letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -415,6 +412,307 @@ a {
   background: var(--danger-soft);
   color: var(--danger);
   font-size: 0.9375rem;
+}
+
+/* --- Boutons-icônes, liens d'action ------------------------------------------- */
+
+.icon-btn--small {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 6px;
+}
+
+.icon-btn--small .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-btn--large {
+  min-width: 52px;
+  min-height: 56px;
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+
+/* Bascule en icône (boucle) : laiton quand elle est active. */
+.icon-btn--toggle {
+  min-width: 52px;
+  min-height: 56px;
+  border: 1px solid var(--line);
+}
+
+.icon-btn--toggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.icon--bold {
+  stroke-width: 3;
+}
+
+.icon--fill {
+  fill: currentColor;
+  stroke: none;
+}
+
+.btn--quiet {
+  min-width: 40px;
+  min-height: 48px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: 600 inherit var(--font);
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  cursor: pointer;
+}
+
+/* --- Feuilles (réglages, options de la partition) ------------------------------ */
+
+.sheet {
+  width: 100%;
+  max-width: 100%;
+  max-height: 86dvh;
+  margin: auto auto 0;
+  padding: 0;
+  border: 0;
+  border-radius: 20px 20px 0 0;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 -12px 40px rgb(0 0 0 / 0.35);
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+}
+
+.sheet[open] {
+  display: flex;
+  flex-direction: column;
+  animation: sheet-in 0.18s ease-out;
+}
+
+.sheet::backdrop {
+  background: rgb(10 6 5 / 0.55);
+}
+
+:root[data-theme='light'] .sheet::backdrop {
+  background: rgb(29 24 22 / 0.35);
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+.sheet__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 10px 6px var(--gutter);
+  background: var(--surface);
+}
+
+/* Poignée : la feuille vient du bas. */
+.sheet__head::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  margin-left: -18px;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.sheet__title {
+  margin: 0;
+  font: 600 1.5rem/1.1 var(--font-display);
+  letter-spacing: 0.01em;
+}
+
+.sheet__body {
+  padding: 0 var(--gutter) calc(env(safe-area-inset-bottom) + 16px);
+}
+
+.sheet__group + .sheet__group {
+  border-top: 1px solid var(--line);
+}
+
+@media (min-width: 640px) {
+  .sheet {
+    max-width: 440px;
+    max-height: 80dvh;
+    margin: auto;
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgb(0 0 0 / 0.45);
+  }
+
+  .sheet__head::before {
+    display: none;
+  }
+}
+
+/* Rangées : un réglage par ligne, libellé à gauche. */
+.row {
+  width: 100%;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+}
+
+button.row {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.row--stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.row__text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.row__label {
+  font-weight: 600;
+}
+
+.row__hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.row__chevron {
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+
+.row--menu[aria-expanded='true'] .row__label {
+  color: var(--accent);
+}
+
+/* Interrupteur : piste et curseur, laiton une fois activé. */
+.switch {
+  position: relative;
+  flex: none;
+  width: 46px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: background 0.15s;
+}
+
+.switch__knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.15s, background 0.15s;
+}
+
+.row--switch[aria-checked='true'] .switch {
+  background: var(--accent);
+  box-shadow: none;
+}
+
+.row--switch[aria-checked='true'] .switch__knob {
+  transform: translateX(18px);
+  background: var(--accent-ink);
+}
+
+.seg--compact {
+  flex: none;
+  padding: 3px;
+}
+
+.seg--compact button {
+  min-height: 38px;
+  padding: 0 14px;
+}
+
+.field {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9375rem;
+}
+
+.field--select {
+  flex: none;
+  max-width: 12rem;
+}
+
+.field-line {
+  display: flex;
+  gap: 8px;
+}
+
+.field-line .field {
+  width: 0;
+}
+
+/* En-tête des panneaux du lecteur (Rythme, Enrichir, Vidéo). */
+.panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -4px -4px -2px 0;
+}
+
+.panel__title {
+  margin: 0;
+  font: 600 1.25rem/1.1 var(--font-display);
+  letter-spacing: 0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet[open] {
+    animation: none;
+  }
+
+  .switch,
+  .switch__knob {
+    transition: none;
+  }
 }
 
 /* --- Accordeur ------------------------------------------------------------- */
@@ -509,9 +807,8 @@ a {
   display: flex;
   align-items: baseline;
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
-  letter-spacing: -0.03em;
 }
 
 .note__letter {
@@ -591,7 +888,7 @@ a {
   border-radius: 12px;
   background: var(--surface);
   color: var(--text);
-  font: 700 1.125rem var(--font-display);
+  font: 600 1.375rem var(--font-display);
   cursor: pointer;
   touch-action: manipulation;
 }
@@ -630,6 +927,14 @@ a {
 .string[aria-pressed='true'] {
   background: var(--surface-2);
   box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.tuner__a4 {
+  margin: -6px 0 0;
+  color: var(--accent);
+  font: 600 1rem var(--font-display);
+  letter-spacing: 0.02em;
+  text-align: center;
 }
 
 .strings__info {
@@ -688,8 +993,7 @@ a {
 }
 
 .tempo__value {
-  font: 700 clamp(5rem, 28vw, 8.5rem) / 1 var(--font-display);
-  letter-spacing: -0.04em;
+  font: 600 clamp(6rem, 34vw, 10rem) / 0.9 var(--font-display);
   font-variant-numeric: tabular-nums;
 }
 
@@ -876,8 +1180,9 @@ a {
 .player__bar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   min-width: 0;
+  margin: 0 -10px;
 }
 
 .btn--ghost {
@@ -900,30 +1205,24 @@ a {
 }
 
 .player__title {
-  font-weight: 700;
+  font: 600 1.375rem/1.15 var(--font-display);
+  letter-spacing: 0.01em;
 }
 
 .player__artist {
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
-.player__track-select {
-  max-width: 11rem;
-  min-height: 44px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-size: 0.9375rem;
-}
-
+/* Une seule ligne d'information sous le titre (origine du fichier, rythme), et son action. */
 .player__notice {
-  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin: -2px 0 0;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .player__stage {
@@ -1094,7 +1393,7 @@ a {
 
 .player__controls {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .player__row {
@@ -1104,14 +1403,17 @@ a {
 }
 
 .player__row--selection {
-  min-height: 44px;
+  min-height: 36px;
 }
 
 .player__sel-label {
   flex: 1;
   min-width: 0;
   color: var(--muted);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .player__sel-label.is-set {
@@ -1121,7 +1423,8 @@ a {
 
 .player__time {
   color: var(--muted);
-  font-size: 0.875rem;
+  font: 600 1rem var(--font-display);
+  letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1129,11 +1432,6 @@ a {
   min-height: 44px;
   padding: 0 12px;
   font-size: 0.9375rem;
-}
-
-.player__row--options {
-  flex-wrap: wrap;
-  row-gap: 8px;
 }
 
 .toggle {
@@ -1154,48 +1452,64 @@ a {
   color: var(--text);
 }
 
-.player__speed {
-  margin-left: auto;
-}
-
+/* Lecture : début, lire (le plus grand), boucle, vitesse. */
 .player__row--transport {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
+  gap: 6px;
 }
 
-.btn--rewind {
-  min-height: 60px;
-  font-size: 1.0625rem;
+.btn--play {
+  flex: 1;
+  min-width: 0;
+  min-height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn--play .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.player__speed {
+  gap: 0;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.player__speed .stepper__value {
+  min-width: 3.6ch;
+  font: 600 1.25rem var(--font-display);
 }
 
 @media (max-height: 760px) {
-  .btn--rewind {
-    min-height: 52px;
+  .btn--play {
+    min-height: 50px;
   }
 }
 
-@media (max-width: 420px) {
-  .toggle {
-    padding: 0 11px;
-    font-size: 0.875rem;
+/* Pendant la lecture, la barre de titre cède sa place à la partition ; la barre du lecteur
+   (retour, titre, options) en tient lieu. */
+.app:has(.view--scores.is-player:not([hidden])) .topbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .view--scores.is-player {
+    padding-top: 18px;
   }
 
-  .player__speed {
-    gap: 4px;
-  }
-
-  .player__speed .stepper__value {
-    min-width: 4.5ch;
+  /* Commandes de lecture à portée de main, même sur un grand écran. */
+  .player__controls {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
   }
 }
 
-/* Écrans peu hauts (iPhone SE, paysage) : pendant la lecture, la barre de titre cède
-   sa place à la partition ; le bouton « Bibliothèque » reste le repère. */
-@media (max-height: 700px) {
-  .app:has(.view--scores.is-player:not([hidden])) .topbar {
-    display: none;
-  }
-
+@media (max-width: 767px), (max-height: 700px) {
   .view--scores.is-player {
     padding-top: calc(env(safe-area-inset-top) + 6px);
   }
@@ -1206,11 +1520,6 @@ a {
 }
 
 /* --- Enregistrement de référence (vidéo YouTube ou fichier audio) --------------- */
-
-.player__media-btn[aria-expanded='true'] {
-  background: var(--surface-2);
-  color: var(--text);
-}
 
 .media {
   display: grid;

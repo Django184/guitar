@@ -19,8 +19,8 @@ Ensuite :
 1. Ouvrez l'adresse du Worker (onglet **Domains**, ligne « Production »), de la forme
    `https://guitar.<votre-nom>.workers.dev`. Elle doit afficher
    `{"ok":true,"name":"pratique-guitare-proxy","version":1}`.
-2. Dans l'app, ouvrez une partition, puis **Rythme** → **Autres sources** → **Proxy**, collez
-   cette adresse et touchez **Enregistrer** (« Proxy prêt »).
+2. Dans l'app, ouvrez **Réglages** (roue dentée en haut à droite) → **Proxy des partitions**,
+   collez cette adresse et touchez **Enregistrer** (« Proxy prêt »).
 
 À chaque modification du dépôt, Cloudflare redéploie le proxy tout seul. L'offre gratuite de
 Cloudflare permet 100 000 requêtes par jour : bien plus que nécessaire.
