@@ -236,8 +236,9 @@ tablature) — `src/scores/rhythm/` :
    recherche avec la tablature à l'envers ; une transcription n'est retenue que si elle fait
    nettement mieux (sinon c'est un autre morceau dans la même tonalité).
 3. **Vote** : pour chaque paire de notes consécutives, chaque source retenue donne l'écart qui les
-   sépare (ramené à l'échelle de la plus fiable si elle écrit en valeurs doublées). L'écart le plus
-   soutenu l'emporte ; la mesure, le chiffrage et le tempo viennent de la source la plus fiable.
+   sépare (ramené à l'échelle de la référence si elle écrit en valeurs doublées). L'écart le plus
+   soutenu l'emporte. La référence — une version pour guitare, sinon la source la plus fiable —
+   donne la mesure, le chiffrage et le tempo.
    Les mesures où les sources se contredisent, ou qu'aucune ne couvre, sont surlignées dans
    l'aperçu, avec un bouton par mesure pour l'écouter en boucle.
 4. **Aperçu** (portée et tablature), puis « Garder » ou « Annuler ».
