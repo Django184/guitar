@@ -56,7 +56,7 @@ jobs:
             if (m.display !== 'standalone') problems.push('display');
             if (!m.icons || m.icons.length < 3) problems.push('icons');
             if (!m.start_url || !m.scope) problems.push('start_url/scope');
-            for (const file of ['index.html', 'font/Bravura.woff2', 'soundfont/sonivox.sf3']) {
+            for (const file of ['index.html', 'font/Bravura.woff2', 'sons/generaluser-gs-2.0.3.sf3']) {
               if (!sw.includes(file)) problems.push(file + ' not precached');
             }
             console.log('manifest:', m.name, '| start_url:', m.start_url, '| scope:', m.scope);

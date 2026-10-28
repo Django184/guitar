@@ -41,6 +41,11 @@ test.describe('Phase 1 : critères d’acceptation', () => {
 
     await importScore(page, musicXmlFile());
     await waitForScore(page);
+    // Banque de sons : GeneralUser GS (public/sons/), précachée comme le reste de l'app.
+    const soundFont = await page.evaluate(
+      () => (window as unknown as { __scores: { debug(): { api: any } } }).__scores.debug().api.settings.player.soundFont as string,
+    );
+    expect(soundFont).toContain('sons/generaluser-gs-2.0.3.sf3');
     const scoreUrl = page.url();
     await page.evaluate(async () => {
       await navigator.serviceWorker.ready;
