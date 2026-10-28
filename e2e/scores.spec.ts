@@ -703,8 +703,7 @@ test.describe('Rythme retrouvé dans des transcriptions', () => {
     // Annulé : la tablature n'a pas changé.
     await page.getByRole('button', { name: 'Annuler' }).click();
     await expect(status).toContainText('Aperçu annulé');
-    await waitForScore(page, { sound: false });
-    expect((await noteStarts(page)).starts).toEqual(before);
+    await expect.poll(async () => (await noteStarts(page)).starts).toEqual(before);
   });
 });
 
