@@ -1483,7 +1483,8 @@ a {
   stroke-dasharray: 5 4;
 }
 
-.rhythm {
+.rhythm,
+.embellish {
   /* Sur téléphone, la partition reste visible sous le panneau, qui défile au besoin. */
   max-height: 55vh;
   overflow-y: auto;
