@@ -126,7 +126,8 @@ jobs:
 
   deploy:
     name: Deploy to GitHub Pages
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Push sur main, ou relance à la main (Actions → CI → Run workflow) sur main.
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: [check, e2e]
     runs-on: ubuntu-24.04
     permissions:
