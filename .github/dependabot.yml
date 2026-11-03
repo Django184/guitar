@@ -1,0 +1,12 @@
+# Signale les mises à jour de dépendances (ECOSYSTEME.md D-009).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

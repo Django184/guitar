@@ -1,3 +1,4 @@
+import './socle.css';
 import './styles.css';
 import { Metronome } from './metronome/metronome';
 import { createMetronomeView } from './metronome/metronomeView';

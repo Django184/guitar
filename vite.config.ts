@@ -1,6 +1,7 @@
 import { alphaTab } from '@coderline/alphatab-vite';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { readFileSync } from 'node:fs';
 
 // Couleur de fond du thème sombre (par défaut), reprise par l'écran de démarrage.
 const ROSEWOOD = '#1a1311';
@@ -14,8 +15,12 @@ const BASE = process.env.BASE_PATH ?? '/';
 // Version publiée (commit), lue par le test de fumée pour savoir que le nouveau site est en ligne.
 const APP_VERSION = process.env.APP_VERSION ?? 'dev';
 
+// Version sémantique : une seule source, package.json (affichée dans Réglages avec le commit).
+const APP_SEMVER = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version as string;
+
 export default defineConfig({
   base: BASE,
+  define: { __APP_SEMVER__: JSON.stringify(APP_SEMVER) },
   server: {
     host: true,
     allowedHosts: TUNNEL_HOSTS,

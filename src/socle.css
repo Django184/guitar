@@ -1,0 +1,88 @@
+/* socle.css — Écosystème d'applications · v0.1.0 · 2026-11-03
+   Fichier copié tel quel dans chaque app, chargé avant la feuille de l'app.
+   Ne pas le modifier localement : toute évolution passe par ECOSYSTEME.md. */
+
+:root {
+  /* Espacement (base 4 px) */
+  --space-0: 0;
+  --space-1: 0.25rem;  /*  4 px */
+  --space-2: 0.5rem;   /*  8 px */
+  --space-3: 0.75rem;  /* 12 px */
+  --space-4: 1rem;     /* 16 px : gouttière par défaut */
+  --space-5: 1.5rem;   /* 24 px */
+  --space-6: 2rem;     /* 32 px */
+  --space-7: 3rem;     /* 48 px */
+  --space-8: 4rem;     /* 64 px */
+
+  /* Typographie */
+  --font-text: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-display: var(--font-text);   /* surchargée par chaque app */
+  --text-xs: 0.75rem;    /* 12 px : mentions, pastilles */
+  --text-sm: 0.875rem;   /* 14 px : texte secondaire */
+  --text-md: 1rem;       /* 16 px : corps, champs de saisie (jamais moins) */
+  --text-lg: 1.125rem;   /* 18 px */
+  --text-xl: 1.375rem;   /* 22 px : titres d'écran */
+  --text-2xl: 1.75rem;   /* 28 px */
+  --text-3xl: 2.25rem;   /* 36 px : chiffres vedettes */
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 600;
+
+  /* Rayons */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+
+  /* Ombres (une app peut les redéfinir en thème sombre) */
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.08);
+  --shadow-2: 0 2px 8px rgb(0 0 0 / 0.12);
+  --shadow-3: 0 8px 24px rgb(0 0 0 / 0.18);
+
+  /* Mouvement */
+  --dur-fast: 150ms;   /* pression, survol, petit changement d'état */
+  --dur-base: 250ms;   /* apparition ou disparition d'un élément */
+  --dur-slow: 400ms;   /* feuille, panneau, déplacement */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Interaction */
+  --tap-min: 44px;      /* cible visée ; plancher WCAG 2.2 AA : 24 px */
+  --focus-width: 3px;
+  --focus-offset: 2px;
+  --measure: 46rem;     /* largeur de lecture maximale par défaut */
+}
+
+/* Mouvement réduit : 1 ms plutôt que 0, pour que transitionend se déclenche encore */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 1ms;
+    --dur-base: 1ms;
+    --dur-slow: 1ms;
+  }
+}
+
+/* Focus visible commun (spécificité nulle : l'app peut le surcharger) */
+:where(a, button, input, select, textarea, summary, [tabindex],
+       [role="button"], [role="switch"], [role="checkbox"]):focus-visible {
+  outline: var(--focus-width) solid var(--color-focus, currentColor);
+  outline-offset: var(--focus-offset);
+}
+
+/* Texte réservé aux lecteurs d'écran */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

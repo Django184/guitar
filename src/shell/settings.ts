@@ -191,7 +191,7 @@ function build(): Sheet {
     group(fieldRow('Thème', themeSeg), fieldRow('Diapason', h('div', { class: 'stepper__controls' }, minus, a4Value, plus), { hint: 'Fréquence du La 4 pour l’accordeur.' })),
     group(proxy, youtube),
     group(
-      fieldRow('Application', install, { hint: fr(version && version !== 'dev' && !version.startsWith('%') ? `Version ${version.slice(0, 7)}. Fonctionne hors-ligne.` : 'Fonctionne hors-ligne.') }),
+      fieldRow('Application', install, { hint: fr(version && version !== 'dev' && !version.startsWith('%') ? `Version ${__APP_SEMVER__} (${version.slice(0, 7)}). Fonctionne hors-ligne.` : `Version ${__APP_SEMVER__}. Fonctionne hors-ligne.`) }),
     ),
   );
   return s;
