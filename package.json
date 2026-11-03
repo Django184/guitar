@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@coderline/alphatab": "~1.8.4",
-    "pdfjs-dist": "~6.2.108"
+    "pdfjs-dist": "~6.4.299"
   },
   "devDependencies": {
     "@coderline/alphatab-vite": "~1.8.4",
