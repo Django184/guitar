@@ -23,7 +23,7 @@ export interface Env {
 
 export const VERSION = 1;
 const MAX_BYTES = 8 * 1024 * 1024;
-const DEFAULT_ORIGINS = ['https://django184.github.io', 'http://localhost:5173', 'http://localhost:4173'];
+const DEFAULT_ORIGINS = ['https://pratique-guitare.pages.dev', 'https://django184.github.io', 'http://localhost:5173', 'http://localhost:4173'];
 const USER_AGENT = 'PratiqueGuitareProxy/1 (+https://github.com/Django184/guitar)';
 
 /** Sites refusés (conditions d'utilisation), sous-domaines compris. */

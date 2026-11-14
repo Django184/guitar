@@ -103,3 +103,31 @@ test.describe('Sauvegarde de la bibliothèque', () => {
     await other.close();
   });
 });
+
+test.describe('Politique de sécurité du contenu', () => {
+  test('aucun écran ne déclenche de violation (accordeur, métronome, partitions, réglages, lecteur)', async ({ page }) => {
+    await page.addInitScript(() => {
+      const w = window as unknown as { __csp: string[] };
+      w.__csp = [];
+      document.addEventListener('securitypolicyviolation', (e) => w.__csp.push(`${e.violatedDirective} ${e.blockedURI}`));
+    });
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await openApp(page, 'accordeur');
+    const hasCsp = await page.locator('meta[http-equiv="Content-Security-Policy"]').count();
+    test.skip(hasCsp === 0, 'build de développement sans politique de sécurité');
+    await page.getByRole('button', { name: 'Démarrer' }).click();
+    await page.getByRole('link', { name: 'Métronome' }).first().click();
+    await page.getByRole('link', { name: 'Partitions' }).first().click();
+    await importScore(page, musicXmlFile());
+    await waitForScore(page);
+    await page.getByRole('button', { name: 'Lire' }).click();
+    await page.waitForTimeout(1500);
+    await page.locator('#settings-btn').click();
+    await expect(page.getByTestId('settings')).toBeVisible();
+    await page.keyboard.press('Escape');
+    const violations = await page.evaluate(() => (window as unknown as { __csp: string[] }).__csp);
+    expect(violations).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+});

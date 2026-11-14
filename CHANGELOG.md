@@ -3,6 +3,20 @@
 Évolutions notables de Pratique Guitare. Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versionnement sémantique.
 La version est définie dans `package.json` et affichée dans Réglages avec le commit publié.
 
+## [1.2.0] - 2026-11-14
+
+Changement d'adresse, étape 1 (chantier B de l'écosystème).
+
+### Ajouté
+- Publication sur **Cloudflare Pages** : https://pratique-guitare.pages.dev/, origine propre à l'app (stockage, micro et notifications ne sont plus partagés avec d'autres sites).
+- **Politique de sécurité du contenu** (CSP) : balise dans la page et en-tête HTTP (`_headers`, avec `frame-ancestors 'none'`), plus `X-Content-Type-Options`, `Referrer-Policy` et `Permissions-Policy` (micro pour l'app seule). Exceptions limitées à YouTube, BitMidi et au proxy `*.workers.dev`.
+- `version.json` publié avec l'app (version et commit), lu par le test du site publié.
+- Proxy des partitions : la nouvelle adresse est autorisée.
+
+### Modifié
+- L'ancienne adresse https://django184.github.io/guitar/ n'est plus publiée et reste en 1.1.0 : exporter la bibliothèque là-bas, puis l'importer ici.
+- pdf.js ne compile plus de code à la volée (`isEvalSupported: false`).
+
 ## [1.1.0] - 2026-11-14
 
 ### Ajouté

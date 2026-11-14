@@ -3,8 +3,13 @@
 PWA de pratique guitare : accordeur, métronome et partitions avec lecture sélective.
 Installable sur iOS, Android et ordinateur, utilisable hors-ligne après le premier chargement.
 
-**Version en ligne :** https://django184.github.io/guitar/ (déployée automatiquement à chaque
-modification de `main`). C'est l'adresse à ouvrir sur le téléphone pour installer l'app.
+**Version en ligne :** https://pratique-guitare.pages.dev/ (Cloudflare Pages, déployée
+automatiquement à chaque modification de `main`, depuis 1.2.0). C'est l'adresse à ouvrir sur le
+téléphone pour installer l'app.
+
+**Ancienne adresse** : https://django184.github.io/guitar/ n'est plus publiée et garde la 1.1.0,
+qui sait exporter la bibliothèque (Réglages › Sauvegarde). Pour changer d'adresse : « Exporter »
+à l'ancienne adresse, puis « Importer » à la nouvelle, et réinstaller l'app depuis la nouvelle.
 
 ## Intégration continue
 
@@ -14,13 +19,16 @@ Le workflow `.github/workflows/ci.yml` s'exécute à chaque pull request et à c
   (police musicale et banque de sons comprises dans le précache) ;
 - **e2e** : tests Playwright dans Chromium, profils ordinateur et mobile (écran tactile), sur le
   build de production. Le rapport (captures, traces) est joint à chaque exécution ;
-- **deploy** (sur `main`, si les deux précédents passent) : publication sur GitHub Pages
-  (réglage requis une seule fois : Settings › Pages › Source : « GitHub Actions »). Pour republier
-  sans rien changer (par exemple après être repassé de privé à public) : Actions › CI ›
-  « Run workflow » sur `main` ;
-- **smoke** (après chaque déploiement) : attend que GitHub Pages serve le nouveau commit (balise
-  `<meta name="app-version">`), puis rejoue sur le site publié les tests de la Phase 1 et du
-  hors-ligne (accordeur, métronome, installation, partition ouverte et jouée sans réseau) ;
+- **deploy** (sur `main`, si les deux précédents passent) : publication du build testé sur
+  Cloudflare Pages (projet `pratique-guitare`, créé par l'API s'il manque ; secrets
+  `CLOUDFLARE_API_TOKEN` et `CLOUDFLARE_ACCOUNT_ID`). Pour republier sans rien changer : Actions ›
+  CI › « Run workflow » sur `main` ;
+- **smoke** (après chaque déploiement) : attend que le site serve le nouveau commit
+  (`version.json`), vérifie les en-têtes HTTP (CSP avec `frame-ancestors`, `nosniff`,
+  `Referrer-Policy`, `Permissions-Policy`, `sw.js` jamais mis en cache), puis rejoue sur le site
+  publié les tests de la Phase 1, du hors-ligne, de la sauvegarde et de la CSP ;
+- **statut** : résultat dans `statut.json` sur la branche `ci-statut` (lisible même si le dépôt
+  devient privé) ;
 - **lockfile** (sur les pull requests) : crée ou met à jour `package-lock.json` sur la branche,
   pour que tous les jobs installent exactement les mêmes versions (`npm ci`).
 
@@ -60,7 +68,7 @@ téléchargés par la CI ; en local, placez-les dans `e2e/fixtures/download/` po
 
 ## Tester sur téléphone (HTTPS obligatoire pour le micro)
 
-Méthode la plus simple : ouvrir la version en ligne sur GitHub Pages (ci-dessus).
+Méthode la plus simple : ouvrir la version en ligne (ci-dessus).
 
 Pour tester une modification locale avant de la pousser : un tunnel HTTPS Cloudflare, gratuit et
 sans compte.
@@ -102,7 +110,7 @@ des certificats sur iPhone).
   toujours avec le chronomètre. Le premier temps est plus aigu (1568 Hz contre 1047 Hz) et plus fort.
 
 **Installation et hors-ligne.**
-1. Ouvrez l'app (GitHub Pages ou tunnel) ; attendez le message « L'app est prête : elle fonctionne maintenant
+1. Ouvrez l'app (version en ligne ou tunnel) ; attendez le message « L'app est prête : elle fonctionne maintenant
    hors-ligne ».
 2. Installez-la :
    - iPhone / iPad (Safari) : bouton Partager › « Sur l'écran d'accueil ».
@@ -112,7 +120,7 @@ des certificats sur iPhone).
    le métronome fonctionnent.
 
 L'adresse `trycloudflare.com` change à chaque lancement du tunnel : pour une installation durable,
-installez l'app depuis la version GitHub Pages.
+installez l'app depuis la version en ligne.
 
 ## Partitions (Phase 2)
 

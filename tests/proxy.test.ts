@@ -71,6 +71,12 @@ describe('proxy : requêtes', () => {
     expect(pre.headers.get('Access-Control-Allow-Origin')).toBe(APP);
   });
 
+  it('sert l’app à sa nouvelle adresse (Cloudflare Pages) comme à l’ancienne', async () => {
+    const pre = await call('/fetch', 'https://pratique-guitare.pages.dev', 'OPTIONS');
+    expect(pre.status).toBe(204);
+    expect(pre.headers.get('Access-Control-Allow-Origin')).toBe('https://pratique-guitare.pages.dev');
+  });
+
   it('ne sert que les pages de l’app', async () => {
     const res = await call('/fetch?url=https%3A%2F%2Fexample.org%2Fa.mid', 'https://evil.example');
     expect(res.status).toBe(403);

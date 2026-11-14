@@ -9,6 +9,13 @@ on:
 permissions:
   contents: read
 
+# Publication sur Cloudflare Pages depuis 1.2.0 (chantier B, D-004, D-013) : origine propre à l'app.
+# L'ancienne adresse https://django184.github.io/guitar/ n'est plus publiée : elle garde la 1.1.0
+# (qui sait exporter la bibliothèque) jusqu'au passeur (ECOSYSTEME.md §7.4, étape 3).
+env:
+  PROJET: pratique-guitare
+  SITE: https://pratique-guitare.pages.dev/
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -35,10 +42,9 @@ jobs:
       - name: Unit tests
         run: npm test
 
-      - name: Build for GitHub Pages
+      - name: Build for Cloudflare Pages
         run: npm run build
         env:
-          BASE_PATH: /${{ github.event.repository.name }}/
           APP_VERSION: ${{ github.sha }}
           # Clé de l'API YouTube Data v3 (recherche de vidéos), restreinte au site publié :
           # variable du dépôt (Settings → Secrets and variables → Actions → Variables).
@@ -59,7 +65,13 @@ jobs:
             for (const file of ['index.html', 'font/Bravura.woff2', 'sons/generaluser-gs-2.0.3.sf3']) {
               if (!sw.includes(file)) problems.push(file + ' not precached');
             }
-            console.log('manifest:', m.name, '| start_url:', m.start_url, '| scope:', m.scope);
+            const headers = fs.readFileSync('dist/_headers', 'utf8');
+            const html = fs.readFileSync('dist/index.html', 'utf8');
+            if (!/Content-Security-Policy: default-src 'self'.*frame-ancestors 'none'/.test(headers)) problems.push('_headers CSP');
+            if (!html.includes('http-equiv=\"Content-Security-Policy\"')) problems.push('meta CSP');
+            const v = JSON.parse(fs.readFileSync('dist/version.json', 'utf8'));
+            if (v.commit !== process.env.GITHUB_SHA) problems.push('version.json');
+            console.log('manifest:', m.name, '| id:', m.id, '| start_url:', m.start_url, '| scope:', m.scope, '| version:', v.version);
             if (problems.length) { console.error('::error::' + problems.join(', ')); process.exit(1); }
           "
           du -sh dist
@@ -71,10 +83,12 @@ jobs:
           name: package-lock
           path: package-lock.json
 
-      - name: Upload site for GitHub Pages
-        uses: actions/upload-pages-artifact@v5
+      - name: Keep the tested build
+        uses: actions/upload-artifact@v7
         with:
+          name: dist
           path: dist
+          retention-days: 7
 
   e2e:
     name: End-to-end (Chromium, ordinateur + mobile)
@@ -125,29 +139,75 @@ jobs:
           retention-days: 14
 
   deploy:
-    name: Deploy to GitHub Pages
+    name: Publication Cloudflare Pages
     # Push sur main, ou relance à la main (Actions → CI → Run workflow) sur main.
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: [check, e2e]
     runs-on: ubuntu-24.04
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     outputs:
-      page_url: ${{ steps.deployment.outputs.page_url }}
+      publie: ${{ steps.deploy.outcome }}
+      site: ${{ steps.projet.outputs.site }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
-      - id: deployment
-        uses: actions/deploy-pages@v5
+      - name: Secrets absents
+        if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
+        run: |
+          echo "::warning::Publication NON faite : secrets Cloudflare absents (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID)."
+          echo "## ⚠️ Publication non faite : secrets Cloudflare absents" >> "$GITHUB_STEP_SUMMARY"
+      - name: Projet Cloudflare Pages (créé s'il n'existe pas, adresse relevée)
+        id: projet
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: |
+          api="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects"
+          auth="Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
+          code=$(curl -sS -o projet.json -w '%{http_code}' -H "$auth" "$api/$PROJET")
+          if [ "$code" = 404 ]; then
+            echo "Projet $PROJET absent : création."
+            code=$(curl -sS -o projet.json -w '%{http_code}' -X POST -H "$auth" -H 'Content-Type: application/json' \
+              --data "{\"name\":\"$PROJET\",\"production_branch\":\"main\"}" "$api")
+          fi
+          if [ "$code" != 200 ]; then
+            echo "::error::API Cloudflare ($code) : $(jq -c '.errors' projet.json)"; exit 1
+          fi
+          sous_domaine=$(jq -r '.result.subdomain' projet.json)
+          branche=$(jq -r '.result.production_branch' projet.json)
+          echo "Projet $PROJET : $sous_domaine (branche de production : $branche)"
+          echo "site=https://$sous_domaine/" >> "$GITHUB_OUTPUT"
+          if [ "https://$sous_domaine/" != "$SITE" ]; then
+            # Cloudflare ajoute un suffixe quand le nom est pris : publication quand même, adresse à reporter
+            # dans le proxy (DEFAULT_ORIGINS), le workflow et la fiche.
+            echo "::warning title=Adresse::Cloudflare a attribué https://$sous_domaine/ au lieu de $SITE"
+          fi
+          if [ "$branche" != main ]; then
+            echo "::error::Branche de production « $branche » au lieu de « main »."; exit 1
+          fi
+      - name: Build testé
+        if: steps.projet.outcome == 'success'
+        uses: actions/download-artifact@v7
+        with:
+          name: dist
+          path: dist
+      - name: Publication sur Cloudflare Pages
+        id: deploy
+        if: steps.projet.outcome == 'success'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=pratique-guitare --branch=main --commit-dirty=true
+      - name: Résumé
+        if: steps.deploy.outcome == 'success'
+        run: echo "## ✅ Publiée sur ${{ steps.projet.outputs.site }} ($(jq -r '.version + "+" + .commit[0:7]' dist/version.json))" >> "$GITHUB_STEP_SUMMARY"
 
   smoke:
     name: Smoke test (site publié)
     needs: deploy
+    if: needs.deploy.outputs.publie == 'success'
     runs-on: ubuntu-24.04
     env:
-      E2E_BASE_URL: ${{ needs.deploy.outputs.page_url }}
+      E2E_BASE_URL: ${{ needs.deploy.outputs.site }}
     steps:
       - uses: actions/checkout@v7
 
@@ -156,26 +216,36 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        # Nouvelle dépendance pas encore verrouillée : npm install (le job lockfile met le verrou à jour).
         run: |
           if [ -f package-lock.json ]; then npm ci || npm install --no-audit --no-fund; else npm install; fi
 
-      - name: Wait until GitHub Pages serves this commit
+      - name: Wait until Cloudflare Pages serves this commit
         run: |
-          for i in $(seq 1 60); do
-            if curl -fsSL "$E2E_BASE_URL" | grep -q "name=\"app-version\" content=\"$GITHUB_SHA\""; then
-              echo "Version $GITHUB_SHA en ligne sur $E2E_BASE_URL"
-              exit 0
+          for i in $(seq 1 48); do
+            servi=$(curl -fsS "${E2E_BASE_URL}version.json?ci=${GITHUB_RUN_ID}-$i" 2>/dev/null || true)
+            if echo "$servi" | grep -q "\"$GITHUB_SHA\""; then
+              echo "Version $GITHUB_SHA en ligne sur $E2E_BASE_URL"; exit 0
             fi
             sleep 10
           done
-          echo "::error::$E2E_BASE_URL ne sert pas encore la version $GITHUB_SHA"
+          echo "::error::$E2E_BASE_URL ne sert pas $GITHUB_SHA après 8 minutes (servi : ${servi:-rien})"
           exit 1
+
+      - name: HTTP headers of the live site
+        run: |
+          curl -fsSI "$E2E_BASE_URL" | tee entetes.txt
+          problems=""
+          grep -qi "^content-security-policy:.*frame-ancestors 'none'" entetes.txt || problems="$problems CSP"
+          grep -qi "^x-content-type-options: nosniff" entetes.txt || problems="$problems nosniff"
+          grep -qi "^referrer-policy:" entetes.txt || problems="$problems Referrer-Policy"
+          grep -qi "^permissions-policy:.*microphone=(self)" entetes.txt || problems="$problems Permissions-Policy"
+          curl -fsSI "${E2E_BASE_URL}sw.js" | grep -qi "^cache-control: no-cache" || problems="$problems sw.js-no-cache"
+          if [ -n "$problems" ]; then echo "::error::En-têtes manquants :$problems"; exit 1; fi
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run Phase 1 + offline checks against the live site
+      - name: Run Phase 1 + offline + backup checks against the live site
         run: npx playwright test e2e/app.spec.ts
 
       - name: Summarize results
@@ -192,6 +262,32 @@ jobs:
             test-results
             e2e-results.json
           retention-days: 14
+
+  statut:
+    # Résultat lisible même quand le dépôt sera privé (D-011) : branche ci-statut, statut.json.
+    needs: [check, e2e, deploy, smoke]
+    if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Écrire statut.json sur la branche ci-statut
+        env:
+          TESTS: ${{ needs.check.result == 'success' && needs.e2e.result == 'success' && 'success' || 'failure' }}
+          PUBLICATION: ${{ needs.deploy.result }}
+          PUBLIE: ${{ needs.deploy.outputs.publie }}
+          EN_LIGNE: ${{ needs.smoke.result }}
+          SITE_PUBLIE: ${{ needs.deploy.outputs.site }}
+          TOKEN: ${{ github.token }}
+        run: |
+          mkdir statut && cd statut && git init -q -b ci-statut
+          printf '{"commit":"%s","tests":"%s","publication":"%s","publie":"%s","en_ligne":"%s","site":"%s","date":"%s","run":"%s/%s/actions/runs/%s"}\n' \
+            "$GITHUB_SHA" "$TESTS" "$PUBLICATION" "${PUBLIE:-skipped}" "${EN_LIGNE:-skipped}" "$SITE_PUBLIE" "$(date -u +%FT%TZ)" \
+            "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > statut.json
+          cat statut.json
+          git add statut.json
+          git -c user.name="CI" -c user.email="ci@users.noreply.github.com" commit -qm "CI ${GITHUB_SHA::7} : tests $TESTS, publication $PUBLICATION, en ligne ${EN_LIGNE:-skipped}"
+          git push -qf "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-statut
 
   lockfile:
     name: Lockfile (package-lock.json)
