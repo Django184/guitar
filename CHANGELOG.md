@@ -3,6 +3,15 @@
 Évolutions notables de Pratique Guitare. Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versionnement sémantique.
 La version est définie dans `package.json` et affichée dans Réglages avec le commit publié.
 
+## [1.1.0] - 2026-11-14
+
+### Ajouté
+- **Sauvegarde de la bibliothèque** (Réglages › Sauvegarde) : « Exporter » enregistre partitions, réglages de lecture, doigtés, rythmes, calages et enregistrements de référence dans un fichier `pratique-guitare-export-AAAA-MM-JJ.zip` (format commun de l'écosystème : `export.json` et dossier `fichiers/`). La clé YouTube n'est jamais exportée.
+- « Importer » relit une sauvegarde, montre un résumé (partitions à ajouter, déjà présentes, réglages repris), puis écrit seulement après confirmation. Rien n'est remplacé : une partition déjà présente et un réglage déjà fait sur l'appareil sont gardés.
+
+### Modifié
+- Bibliothèque en **version de schéma 2** (`src/scores/schema.ts`) : à la première ouverture, chaque fiche est validée et ses réglages de lecture complétés ; les fichiers ne changent pas. Une version plus récente de l'app ouverte dans un autre onglet n'est plus bloquée par celle-ci.
+
 ## [1.0.0] - 2026-11-03
 
 Première version numérotée, alignée sur le socle de l'écosystème.

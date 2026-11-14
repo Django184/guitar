@@ -6,10 +6,12 @@
  */
 import { AppError } from '../ui/errors';
 import type { ScoreFormat } from './formats';
+import { SCHEMA_VERSION, migrateEntry } from './schema';
 import type { SyncPoint } from './sync/rhythmFit';
 
 const DB_NAME = 'pratique-guitare';
-const DB_VERSION = 1;
+/** Version de la base = version du schéma des fiches (scores/schema.ts). */
+const DB_VERSION = SCHEMA_VERSION;
 const ENTRIES = 'entries';
 const FILES = 'files';
 
@@ -118,12 +120,17 @@ export class ScoreLibrary {
     if (typeof indexedDB === 'undefined') throw new AppError('storage-unavailable');
     try {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onupgradeneeded = () => {
+      req.onupgradeneeded = (event) => {
         const db = req.result;
         if (!db.objectStoreNames.contains(ENTRIES)) db.createObjectStore(ENTRIES, { keyPath: 'id' });
         if (!db.objectStoreNames.contains(FILES)) db.createObjectStore(FILES);
+        const from = event.oldVersion;
+        if (from >= 1 && from < DB_VERSION && req.transaction) migrateStore(req.transaction.objectStore(ENTRIES), from);
       };
-      return new ScoreLibrary(await request(req));
+      const db = await request(req);
+      // Une version plus récente de l'app ouverte dans un autre onglet : on lui laisse la place.
+      db.onversionchange = () => db.close();
+      return new ScoreLibrary(db);
     } catch (error) {
       throw storageError(error);
     }
@@ -191,6 +198,13 @@ export class ScoreLibrary {
     }
   }
 
+  /** Partition, réglages et enregistrement d'une fiche (sauvegarde). */
+  async getFiles(id: string): Promise<{ bytes?: Uint8Array; media?: Uint8Array }> {
+    const bytes = await this.getFile(id);
+    const media = await this.getMedia(id);
+    return { ...(bytes ? { bytes } : {}), ...(media ? { media } : {}) };
+  }
+
   /** Supprime une partition et renvoie de quoi annuler la suppression. */
   async remove(id: string): Promise<{ entry: ScoreEntry; bytes: Uint8Array; media?: Uint8Array } | null> {
     const entry = await this.get(id);
@@ -203,6 +217,21 @@ export class ScoreLibrary {
     await done(tx);
     return entry && bytes ? { entry, bytes, ...(media ? { media } : {}) } : null;
   }
+}
+
+/**
+ * Migration des fiches dans la transaction d'ouverture : une fiche inutilisable est laissée telle quelle
+ * (jamais supprimée), les fichiers ne changent pas.
+ */
+function migrateStore(store: IDBObjectStore, from: number): void {
+  const cursorReq = store.openCursor();
+  cursorReq.onsuccess = () => {
+    const cursor = cursorReq.result;
+    if (!cursor) return;
+    const migrated = migrateEntry(cursor.value, from);
+    if (migrated) cursor.update(migrated);
+    cursor.continue();
+  };
 }
 
 /** Demande au navigateur de ne pas effacer la bibliothèque en cas de manque de place. */

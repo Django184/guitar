@@ -1,3 +1,4 @@
+import { LIBRARY_CHANGE } from '../shell/backupRows';
 import { navigate } from '../shell/router';
 import { showToast } from '../shell/toast';
 import type { View } from '../shell/view';
@@ -96,6 +97,9 @@ export function createScoresView(): ScoresView {
     libraryView.element,
     player.element,
   );
+
+  // Sauvegarde importée depuis Réglages : la liste suit.
+  document.addEventListener(LIBRARY_CHANGE, () => void refresh());
 
   // --- Bibliothèque ------------------------------------------------------------
 

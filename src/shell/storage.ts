@@ -40,3 +40,22 @@ export const isOneOf =
   <T extends string>(options: readonly T[]) =>
   (value: unknown): value is T =>
     typeof value === 'string' && (options as readonly string[]).includes(value);
+
+/** Préférences réglées sur cet appareil, parmi `keys` (sauvegarde). Une valeur illisible est ignorée. */
+export function readPrefs(keys: readonly string[]): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const key of keys) {
+    try {
+      const raw = localStorage.getItem(PREFIX + key);
+      if (raw !== null) out[key] = JSON.parse(raw);
+    } catch {
+      // Valeur corrompue ou stockage indisponible : non exportée.
+    }
+  }
+  return out;
+}
+
+/** Écrit des préférences reprises d'une sauvegarde (chaque lecture les revalide ensuite). */
+export function writePrefs(values: Record<string, unknown>): void {
+  for (const [key, value] of Object.entries(values)) savePref(key, value);
+}

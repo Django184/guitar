@@ -8,6 +8,7 @@ import { A4_DEFAULT, clampA4 } from '../tuner/notes';
 import { h } from '../ui/dom';
 import { bindHoldRepeat } from '../ui/hold';
 import { Sheet, fieldRow, group } from '../ui/sheet';
+import { backupRows } from './backupRows';
 import { isNumber, loadPref, onPrefChange, savePref } from './storage';
 import { type Theme, applyTheme, currentTheme } from './theme';
 
@@ -190,6 +191,7 @@ function build(): Sheet {
   s.body.append(
     group(fieldRow('Thème', themeSeg), fieldRow('Diapason', h('div', { class: 'stepper__controls' }, minus, a4Value, plus), { hint: 'Fréquence du La 4 pour l’accordeur.' })),
     group(proxy, youtube),
+    group(backupRows()),
     group(
       fieldRow('Application', install, { hint: fr(version && version !== 'dev' && !version.startsWith('%') ? `Version ${__APP_SEMVER__} (${version.slice(0, 7)}). Fonctionne hors-ligne.` : `Version ${__APP_SEMVER__}. Fonctionne hors-ligne.`) }),
     ),

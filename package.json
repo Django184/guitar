@@ -1,7 +1,7 @@
 {
   "name": "pratique-guitare",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "PWA de pratique guitare : accordeur, métronome et partitions.",
   "type": "module",
   "engines": {

@@ -213,6 +213,15 @@ La lecture se met en pause quand on quitte l'écran ou qu'on démarre l'accordeu
 vitesse, boucle, sélection), restaurés à la réouverture. Renommer et supprimer (avec « Annuler »)
 depuis la liste. En navigation privée, la partition s'ouvre mais n'est pas conservée.
 
+**Sauvegarde.** Réglages › Sauvegarde › « Exporter » enregistre toute la bibliothèque (fichiers,
+réglages, doigtés, rythmes, calages, enregistrements de référence) et les préférences dans
+`pratique-guitare-export-AAAA-MM-JJ.zip` : `export.json` au format commun de l'écosystème
+(`ecosysteme.export`, `schemaVersion` 2) et un dossier `fichiers/`. La clé YouTube n'est jamais
+exportée. « Importer » montre un résumé, puis ajoute seulement ce qui manque : une partition déjà
+présente (même identifiant, ou même nom et même taille) et un réglage déjà fait sont gardés.
+Le schéma de la bibliothèque est versionné (`src/scores/schema.ts`, migrations pures et testées,
+appliquées à l'ouverture de la base IndexedDB).
+
 **Doigtés de la main gauche.** Sur la tablature, une pastille colorée à gauche de chaque case
 indique le doigt (1 index, 2 majeur, 3 annulaire, 4 auriculaire, T pouce), comme dans les méthodes ;
 « Doigtés » (options ⋯) les affiche ou les masque. Ils sont optimisés sur toute la pièce par

@@ -62,3 +62,44 @@ test.describe('Phase 1 : critères d’acceptation', () => {
     await context.setOffline(false);
   });
 });
+
+test.describe('Sauvegarde de la bibliothèque', () => {
+  test('export puis import sur un appareil vide : partition et réglages retrouvés, rien remplacé', async ({ page, browser, baseURL }, testInfo) => {
+    await openApp(page);
+    await importScore(page, musicXmlFile());
+    await waitForScore(page, { sound: false });
+    await page.goto('./?e2e#/partitions');
+    await expect(page.getByTestId('library').locator('li')).toHaveCount(1);
+
+    await page.locator('#settings-btn').click();
+    const download = page.waitForEvent('download');
+    await page.getByTestId('backup-export').click();
+    const file = await download;
+    expect(file.suggestedFilename()).toMatch(/^pratique-guitare-export-\d{4}-\d{2}-\d{2}\.zip$/);
+    const path = testInfo.outputPath('sauvegarde.zip');
+    await file.saveAs(path);
+    await expect(page.getByTestId('backup-status')).toContainText('1 partition exportée');
+
+    // Nouvel appareil : stockage vide.
+    const other = await browser.newContext({ baseURL });
+    const fresh = await other.newPage();
+    await openApp(fresh);
+    await expect(fresh.getByTestId('library').locator('li')).toHaveCount(0);
+    await fresh.locator('#settings-btn').click();
+    await fresh.getByTestId('backup-file').setInputFiles(path);
+    await expect(fresh.getByTestId('backup-status')).toContainText('1 partition à ajouter');
+    await fresh.getByTestId('backup-confirm').click();
+    await expect(fresh.getByTestId('backup-status')).toContainText('Import terminé');
+    await fresh.keyboard.press('Escape');
+    await expect(fresh.getByTestId('library').locator('li')).toHaveCount(1);
+    await fresh.getByTestId('library').locator('a').first().click();
+    await waitForScore(fresh, { sound: false });
+
+    // Second import : rien n'est ajouté ni remplacé.
+    await fresh.goto('./?e2e#/partitions');
+    await fresh.locator('#settings-btn').click();
+    await fresh.getByTestId('backup-file').setInputFiles(path);
+    await expect(fresh.getByTestId('backup-status')).toContainText('Rien à importer');
+    await other.close();
+  });
+});

@@ -95,3 +95,13 @@ export function decodeXml(bytes: Uint8Array): string {
   if (bytes[0] === 0xfe && bytes[1] === 0xff) return new TextDecoder('utf-16be').decode(bytes);
   return new TextDecoder('utf-8').decode(bytes);
 }
+
+/** Lit toutes les entrées d'une archive ZIP (sauvegarde de la bibliothèque), par nom. */
+export async function readZip(bytes: Uint8Array): Promise<Map<string, Uint8Array>> {
+  const files = new Map<string, Uint8Array>();
+  for (const entry of listEntries(bytes)) {
+    if (entry.name.endsWith('/')) continue;
+    files.set(entry.name, await readEntry(bytes, entry));
+  }
+  return files;
+}
