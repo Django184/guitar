@@ -119,12 +119,12 @@ test.describe('Politique de sécurité du contenu', () => {
     await page.getByRole('button', { name: 'Démarrer' }).click();
     await page.getByRole('link', { name: 'Métronome' }).first().click();
     await page.getByRole('link', { name: 'Partitions' }).first().click();
-    await importScore(page, musicXmlFile());
-    await waitForScore(page);
-    // Réglages avant la lecture : pendant la lecture, la barre du haut s'efface.
+    // Réglages depuis la bibliothèque : dans le lecteur, la barre du haut s'efface.
     await page.locator('#settings-btn').click();
     await expect(page.getByTestId('settings')).toBeVisible();
     await page.keyboard.press('Escape');
+    await importScore(page, musicXmlFile());
+    await waitForScore(page);
     await page.getByRole('button', { name: 'Lire' }).click();
     await page.waitForTimeout(1500);
     const violations = await page.evaluate(() => (window as unknown as { __csp: string[] }).__csp);
