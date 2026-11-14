@@ -82,8 +82,6 @@ export async function convertPdf(
       // Copie : pdf.js transfère le tampon à son worker.
       data: bytes.slice(),
       disableFontFace: true,
-      // Pas de code compilé à la volée (CSP sans 'unsafe-eval').
-      isEvalSupported: false,
       fontExtraProperties: true,
       // Images en pixels bruts (et non en ImageBitmap) : la lecture des tablatures en image en a besoin.
       isOffscreenCanvasSupported: false,

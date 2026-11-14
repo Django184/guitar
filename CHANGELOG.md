@@ -15,7 +15,6 @@ Changement d'adresse, étape 1 (chantier B de l'écosystème).
 
 ### Modifié
 - L'ancienne adresse https://django184.github.io/guitar/ n'est plus publiée et reste en 1.1.0 : exporter la bibliothèque là-bas, puis l'importer ici.
-- pdf.js ne compile plus de code à la volée (`isEvalSupported: false`).
 
 ## [1.1.0] - 2026-11-14
 
