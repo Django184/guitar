@@ -109,16 +109,18 @@ test.describe('Navigation et reprise', () => {
     await expect(page.getByTestId('speed')).toContainText('100');
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('ArrowRight');
-    await expect.poll(() => tickPosition(page)).toBe(await barStart(page, 2));
+    // alphaTab arrondit parfois la position d'un tick : écart toléré de quelques ticks (une noire = 960).
+    const near = async (target: number) => expect.poll(async () => Math.abs((await tickPosition(page)) - target)).toBeLessThanOrEqual(4);
+    await near((await barStart(page, 2)) as number);
     await page.keyboard.press('ArrowLeft');
-    await expect.poll(() => tickPosition(page)).toBe(await barStart(page, 1));
+    await near((await barStart(page, 1)) as number);
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press(' ');
     await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
     await page.keyboard.press(' ');
     await expect(page.getByRole('button', { name: 'Lire' })).toBeVisible();
     const tick = await tickPosition(page);
-    expect(tick).toBeGreaterThanOrEqual((await barStart(page, 2)) as number);
+    expect(tick).toBeGreaterThanOrEqual(((await barStart(page, 2)) as number) - 4);
 
     // Bibliothèque : la partition dit où elle reprendra ; rouverte, elle y reprend.
     await page.getByRole('button', { name: 'Retour à la bibliothèque' }).click();
@@ -126,6 +128,6 @@ test.describe('Navigation et reprise', () => {
     await expect(page.getByTestId('library-resume')).toContainText('mesure 3');
     await page.locator(`.library__open[href="${hash}"]`).click();
     await waitForScore(page);
-    await expect.poll(() => tickPosition(page)).toBe(tick);
+    await near(tick);
   });
 });
