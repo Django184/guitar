@@ -1,4 +1,5 @@
 import { LIBRARY_CHANGE } from '../shell/backupRows';
+import { arriveScreen, backTo } from '../shell/navigation';
 import { navigate } from '../shell/router';
 import { showToast } from '../shell/toast';
 import type { View } from '../shell/view';
@@ -68,7 +69,8 @@ export function createScoresView(): ScoresView {
 
   const libraryView = new LibraryView({ onImport: importFile, onDelete: deleteEntry, onRename: renameEntry });
   const player = new ScorePlayerView({
-    onBack: () => navigate('partitions'),
+    // Retour dans l'historique quand on vient de la bibliothèque : elle retrouve la partition quittée.
+    onBack: () => backTo('partitions'),
     onSettingsChange: scheduleSave,
     loadMediaFile: async (entry) => {
       const session = sessionScores.get(entry.id);
@@ -133,6 +135,7 @@ export function createScoresView(): ScoresView {
 
   async function refresh(): Promise<void> {
     libraryView.render(await allEntries());
+    if (!libraryView.element.hidden) arriveScreen(); // liste redessinée : la partition quittée reste signalée
   }
 
   function scheduleSave(entry: ScoreEntry): void {

@@ -1147,6 +1147,36 @@ button.row {
   white-space: nowrap;
 }
 
+/* Dernière partition ouverte : où elle reprendra (passage, vitesse ou mesure). */
+.library__resume {
+  color: var(--accent);
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Retour d'une partition : son lien est signalé deux secondes (shell/navigation.ts). */
+.is-found {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+  border-radius: 6px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .is-found {
+    animation: is-found 2s ease-out forwards;
+  }
+}
+@keyframes is-found {
+  0%,
+  45% {
+    outline-color: var(--accent);
+  }
+  100% {
+    outline-color: transparent;
+  }
+}
+
 .library__rename {
   flex: 1;
   min-width: 0;

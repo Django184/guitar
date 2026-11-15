@@ -22,6 +22,7 @@ import { PcmRecorder, type Recording } from './recorder';
 import { barSyncPoints, fitRhythm, scalePositions, type SyncPoint } from './rhythmFit';
 import { type ScoreEvent, barLength, fitEvents, hasRepeats, rewriteTab, scoreEvents, syncFromTimes } from './scoreEvents';
 import { encodeWav, isVideoFile, peakOf, trimSilence, videoAudio } from './videoAudio';
+import { BackClose } from '../../ui/backClose';
 import {
   SearchError,
   type VideoResult,
@@ -92,6 +93,8 @@ interface Pending {
 const pause = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
 export class MediaPanel {
+  /** Retour d'Android : ferme d'abord ce panneau (N7). */
+  private readonly backClose = new BackClose(() => this.setOpen(false));
   readonly element: HTMLElement;
   readonly toggleButton: HTMLButtonElement;
 
@@ -240,6 +243,7 @@ export class MediaPanel {
 
   private setOpen(open: boolean): void {
     this.element.hidden = !open;
+    this.backClose.set(open);
     this.toggleButton.setAttribute('aria-expanded', String(open));
     if (open && !this.media && !this.picker.hidden) void this.autoSearch();
   }

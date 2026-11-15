@@ -1,6 +1,7 @@
 import { h, s } from '../ui/dom';
 import { FORMAT_LABELS, ACCEPTED_EXTENSIONS } from './formats';
 import type { ScoreEntry } from './library';
+import { loadResume, resumeLabel } from './resume';
 
 interface LibraryDeps {
   onImport: (file: File) => void;
@@ -62,10 +63,13 @@ export class LibraryView {
   render(entries: ScoreEntry[]): void {
     this.empty.hidden = entries.length > 0;
     this.list.hidden = entries.length === 0;
-    this.list.replaceChildren(...entries.map((entry) => this.item(entry)));
+    // La dernière partition ouverte (en tête) dit où elle reprendra : passage, vitesse ou mesure.
+    const first = entries[0];
+    const resume = first ? resumeLabel(first, loadResume()[first.id]) : null;
+    this.list.replaceChildren(...entries.map((entry, i) => this.item(entry, i === 0 ? resume : null)));
   }
 
-  private item(entry: ScoreEntry): HTMLLIElement {
+  private item(entry: ScoreEntry, resume: string | null = null): HTMLLIElement {
     // Format d'origine : un PDF lu par l'app reste « PDF » (même s'il est gardé en MusicXML).
     const format = entry.origin === 'pdf' || entry.origin === 'pdf-tab' ? 'PDF' : FORMAT_LABELS[entry.format];
     const meta = [entry.artist, format].filter(Boolean).join(', ');
@@ -75,6 +79,7 @@ export class LibraryView {
       { class: 'library__open', href: `#/partitions/${encodeURIComponent(entry.id)}` },
       title,
       h('span', { class: 'library__meta' }, meta),
+      ...(resume ? [h('span', { class: 'library__resume', 'data-testid': 'library-resume' }, resume)] : []),
     );
     const rename = h('button', { type: 'button', class: 'icon-btn', 'aria-label': `Renommer « ${entry.title} »` }, icon(PENCIL));
     const remove = h('button', { type: 'button', class: 'icon-btn', 'aria-label': `Supprimer « ${entry.title} »` }, icon(TRASH));

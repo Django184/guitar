@@ -4,6 +4,7 @@ import { Metronome } from './metronome/metronome';
 import { createMetronomeView } from './metronome/metronomeView';
 import { DEFAULT_BPM, METERS, type Meter } from './metronome/scheduler';
 import { createScoresView } from './scores/scoresView';
+import { arriveScreen, enterScreen, keyOf, onTabClick, setupNavigation } from './shell/navigation';
 import { setupPwa } from './shell/pwa';
 import { type RouteId, startRouter } from './shell/router';
 import { isNumber, isOneOf, loadPref } from './shell/storage';
@@ -43,10 +44,15 @@ for (const view of Object.values(views)) {
 
 let current: View | null = null;
 
+setupNavigation();
+
 startRouter(({ route, param }, initial) => {
+  // Position de l'écran quitté, marque de l'entrée d'historique (retour au bon endroit : shell/navigation.ts).
+  enterScreen(keyOf({ route, param }));
   const next = views[route];
   if (current === next) {
     next.update?.(param);
+    arriveScreen();
     return;
   }
   current?.leave();
@@ -62,8 +68,16 @@ startRouter(({ route, param }, initial) => {
     if (item.dataset.route === route) item.setAttribute('aria-current', 'page');
     else item.removeAttribute('aria-current');
   });
-  // Lecteurs d'écran et clavier : le focus suit le changement d'écran.
-  if (!initial) title.focus({ preventScroll: true });
+  // Lecteurs d'écran et clavier : le focus suit le changement d'écran (sauf s'il revient sur l'élément quitté).
+  if (!arriveScreen() && !initial) title.focus({ preventScroll: true });
+});
+
+// Onglet de l'écran affiché : retour en haut ; onglet de l'écran d'où l'on vient : retour dans l'historique.
+navItems.forEach((item) => {
+  item.addEventListener('click', (event) => {
+    const route = item.dataset.route;
+    if (route === 'accordeur' || route === 'metronome' || route === 'partitions') onTabClick(event, route);
+  });
 });
 
 // Retour au premier plan, ou tout nouveau toucher : relance l'audio si iOS l'a suspendu.

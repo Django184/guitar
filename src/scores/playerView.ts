@@ -22,6 +22,7 @@ import { FingeringLayer } from './fingering/fingeringLayer';
 import { type TabFingering, fingerTab, tabStaff } from './fingering/fromScore';
 import type { ScoreEntry, ScoreSettings, StoredSelection } from './library';
 import { type Passage, SelectionController } from './selection';
+import { barAt, loadResume, saveResume, stepTarget } from './resume';
 import type { ReferenceMedia } from './sync/media';
 import { BarMarks } from './rhythm/barMarks';
 import { RhythmPanel } from './rhythm/rhythmPanel';
@@ -124,12 +125,12 @@ export class ScorePlayerView {
   private readonly fingeringSwitch = switchRow('Doigtés', 'Doigts de la main gauche sur la tablature.', { 'data-testid': 'fingering-toggle' });
   private readonly loopToggle = h(
     'button',
-    { type: 'button', class: 'icon-btn icon-btn--toggle', 'aria-pressed': 'true', 'aria-label': 'Boucle', title: 'Boucle' },
+    { type: 'button', class: 'icon-btn icon-btn--toggle', 'aria-pressed': 'true', 'aria-label': 'Boucle', title: 'Boucle (L)', 'aria-keyshortcuts': 'L' },
     icon(ICONS.loop),
   );
   private readonly speedValue = h('output', { class: 'stepper__value readout-num', 'data-testid': 'speed' });
-  private readonly speedMinus = h('button', { type: 'button', class: 'btn btn--square btn--quiet', 'aria-label': 'Ralentir de 5 %' }, '−');
-  private readonly speedPlus = h('button', { type: 'button', class: 'btn btn--square btn--quiet', 'aria-label': 'Accélérer de 5 %' }, '+');
+  private readonly speedMinus = h('button', { type: 'button', class: 'btn btn--square btn--quiet', 'aria-label': 'Ralentir de 5 %', 'aria-keyshortcuts': '-' }, '−');
+  private readonly speedPlus = h('button', { type: 'button', class: 'btn btn--square btn--quiet', 'aria-label': 'Accélérer de 5 %', 'aria-keyshortcuts': '+' }, '+');
   private readonly rewindButton = h(
     'button',
     { type: 'button', class: 'icon-btn icon-btn--large', 'aria-label': 'Revenir au début du passage', title: 'Début' },
@@ -137,7 +138,9 @@ export class ScorePlayerView {
   );
   private readonly playIcon = icon(ICONS.play, 'icon--fill');
   private readonly playLabel = h('span', {}, 'Lire');
-  private readonly playButton = h('button', { type: 'button', class: 'btn btn--primary btn--play', 'aria-pressed': 'false', disabled: true }, this.playIcon, this.playLabel);
+  private readonly playButton = h('button', { type: 'button', class: 'btn btn--primary btn--play', 'aria-pressed': 'false', 'aria-keyshortcuts': 'Space', disabled: true }, this.playIcon, this.playLabel);
+  /** Position à reprendre à l'ouverture (dernière position jouée, sans passage choisi). */
+  private resumeTick: number | null = null;
 
   constructor(private readonly deps: PlayerDeps) {
     this.panel = new MediaPanel({
@@ -243,10 +246,71 @@ export class ScorePlayerView {
     bindHoldRepeat(this.speedPlus, () => this.updateSettings({ speed: this.settings.speed + SPEED_STEP }));
     this.rewindButton.addEventListener('click', () => this.api?.stop());
     this.playButton.addEventListener('click', () => this.togglePlayback());
+    // Clavier (ordinateur, guitare en main) : sur window, après les écouteurs du document (calage tapé au clavier).
+    window.addEventListener('keydown', (e) => this.onKey(e));
 
     document.addEventListener('themechange', () => this.applyTheme());
     window.addEventListener('resize', () => this.applyScale());
     this.renderSelection(null);
+  }
+
+  /** Début de chaque mesure, en ticks (ordre de la partition). */
+  private barStarts(): number[] {
+    const bars = this.api?.score?.masterBars ?? [];
+    return bars.map((bar) => bar.start);
+  }
+
+  /** Dernière position jouée, gardée pour rouvrir la partition au même endroit. */
+  private rememberPosition(): void {
+    const api = this.api;
+    const entry = this.entry;
+    if (!api || !entry || !api.isReadyForPlayback || this.previewing) return;
+    const tick = api.tickPosition;
+    saveResume(entry.id, tick, barAt(this.barStarts(), tick));
+  }
+
+  /**
+   * Raccourcis du lecteur (ECOSYSTEME.md §4, N8) : Espace lecture et pause, L boucle, + et − vitesse de 5 %,
+   * ← → mesure précédente et suivante. Inactifs dans un champ, une feuille ouverte ou un autre écran.
+   */
+  private onKey(e: KeyboardEvent): void {
+    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.isComposing) return;
+    if (!this.entry || this.element.getClientRects().length === 0 || document.querySelector('dialog[open]')) return;
+    const target = e.target;
+    if (target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+    const onControl = target instanceof HTMLElement && /^(BUTTON|A|SUMMARY)$/.test(target.tagName);
+    switch (e.key) {
+      case ' ':
+        if (onControl || e.repeat) return; // un bouton focalisé réagit déjà à Espace
+        e.preventDefault();
+        this.togglePlayback();
+        break;
+      case 'l':
+      case 'L':
+        if (e.repeat) return;
+        e.preventDefault();
+        this.updateSettings({ loop: !this.settings.loop });
+        break;
+      case '+':
+      case '=':
+        e.preventDefault();
+        this.updateSettings({ speed: this.settings.speed + SPEED_STEP });
+        break;
+      case '-':
+      case '_':
+        e.preventDefault();
+        this.updateSettings({ speed: this.settings.speed - SPEED_STEP });
+        break;
+      case 'ArrowLeft':
+      case 'ArrowRight': {
+        const api = this.api;
+        const starts = this.barStarts();
+        if (!api?.isReadyForPlayback || !starts.length) return;
+        e.preventDefault();
+        api.tickPosition = starts[stepTarget(starts, api.tickPosition, e.key === 'ArrowRight' ? 1 : -1, QUARTER_TICKS / 2)] ?? 0;
+        break;
+      }
+    }
   }
 
   private get settings(): ScoreSettings {
@@ -275,6 +339,8 @@ export class ScorePlayerView {
     if (synced && entry.sync) score.applyFlatSyncPoints(entry.sync.points);
     void this.panel.load(entry);
     this.pendingSelection = entry.settings.selection;
+    // Sans passage choisi, la partition reprend à la dernière position jouée.
+    this.resumeTick = entry.settings.selection ? null : (loadResume()[entry.id]?.tick ?? null);
     this.titleEl.textContent = entry.title;
     this.artistEl.textContent = entry.artist;
     this.artistEl.hidden = !entry.artist;
@@ -319,8 +385,9 @@ export class ScorePlayerView {
     this.media?.pause();
   }
 
-  /** Partition quittée : tâche de calage arrêtée. */
+  /** Partition quittée : tâche de calage arrêtée, position gardée pour la reprise. */
   close(): void {
+    this.rememberPosition();
     this.options.close();
     this.panel.close();
     this.rhythm.close();
@@ -524,6 +591,9 @@ export class ScorePlayerView {
         api.isLooping = settings.loop;
       }
       this.selection?.reapply();
+      // Reprise à la dernière position jouée (une seule fois, à l'ouverture).
+      if (this.resumeTick !== null && !this.entry?.settings.selection) api.tickPosition = this.resumeTick;
+      this.resumeTick = null;
     });
     api.playerStateChanged.on((e) => {
       this.playing = e.state === at.synth.PlayerState.Playing;
@@ -531,7 +601,10 @@ export class ScorePlayerView {
       this.playIcon.querySelector('path')?.setAttribute('d', this.playing ? ICONS.pause : ICONS.play);
       this.playButton.setAttribute('aria-pressed', String(this.playing));
       if (this.playing) keepAwake('player');
-      else allowSleep('player');
+      else {
+        allowSleep('player');
+        this.rememberPosition();
+      }
     });
     api.playerPositionChanged.on((e) => {
       this.timeEl.textContent = `${formatTime(e.currentTime)} / ${formatTime(e.endTime)}`;

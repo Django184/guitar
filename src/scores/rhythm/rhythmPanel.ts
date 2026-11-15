@@ -17,6 +17,7 @@ import type { Onset } from './align';
 import type { Consensus } from './consensus';
 import { collectSources, fileItems, foundItems } from './collect';
 import { type AlignedSource, combine, tabOnsets, trackName } from './findRhythm';
+import { BackClose } from '../../ui/backClose';
 import {
   type Found,
   claudeLink,
@@ -57,6 +58,8 @@ interface Pending {
 }
 
 export class RhythmPanel {
+  /** Retour d'Android : ferme d'abord ce panneau (N7). */
+  private readonly backClose = new BackClose(() => this.setOpen(false));
   readonly element: HTMLElement;
   readonly toggleButton: HTMLButtonElement;
 
@@ -191,6 +194,7 @@ export class RhythmPanel {
   setOpen(open: boolean): void {
     if (open === this.isOpen) return;
     this.element.hidden = !open;
+    this.backClose.set(open);
     this.toggleButton.setAttribute('aria-expanded', String(open));
     if (open) {
       this.host.opened();

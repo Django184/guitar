@@ -342,6 +342,12 @@ déjà importée s'ouvre et se joue sans réseau, et un PDF s'importe hors-ligne
 **Limite connue d'alphaTab 1.8.4.** S'abonner à l'événement `midiLoaded` provoque une récursion
 infinie (`AlphaSynthWebWorkerApi.loadedMidiInfo`) ; l'app utilise `playerReady` à la place.
 
+**Navigation.** « Retour à la bibliothèque », le geste retour et l'onglet Partitions ramènent à la
+bibliothèque sur la partition qu'on vient de quitter (entourée un instant). Une partition sans passage
+choisi rouvre à la dernière position jouée ; la dernière ouverte dit en tête de liste où elle reprendra.
+Sur Android, le retour ferme d'abord le panneau ouvert (Vidéo, Rythme, Enrichir). Au clavier, dans le
+lecteur : Espace (lecture, pause), L (boucle), + et − (vitesse), ← et → (mesure).
+
 ## Vérifier les critères d'acceptation de la Phase 2
 
 Automatique (CI, job **e2e**, profils ordinateur et mobile) :

@@ -15,6 +15,7 @@ import { type AlignedSource, tabOnsets } from '../rhythm/findRhythm';
 import { proxyUrl, searchBitMidi } from '../rhythm/search';
 import type { Ring } from './additionLayer';
 import { type AddKind, type Addition, type GuitarSetup, applyAdditions, suggest } from './suggest';
+import { BackClose } from '../../ui/backClose';
 
 const NB = ' ';
 const fr = (text: string): string => text.replace(/ ([:;!?»])/g, `${NB}$1`).replace(/« /g, `«${NB}`);
@@ -43,6 +44,8 @@ export interface EmbellishHost {
 }
 
 export class EmbellishPanel {
+  /** Retour d'Android : ferme d'abord ce panneau (N7). */
+  private readonly backClose = new BackClose(() => this.setOpen(false));
   readonly element: HTMLElement;
   readonly toggleButton: HTMLButtonElement;
 
@@ -94,6 +97,7 @@ export class EmbellishPanel {
     if (open === this.isOpen) return;
     this.session++;
     this.element.hidden = !open;
+    this.backClose.set(open);
     this.toggleButton.setAttribute('aria-expanded', String(open));
     if (open) {
       this.host.opened();

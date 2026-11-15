@@ -3,6 +3,18 @@
 Évolutions notables de Pratique Guitare. Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versionnement sémantique.
 La version est définie dans `package.json` et affichée dans Réglages avec le commit publié.
 
+## [1.3.0] - 2026-11-15
+
+Navigation et reprise (chantier L de l'écosystème).
+
+### Ajouté
+- **Retour au bon endroit** : « Retour à la bibliothèque » et l'onglet Partitions reviennent en arrière dans l'historique (un seul retour ramène où l'on était) ; dans la bibliothèque, la partition qu'on vient de quitter est remise en vue, entourée deux secondes et reçoit le focus. Chaque écran retrouve sa position au retour ; toucher l'onglet de l'écran affiché remonte en haut.
+- **Reprendre où j'en étais** : sans passage choisi, une partition rouvre à la dernière position jouée ; la dernière partition ouverte dit, en tête de la bibliothèque, où elle reprendra (« Reprendre : mesures 12–20, 70 % »).
+- **Retour d'Android** : les panneaux Vidéo de référence, Rythme et Enrichir se ferment d'abord, la partition reste à l'écran (CloseWatcher, Chrome 120 et suivants ; les feuilles le faisaient déjà).
+- **Clavier dans le lecteur** (ordinateur) : Espace lecture et pause, L boucle, + et − vitesse de 5 %, ← et → mesure précédente et suivante (← revient d'abord au début de la mesure en cours). Inactifs dans un champ ou une feuille ouverte.
+
+Positions gardées pour l'onglet (`sessionStorage`) ; dernière position jouée de chaque partition sur l'appareil (`localStorage`, `pg.reprise`, 30 partitions au plus), hors de la sauvegarde. Aucun changement du schéma de la bibliothèque. Tests : `tests/navigation.test.ts`, `tests/resume.test.ts`, `e2e/navigation.spec.ts`.
+
 ## [1.2.0] - 2026-11-14
 
 Changement d'adresse, étape 1 (chantier B de l'écosystème).
